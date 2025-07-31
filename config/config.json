@@ -1,0 +1,4 @@
+{
+  "activities_url": "https://www.strava.com/api/v3/athlete/activities",
+  "auth_url" : "https://www.strava.com/oauth/token"
+}
