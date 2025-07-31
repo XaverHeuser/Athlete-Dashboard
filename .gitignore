@@ -1,6 +1,11 @@
 # New
 .env
 
+# IntelliJ / PyCharm
+.idea/
+*.iml
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
