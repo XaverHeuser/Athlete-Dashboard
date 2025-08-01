@@ -1,4 +1,4 @@
-name: Run Pytest on PR
+name: Run formatter, linter and Pytest on PR
 
 on:
   pull_request:
