@@ -1,0 +1,59 @@
+Column,Dtype,Unique Count,Null Count,Missing %,Example Value,Description
+resource_state,int64,1,0,0.0,2,TODO: Add description for each column
+name,object,67,0,0.0,Hill Intervals,TODO: Add description for each column
+distance,float64,191,0,0.0,7502.8,TODO: Add description for each column
+moving_time,int64,188,0,0.0,2402,TODO: Add description for each column
+elapsed_time,int64,189,0,0.0,2405,TODO: Add description for each column
+total_elevation_gain,float64,126,0,0.0,230.0,TODO: Add description for each column
+type,object,2,0,0.0,Run,TODO: Add description for each column
+sport_type,object,2,0,0.0,Run,TODO: Add description for each column
+workout_type,float64,3,6,3.11,0.0,TODO: Add description for each column
+id,int64,193,0,0.0,15309238742,TODO: Add description for each column
+start_date,object,193,0,0.0,2025-08-01T14:16:48Z,TODO: Add description for each column
+start_date_local,object,193,0,0.0,2025-08-01T16:16:48Z,TODO: Add description for each column
+timezone,object,3,0,0.0,(GMT+01:00) Europe/Berlin,TODO: Add description for each column
+utc_offset,float64,2,0,0.0,7200.0,TODO: Add description for each column
+location_city,object,0,193,100.0,,TODO: Add description for each column
+location_state,object,0,193,100.0,,TODO: Add description for each column
+location_country,object,0,193,100.0,,TODO: Add description for each column
+achievement_count,int64,25,0,0.0,0,TODO: Add description for each column
+kudos_count,int64,5,0,0.0,0,TODO: Add description for each column
+comment_count,int64,3,0,0.0,0,TODO: Add description for each column
+athlete_count,int64,2,0,0.0,1,TODO: Add description for each column
+photo_count,int64,1,0,0.0,0,TODO: Add description for each column
+trainer,bool,2,0,0.0,False,TODO: Add description for each column
+commute,bool,1,0,0.0,False,TODO: Add description for each column
+manual,bool,1,0,0.0,False,TODO: Add description for each column
+private,bool,1,0,0.0,False,TODO: Add description for each column
+visibility,object,1,0,0.0,everyone,TODO: Add description for each column
+flagged,bool,1,0,0.0,False,TODO: Add description for each column
+gear_id,object,5,2,1.04,g20984891,TODO: Add description for each column
+start_latlng,object,193,0,0.0,"[50.858947, 7.197307]",TODO: Add description for each column
+end_latlng,object,193,0,0.0,"[50.858818, 7.197319]",TODO: Add description for each column
+average_speed,float64,186,0,0.0,3.124,TODO: Add description for each column
+max_speed,float64,158,0,0.0,4.7,TODO: Add description for each column
+average_cadence,float64,63,61,31.61,85.5,TODO: Add description for each column
+average_watts,float64,114,70,36.27,320.0,TODO: Add description for each column
+max_watts,float64,95,70,36.27,587.0,TODO: Add description for each column
+weighted_average_watts,float64,72,70,36.27,369.0,TODO: Add description for each column
+device_watts,object,1,70,36.27,True,TODO: Add description for each column
+kilojoules,float64,120,70,36.27,769.9,TODO: Add description for each column
+has_heartrate,bool,2,0,0.0,True,TODO: Add description for each column
+average_heartrate,float64,150,2,1.04,131.2,TODO: Add description for each column
+max_heartrate,float64,52,2,1.04,175.0,TODO: Add description for each column
+heartrate_opt_out,bool,1,0,0.0,False,TODO: Add description for each column
+display_hide_heartrate_option,bool,2,0,0.0,True,TODO: Add description for each column
+elev_high,float64,98,0,0.0,114.6,TODO: Add description for each column
+elev_low,float64,149,0,0.0,76.2,TODO: Add description for each column
+upload_id,int64,193,0,0.0,16349023789,TODO: Add description for each column
+upload_id_str,object,193,0,0.0,16349023789,TODO: Add description for each column
+external_id,object,193,0,0.0,garmin_ping_465048251379,TODO: Add description for each column
+from_accepted_tag,bool,1,0,0.0,False,TODO: Add description for each column
+pr_count,int64,18,0,0.0,0,TODO: Add description for each column
+total_photo_count,int64,2,0,0.0,0,TODO: Add description for each column
+has_kudoed,bool,1,0,0.0,False,TODO: Add description for each column
+athlete.id,int64,1,0,0.0,133094316,TODO: Add description for each column
+athlete.resource_state,int64,1,0,0.0,1,TODO: Add description for each column
+map.id,object,193,0,0.0,a15309238742,TODO: Add description for each column
+map.summary_polyline,object,193,0,0.0,kcluHkq}j@DMn@yAJ]|@{B?i@Em@QwAIkB?GHW@Om@kIe@iCm@cB_AgDy@cCOi@Gc@I_ACmACkCMwFBYTY?ECCCRM^?VLzDFvEN~BNt@ZdAPt@Vn@d@pB`@fA\nAXfBLxABBGQA]M_A_@wBOi@[w@YgAIQ]sAUm@w@wCEk@GoBAiCOmFH]NQ?QEVKVA\L|C?bAFv@@x@AhAJpBHf@\fAPv@\x@Pz@x@fCXpAVrARlBGWG{@i@sCq@wBeA{Dk@}AMk@Ig@EaA?kAEoB?y@MwB@c@Co@F[PW@QC??NKVCb@HvC@hBDt@BzCD|@Lj@Vt@JRr@lCZ~@R~@`@lAVjAPxA@ZH`@w@_FMc@m@aBo@oC_AsCGWM}@CgBCu@AqBEq@GiDH_@NQ@KAEQr@?`@HrC?|@HjEB`ADb@FXN^Pz@^jATz@X|@Nn@f@`BZrA\vCu@wEKi@sB}Gi@sBM[Ig@Cg@AaDGgB?aAIwA?_@Di@NSBSO`@E\LvCA|ADnA@|BL~Al@vBJf@rAbENh@Z~@RhAZvCEGM}@Gk@c@cCMYY{@IY?IUo@eBkGC_@AaAGq@EmC@q@O_E@WFSRUASALQ^AZHrB?jCHvC?|@Hd@Dv@BR`AjCVfAf@xAn@fCXxAJtADLDFFv@@PE^FdBDp@PtABr@XlC?XG^Qd@oBjE,TODO: Add description for each column
+map.resource_state,int64,1,0,0.0,2,TODO: Add description for each column
