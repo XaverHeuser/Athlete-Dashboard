@@ -19,6 +19,7 @@ if os.path.exists(".env"):
 def run_script(request):
     now = datetime.datetime.now()
     logging.info(f'Script gestartet um {now}')
+    logging.info('Toll')
 
     # Proxy setzen (nur lokal)
     set_proxy_if_needed()
