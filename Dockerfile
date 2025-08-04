@@ -25,4 +25,4 @@ COPY . .
 ENV PORT 8080
 
 # 7. Functions Framework starten
-CMD exec functions-framework --target run_script --source main.py --port $PORT
+CMD exec functions-framework --target run_script --port $PORT
