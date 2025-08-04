@@ -1,24 +1,16 @@
-import json
-
 import requests
 
 
-def get_access_token(
-    client_id: str, client_secret: str, refresh_token: str, grant_type: str
-) -> str:
+def get_access_token(client_id: str, client_secret: str, refresh_token: str, grant_type: str) -> str:
     """Fetches a new access token using the refresh token."""
-    # Read auth url from config
-    with open('../config/config.json') as f:
-        config = json.load(f)
-
-    auth_url = config.get('auth_url')
+    auth_url = 'https://www.strava.com/oauth/token'
 
     payload = {
         'client_id': client_id,
         'client_secret': client_secret,
         'refresh_token': refresh_token,
         'grant_type': grant_type,
-        'f': 'json',
+        'f': 'json'
     }
 
     res = requests.post(auth_url, data=payload, verify=False)
@@ -27,11 +19,7 @@ def get_access_token(
 
 def fetch_all_activities(access_token: str) -> list:
     """Fetches all activities for the authenticated user."""
-    # Read api url from config
-    with open('../config/config.json') as f:
-        config = json.load(f)
-
-    activities_url = config.get('activities_url')
+    activities_url = 'https://www.strava.com/api/v3/athlete/activities'
 
     header = {'Authorization': f'Bearer {access_token}'}
 
