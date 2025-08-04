@@ -25,4 +25,4 @@ COPY . .
 ENV PORT 8080
 
 # 7. Functions Framework starten
-CMD exec functions-framework --target run_script --port $PORT
+CMD exec functions-framework --target run_script --host 0.0.0.0 --port $PORT
