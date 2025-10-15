@@ -22,7 +22,7 @@ def get_fresh_access_token(
     }
 
     try:
-        response = requests.post(AUTH_URL, data=payload)
+        response = requests.post(AUTH_URL, data=payload, timeout=10)
         response.raise_for_status()
         new_token: str = response.json()['access_token']
         print('Successfully refreshed access token.')
@@ -73,7 +73,7 @@ class StravaExtractor(BaseExtractor):
         while True:
             params = {'per_page': 200, 'page': page}
 
-            response = requests.get(activities_url, headers=headers, params=params)
+            response = requests.get(activities_url, headers=headers, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
