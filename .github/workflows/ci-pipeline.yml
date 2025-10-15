@@ -1,0 +1,238 @@
+name: Run CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.head.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  ############################
+  # Linting and Formatting
+  ############################
+  lint:
+    name: Linting and Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Dev Dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff Lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check . --output-format=github
+
+      - name: Ruff Format (check only)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: format . --check --diff
+
+  ########################
+  # Security Scans
+  ########################
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Dev Dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run pip-audit
+        run: pip-audit --ignore-vuln GHSA-4xh5-x5gv-qwph
+
+      - name: Run Bandit
+        run: bandit -r . --exclude ./tests
+
+  ########################
+  # Type Checking
+  ########################
+  type-check:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Dev Dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run mypy
+        run: mypy --explicit-package-bases src
+
+  ############################
+  # Testing with Pytest
+  ############################
+#   pytest:
+#     name: Pytest
+#     needs: [lint, security, type-check]
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 20
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v5
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v6
+#         with:
+#           python-version: "3.12"
+#           cache: pip
+#           cache-dependency-path: |
+#             requirements.txt
+
+#       - name: Upgrade pip
+#         run: python -m pip install --upgrade pip
+
+#       - name: Install runtime deps
+#         run: pip install -r requirements.txt
+
+#       - name: Install dev deps
+#         run: pip install -r requirements-dev.txt
+
+#       - name: Run Pytest (Coverage + HTML + JUnit)
+#         id: pytest
+#         env:
+#           PYTHONUNBUFFERED: "1"
+#         run: |
+#           mkdir -p test-reports
+#           # If xdist is installed: parallel, else normal
+#           if python -c "import xdist" 2>/dev/null; then
+#             PAR="-n auto"
+#           else
+#             PAR=""
+#           fi
+  
+#           python -m pytest tests/ ${PAR} -q \
+#             --maxfail=1 -rfE \
+#             --durations=10 \
+#             --junitxml=test-reports/junit.xml \
+#             --cov=src \
+#             --cov-report=term-missing \
+#             --cov-report=xml:test-reports/coverage.xml \
+#             --cov-report=html \
+#             --cov-fail-under=80
+
+#         continue-on-error: true
+
+
+#       - name: Export coverage as JSON
+#         if: always()
+#         run: |
+#           # coverage.py kommt mit pytest-cov mit
+#           python -m coverage json -o test-reports/coverage.json
+
+#       - name: Pretty per-file coverage table → Job Summary
+#         if: always()
+#         run: |
+#           python - << 'PY'
+#           import json, os, math, pathlib
+
+#           LOW, HIGH = 80.0, 95.0   # Schwellen für Ampel
+
+#           def compress_ranges(nums):
+#               if not nums: return "–"
+#               nums = sorted(nums)
+#               ranges, start, prev = [], nums[0], nums[0]
+#               for n in nums[1:] + [None]:
+#                   if n is None or n != prev + 1:
+#                       ranges.append(str(start) if start==prev else f"{start}-{prev}")
+#                       start = n
+#                   prev = n
+#               return ", ".join(ranges)
+
+#           p = pathlib.Path("test-reports/coverage.json")
+#           data = json.loads(p.read_text())
+
+#           files = []
+#           total_stmts = total_miss = 0
+#           for path, meta in data.get("files", {}).items():
+#               summ = meta.get("summary", {})
+#               stmts = int(summ.get("num_statements", 0))
+#               miss  = int(summ.get("missing_lines", 0))
+#               cov   = 0.0 if stmts==0 else 100.0 * (stmts - miss) / stmts
+#               files.append({
+#                   "path": path.replace("\\", "/"),
+#                   "stmts": stmts, "miss": miss, "cov": cov,
+#                   "missing": compress_ranges(meta.get("missing_lines", [])),
+#               })
+#               total_stmts += stmts
+#               total_miss  += miss
+
+#           files.sort(key=lambda x: (x["path"].count("/"), x["path"]))  # stabil & lesbar
+#           total_cov = 0.0 if total_stmts==0 else 100.0 * (total_stmts - total_miss) / total_stmts
+
+#           def status(c):
+#               if c < LOW:  return "❌"
+#               if c < HIGH: return "➖"
+#               return "✅"
+
+#           def fmtp(c):  # 0 Dezimal bei Ganzzahl, sonst 1
+#               return f"{c:.0f}%" if abs(c - round(c)) < 1e-9 else f"{c:.1f}%"
+
+#           lines = []
+#           lines.append("## Coverage Report (per file)\n")
+#           lines.append(f"**Gesamt:** {fmtp(total_cov)}  ({total_stmts-total_miss}/{total_stmts})\n")
+#           lines.append("")
+#           lines.append("| File | Stmts | Miss | Cover | Health | Missing |")
+#           lines.append("|------|------:|-----:|------:|:------:|---------|")
+
+#           for f in files:
+#               lines.append(
+#                   f"| `{f['path']}` | {f['stmts']} | {f['miss']} | {fmtp(f['cov'])} | {status(f['cov'])} | {f['missing']} |"
+#               )
+
+#           # Totals-Zeile
+#           lines.append(
+#               f"| **TOTAL** | **{total_stmts}** | **{total_miss}** | **{fmtp(total_cov)}** | {status(total_cov)} |  |"
+#           )
+
+#           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fd:
+#               fd.write("\n".join(lines) + "\n")
+#           PY
+
+#       - name: Upload test reports (JUnit + HTML coverage)
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: pytest-reports-${{ github.run_id }}
+#           path: |
+#             test-reports/
+#             htmlcov/
+#           retention-days: 30
+
+#       - name: Upload Coverage to Codecov
+#         if: always()
+#         uses: codecov/codecov-action@v5
+#         with:
+#           files: test-reports/coverage.xml
+
+#       - name: Fail job if tests failed
+#         if: steps.pytest.outcome == 'failure'
+#         run: exit 1
