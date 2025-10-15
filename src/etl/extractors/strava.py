@@ -1,6 +1,7 @@
 """This module ."""
 
 from typing import Any
+
 import requests
 
 from .base import BaseExtractor
