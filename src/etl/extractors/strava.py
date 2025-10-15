@@ -1,5 +1,6 @@
 """This module ."""
 
+from typing import Any
 import requests
 
 from .base import BaseExtractor
@@ -23,7 +24,7 @@ def get_fresh_access_token(
     try:
         response = requests.post(AUTH_URL, data=payload)
         response.raise_for_status()
-        new_token = response.json()['access_token']
+        new_token: str = response.json()['access_token']
         print('Successfully refreshed access token.')
         return new_token
     except requests.exceptions.HTTPError as e:
@@ -59,14 +60,14 @@ class StravaExtractor(BaseExtractor):
     def __init__(self, access_token: str) -> None:
         self.access_token = access_token
 
-    def fetch_all_activities(self) -> list[dict]:
+    def fetch_all_activities(self) -> list[dict[str, Any]]:
         """Fetches all activities."""
         print('Start fetching all activities.')
 
         activities_url = StravaEndpoints.get_activities()
         headers = {'Authorization': f'Bearer {self.access_token}'}
 
-        all_activities: list[dict] = []
+        all_activities: list[dict[str, Any]] = []
         page = 1
 
         while True:
