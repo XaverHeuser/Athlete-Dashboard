@@ -74,7 +74,9 @@ class StravaExtractor(BaseExtractor):
         while True:
             params = {'per_page': 200, 'page': page}
 
-            response = requests.get(activities_url, headers=headers, params=params, timeout=10)
+            response = requests.get(
+                activities_url, headers=headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
