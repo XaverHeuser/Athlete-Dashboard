@@ -16,7 +16,7 @@ except Exception:
     client = bigquery.Client()
 
 
-@st.cache_data
+@st.cache_data # type: ignore[misc]
 def load_raw_data() -> pd.DataFrame:
     """Queries the BigQuery table and returns the data as a Pandas DataFrame."""
     # Define your BigQuery SQL query

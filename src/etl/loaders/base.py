@@ -5,6 +5,6 @@ from abc import ABC, abstractmethod
 
 class BaseLoader(ABC):
     @abstractmethod
-    def load_data(self) -> None:
+    def load_data(self, list[dict[str, Any]]) -> None:
         """Takes transformed data and loads it into the data store."""
         pass
