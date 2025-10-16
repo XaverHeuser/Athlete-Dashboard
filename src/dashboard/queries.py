@@ -1,14 +1,13 @@
 """This module includes queries from bigquery for streamlit."""
 
-import streamlit as st
-import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
+import pandas as pd
+import streamlit as st
 
 try:
     creds = service_account.Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"]
+        st.secrets['gcp_service_account']
     )
     client = bigquery.Client(credentials=creds, project=creds.project_id)
 except Exception:
@@ -24,7 +23,7 @@ def load_raw_data() -> pd.DataFrame:
     query = """
         SELECT * FROM `athlete-dashboard-467718.strava_data.strava_activities_raw`
     """
-    print("Running BigQuery query...")
+    print('Running BigQuery query...')
     # Run the query and convert the result to a Pandas DataFrame
     df = client.query(query).to_dataframe()
     return df
