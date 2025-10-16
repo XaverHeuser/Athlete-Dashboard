@@ -34,7 +34,7 @@ def get_fresh_access_token(
 
 
 class StravaEndpoints:
-    """Eine Hilfsklasse zur zentralen Verwaltung aller Strava API URLs."""
+    """A helper class as a central Strava API URL management."""
 
     BASE_URL = 'https://www.strava.com/api/v3'
     AUTH_URL = 'https://www.strava.com/oauth/token'

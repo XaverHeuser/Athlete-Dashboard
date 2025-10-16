@@ -5,3 +5,4 @@ numpy==2.3.3
 pandas==2.3.3
 polyline==2.0.3
 pyarrow==21.0.0
+streamlit==1.50.0
