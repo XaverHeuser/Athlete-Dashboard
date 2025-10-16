@@ -28,10 +28,10 @@ class BigQueryLoader(BaseLoader):
     def load_data(self, data: list[dict[str, Any]]) -> None:
         # TODO: Implement
         if not data:
-            print("No data provided to load. Skipping.")
+            print('No data provided to load. Skipping.')
             return
 
-        print(f"Loading {len(data)} records into BigQuery table: {self.table_id}...")
+        print(f'Loading {len(data)} records into BigQuery table: {self.table_id}...')
 
         # Start the load job
         job = self.client.load_table_from_dataframe(
@@ -39,4 +39,4 @@ class BigQueryLoader(BaseLoader):
         )
 
         job.result()
-        print(f"Successfully loaded data into {self.table_id}.")
+        print(f'Successfully loaded data into {self.table_id}.')
