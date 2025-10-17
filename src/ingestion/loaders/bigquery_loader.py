@@ -1,8 +1,7 @@
 """This module ."""
 
-from typing import Any
-
 from google.cloud import bigquery
+import pandas as pd
 
 from .base import BaseLoader
 
@@ -27,7 +26,7 @@ class BigQueryLoader(BaseLoader):
             autodetect=True,
         )
 
-    def load_data(self, data: list[dict[str, Any]]) -> None:
+    def load_data(self, data: pd.DataFrame) -> None:
         # TODO: Implement and improve code
         if not data:
             print('No data provided to load. Skipping.')
