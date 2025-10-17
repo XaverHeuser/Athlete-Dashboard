@@ -1,6 +1,7 @@
 """This module ."""
 
 from typing import Any
+
 from google.cloud import bigquery
 
 from .base import BaseLoader
@@ -12,6 +13,7 @@ class BigQueryLoader(BaseLoader):
     def __init__(self, project_id: str, dataset: str, table: str) -> None:
         """Initializes the BigQueryLoader."""
         # TODO: Add handling for local vs. Cloud
+        # TODO: Improve code
         CREDENTIALS_PATH = '../credentials/sa-athlete-dashboard.json'
 
         self.client = bigquery.Client.from_service_account_json(
@@ -26,7 +28,7 @@ class BigQueryLoader(BaseLoader):
         )
 
     def load_data(self, data: list[dict[str, Any]]) -> None:
-        # TODO: Implement
+        # TODO: Implement and improve code
         if not data:
             print('No data provided to load. Skipping.')
             return

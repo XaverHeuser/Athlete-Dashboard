@@ -1,6 +1,6 @@
 """Main File."""
 
-from src.processing.process import my_func
+from ingestion.pipelines.strava_pipeline import run
 
 if __name__ == '__main__':
-    my_func()
+    run()
