@@ -9,16 +9,12 @@ from .base import BaseLoader
 class BigQueryLoader(BaseLoader):
     """Load data into a Google BigQuery table."""
 
-    def __init__(self, project_id: str, dataset: str, table: str) -> None:
+    def __init__(self, gcp_project_id: str, dataset: str, table: str) -> None:
         """Initializes the BigQueryLoader."""
-        # TODO: Add handling for local vs. Cloud
         # TODO: Improve code
-        CREDENTIALS_PATH = '../credentials/sa-athlete-dashboard.json'
+        self.client = bigquery.Client(project=gcp_project_id)
 
-        self.client = bigquery.Client.from_service_account_json(
-            CREDENTIALS_PATH, project='athlete-dashboard-467718'
-        )
-        self.table_id = f'{project_id}.{dataset}.{table}'
+        self.table_id = f'{gcp_project_id}.{dataset}.{table}'
 
         self.job_config = bigquery.LoadJobConfig(
             write_disposition='WRITE_TRUNCATE',
@@ -28,7 +24,7 @@ class BigQueryLoader(BaseLoader):
 
     def load_data(self, data: pd.DataFrame) -> None:
         # TODO: Implement and improve code
-        if not data:
+        if data.empty:
             print('No data provided to load. Skipping.')
             return
 
@@ -39,5 +35,5 @@ class BigQueryLoader(BaseLoader):
             data, self.table_id, job_config=self.job_config
         )
 
-        job.result()
+        job.result()  # Wait for the job to complete
         print(f'Successfully loaded data into {self.table_id}.')

@@ -1,11 +1,12 @@
 """This file implements ."""
 
 from abc import ABC, abstractmethod
-from typing import Any
+
+import pandas as pd
 
 
 class BaseLoader(ABC):
     @abstractmethod
-    def load_data(self, data: list[dict[str, Any]]) -> None:
+    def load_data(self, data: pd.DataFrame) -> None:
         """Takes transformed data and loads it into the data store."""
         pass
