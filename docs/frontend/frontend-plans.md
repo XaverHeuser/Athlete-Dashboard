@@ -30,3 +30,9 @@
     - Total activities per equipment
     - Average distance per equipment
     - Average pace per equipment
+
+---
+
+- Single activity details
+    - All possible and interesting details for each activity
+    - Probably in an own tab 'Activities' *(including searchichg and filtering)*
