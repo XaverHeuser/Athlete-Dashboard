@@ -76,7 +76,7 @@ Run this command from your project root:
 
 ```bash
 gcloud builds submit \
-  --tag REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-PACKAGE-NAME:latest
+  --tag REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-JOB-NAME:latest
 ```
 
 This:
@@ -121,7 +121,7 @@ Create the job (only once):
 
 ```bash
 gcloud run jobs create JOB-NAME \
-  --image REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-PACKAGE-NAME:latest \
+  --image REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-JOB-NAME:latest \
   --region REGION
 ```
 
