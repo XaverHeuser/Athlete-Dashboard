@@ -28,7 +28,7 @@ class StravaEndpoints:
         return f'{StravaEndpoints.BASE_URL}/activities/{activity_id}/streams'
 
 
-class StravaExtractor(BaseExtractor):
+class StravaExtractor(BaseExtractor):  # type: ignore
     """Extracts data from Strava API"""
 
     def __init__(self, access_token: str) -> None:
