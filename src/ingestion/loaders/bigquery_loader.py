@@ -1,4 +1,4 @@
-"""This module ."""
+"""This module contains the loader for interacting with Google's BigQuery."""
 
 import os
 
@@ -13,7 +13,6 @@ class BigQueryLoader(BaseLoader):
 
     def __init__(self) -> None:
         """Initializes the BigQueryLoader."""
-        # TODO: Improve code
         GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
         DATASET = os.environ.get('BIGQUERY_DATASET')
         TABLE_RAW = os.environ.get('BIGQUERY_TABLE_ACTIVITIES_RAW')
@@ -31,7 +30,6 @@ class BigQueryLoader(BaseLoader):
         )
 
     def load_data(self, data: pd.DataFrame) -> None:
-        # TODO: Implement and improve code
         if data.empty:
             print('No data provided to load. Skipping.')
             return

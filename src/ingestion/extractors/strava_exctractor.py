@@ -1,4 +1,4 @@
-"""This module contains the client for interacting with the Strava API."""
+"""This module contains the extractor for interacting with the Strava API."""
 
 from typing import Any
 

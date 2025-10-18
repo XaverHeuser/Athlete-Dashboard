@@ -1,4 +1,4 @@
-"""Main File."""
+"""Entry point."""
 
 from ingestion.pipelines.strava_pipeline import run
 

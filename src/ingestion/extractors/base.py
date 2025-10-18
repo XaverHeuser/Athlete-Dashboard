@@ -5,7 +5,7 @@ from typing import Any
 
 
 class BaseExtractor(ABC):
-    """An abstract base class for API clients."""
+    """An abstract base class for Extractor."""
 
     @abstractmethod
     def fetch_all_activities(self) -> list[dict[str, Any]]:
