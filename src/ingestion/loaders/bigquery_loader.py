@@ -1,5 +1,7 @@
 """This module ."""
 
+import os
+
 from google.cloud import bigquery
 import pandas as pd
 
@@ -9,12 +11,18 @@ from .base import BaseLoader
 class BigQueryLoader(BaseLoader):
     """Load data into a Google BigQuery table."""
 
-    def __init__(self, gcp_project_id: str, dataset: str, table: str) -> None:
+    def __init__(self) -> None:
         """Initializes the BigQueryLoader."""
         # TODO: Improve code
-        self.client = bigquery.Client(project=gcp_project_id)
+        GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
+        DATASET = os.environ.get('BIGQUERY_DATASET')
+        TABLE_RAW = os.environ.get('BIGQUERY_TABLE_ACTIVITIES_RAW')
 
-        self.table_id = f'{gcp_project_id}.{dataset}.{table}'
+        self.client = bigquery.Client(
+            project=GCP_PROJECT_ID,
+        )
+
+        self.table_id = f'{GCP_PROJECT_ID}.{DATASET}.{TABLE_RAW}'
 
         self.job_config = bigquery.LoadJobConfig(
             write_disposition='WRITE_TRUNCATE',

@@ -32,7 +32,7 @@ def run() -> None:
     """Executes the full Strava Extract and Load pipeline."""
     print('Starting Strava EL pipeline...')
 
-    access_token = strava_auth.get_access_token(mode='cloud')
+    access_token = strava_auth.get_access_token()
 
     client = StravaExtractor(access_token=access_token)
     activities_data = client.fetch_all_activities()

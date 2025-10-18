@@ -2,19 +2,13 @@
 
 import os
 
-from dotenv import load_dotenv
 import requests
 
 AUTH_URL = 'https://www.strava.com/oauth/token'
 
 
-def _load_strava_credentials(mode: str) -> tuple[str, str, str]:
+def _load_strava_credentials() -> tuple[str, str, str]:
     """Helper to securely load credentials from environment."""
-    print(mode)
-    if mode == 'local':
-        load_dotenv()
-    elif mode != 'cloud':
-        raise ValueError(f'Invalid mode given: {mode}')
 
     client_id = os.environ.get('CLIENT_ID')
     client_secret = os.environ.get('CLIENT_SECRET')
@@ -23,7 +17,7 @@ def _load_strava_credentials(mode: str) -> tuple[str, str, str]:
     print(client_id, client_secret, refresh_token)
 
     if not all([client_id, client_secret, refresh_token]):
-        raise EnvironmentError("Missing Strava authentication environment variables.")
+        raise OSError('Missing Strava authentication environment variables.')
 
     return client_id, client_secret, refresh_token
 
@@ -50,8 +44,9 @@ def _get_fresh_access_token(
         print(f'Error refreshing token: {e.response.text}')
         raise
 
+
 # This is the primary function other modules will call
-def get_access_token(mode: str = 'cloud') -> str:
+def get_access_token() -> str:
     """Loads credentials and returns a fresh access token."""
-    client_id, client_secret, refresh_token = _load_strava_credentials(mode)
+    client_id, client_secret, refresh_token = _load_strava_credentials()
     return _get_fresh_access_token(client_id, client_secret, refresh_token)
