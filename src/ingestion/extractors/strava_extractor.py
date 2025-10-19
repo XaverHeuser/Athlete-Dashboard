@@ -4,7 +4,7 @@ from typing import Any
 
 import requests
 
-from ingestion.extractors.base import BaseExtractor
+from src.ingestion.extractors.base import BaseExtractor
 
 
 class StravaEndpoints:
@@ -14,18 +14,8 @@ class StravaEndpoints:
 
     @staticmethod
     def get_activities() -> str:
-        """URL zum Abrufen von Aktivitäten."""
+        """URL to fetch activities."""
         return f'{StravaEndpoints.BASE_URL}/athlete/activities'
-
-    @staticmethod
-    def get_athlete_stats(athlete_id: int) -> str:
-        """URL zum Abrufen der Statistiken eines Athleten."""
-        return f'{StravaEndpoints.BASE_URL}/athletes/{athlete_id}/stats'
-
-    @staticmethod
-    def get_activity_stream(activity_id: int) -> str:
-        """URL zum Abrufen der Datenströme einer Aktivität."""
-        return f'{StravaEndpoints.BASE_URL}/activities/{activity_id}/streams'
 
 
 class StravaExtractor(BaseExtractor):  # type: ignore
