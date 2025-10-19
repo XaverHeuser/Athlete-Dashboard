@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 
 from ingestion.auth import strava_auth
-from ingestion.extractors.strava_exctractor import StravaExtractor
+from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
 
 
