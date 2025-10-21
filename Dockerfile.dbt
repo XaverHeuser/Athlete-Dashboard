@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Install dbt
+COPY requirements-dbt.txt .
+RUN pip install --no-cache-dir -r requirements-dbt.txt
+
+# Copy dbt project
+COPY dbt_athlete_dashboard/ ./dbt_athlete_dashboard/
+
+# Copy profiles.yml directly into /app/
+COPY dbt_athlete_dashboard/profiles.yml ./profiles.yml
+
+# Set environment vars (critical!)
+ENV DBT_PROFILES_DIR=/app
+ENV DBT_PROJECT_DIR=/app/dbt_athlete_dashboard
+
+# Default command
+CMD ["bash", "-c", "dbt debug && dbt deps && dbt run && dbt test"]
