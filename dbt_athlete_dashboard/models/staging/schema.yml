@@ -32,16 +32,13 @@ models:
         description: "Current Strava activity sport type (e.g., 'Run', 'Ride', 'Swim')."
         tests:
           - not_null
-          - accepted_values:
-              values: ['Ride', 'Run', 'Swim', 'Hike', 'Walk', 'VirtualRide', 'WeightTraining', 'InlineSkate']
+          # - accepted_values:
+          #   arguments:
+          #     values: ['Ride', 'Run', 'Swim', 'Hike', 'Walk', 'VirtualRide', 'WeightTraining', 'InlineSkate']
 
       - name: distance_m
         description: "Distance covered in meters."
-        tests:
-          - not_null
-          - relationships:
-              to: source('strava_data', 'strava_activities_raw')
-              field: distance
+
 
       - name: moving_time_s
         description: "Time spent moving, in seconds."

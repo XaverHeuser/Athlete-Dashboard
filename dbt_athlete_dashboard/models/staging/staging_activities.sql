@@ -4,8 +4,8 @@ WITH base AS (
     SELECT
         -- Core identifiers
         SAFE_CAST(id AS INT64) AS activity_id,
-        SAFE_CAST(athlete.id AS INT64) AS athlete_id,
-        SAFE_CAST(map.id AS STRING) AS map_id,
+        SAFE_CAST(athlete_id AS INT64) AS athlete_id,
+        SAFE_CAST(map_id AS STRING) AS map_id,
 
         -- Basic info
         name,
@@ -55,8 +55,8 @@ WITH base AS (
         SAFE_CAST(photo_count AS INT64) AS photo_count,
 
         -- Map info
-        map.summary_polyline AS map_polyline,
-        SAFE_CAST(map.resource_state AS INT64) AS map_resource_state,
+        map_summary_polyline AS map_polyline,
+        SAFE_CAST(map_resource_state AS INT64) AS map_resource_state,
 
         -- Upload
         SAFE_CAST(upload_id AS INT64) AS upload_id,
@@ -68,7 +68,7 @@ WITH base AS (
         CURRENT_TIMESTAMP() AS _staged_at
 
 
-    FROM {{ source('strava_data', 'strava_activities_raw') }}
+    FROM {{ source('strava_data', 'raw_activities') }}
 )
 
 SELECT * FROM base

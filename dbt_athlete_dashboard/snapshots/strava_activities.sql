@@ -10,6 +10,6 @@
 }}
 
 select *
-from {{ source('strava_data', 'strava_activities_raw') }}
+from {{ source('strava_data', 'raw_activities') }}
 
 {% endsnapshot %}
