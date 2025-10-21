@@ -29,10 +29,14 @@ class StravaActivity(BaseModel):
     sport_type: Optional[str] = None
     workout_type: Optional[float] = None
     id: int
+
+    # Time info
     start_date: Optional[str] = None
     start_date_local: Optional[str] = None
     timezone: Optional[str] = None
     utc_offset: Optional[float] = None
+
+    # Location
     location_city: Optional[str] = None
     location_state: Optional[str] = None
     location_country: Optional[str] = None
