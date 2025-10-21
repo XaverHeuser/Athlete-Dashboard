@@ -1,3 +1,9 @@
+# dbt build artifacts
+target/
+dbt_packages/
+logs/
+
+# Credentials
 credentials/
 
 # Byte-compiled / optimized / DLL files
