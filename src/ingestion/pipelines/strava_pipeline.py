@@ -8,24 +8,8 @@ import pandas as pd
 from ingestion.auth import strava_auth
 from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
+from models.strava_activity_model import StravaActivity
 
-
-def _preprocess_strava_data(data: list[dict[str, Any]]) -> pd.DataFrame:
-    """Flattens nested JSON and cleans column names for BigQuery compatibility."""
-    if not data:
-        return []
-
-    # Flatten columns from JSON
-    df_raw = pd.json_normalize(data)
-
-    # Clean column names
-    df_cleaned = df_raw.copy()
-    df_cleaned.columns = [
-        re.sub(r'[^a-zA-Z0-9_]', '_', col) for col in df_cleaned.columns
-    ]
-
-    print('Cleaned column names for BigQuery.')
-    return df_cleaned
 
 
 def run() -> None:
@@ -41,9 +25,10 @@ def run() -> None:
         print('No new activities found. Pipeline finished.')
         return
 
-    df_activities_to_load = _preprocess_strava_data(activities_data)
+    # Create dataframe from data
+    df_activities = pd.DataFrame([a.model_dump() for a in activities_data])
 
     loader = BigQueryLoader()
-    loader.load_data(data=df_activities_to_load)
+    loader.load_data(data=df_activities)
 
     print('Strava EL pipeline finished successfully.')
