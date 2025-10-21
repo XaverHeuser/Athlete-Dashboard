@@ -137,6 +137,11 @@ Having a rich *schema.yml* like yours:
 - Makes dbt aware of your semantic layer — what each field means and how it should behave
 
 
+## profiles.yml
+
+- *Wie verbinde ich mich mit BigQuery?*
+
+
 
 ## Snapshots
 
