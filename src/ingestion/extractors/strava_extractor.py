@@ -3,7 +3,7 @@
 from pydantic import ValidationError
 import requests
 
-from ingestion.extractors.base import BaseExtractor
+from ingestion.extractors.base import BaseExtractor # type: ignore
 from models.strava_activity_model import StravaActivity
 
 

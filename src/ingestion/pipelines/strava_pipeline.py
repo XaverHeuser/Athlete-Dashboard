@@ -9,7 +9,7 @@ from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
 
 
-def trigger_dbt_job():
+def trigger_dbt_job() -> None:
     project = 'athlete-dashboard-467718'
     region = 'europe-west1'
     job_name = 'dbt-job'
