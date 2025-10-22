@@ -3,7 +3,7 @@
 from pydantic import ValidationError
 import requests
 
-from ingestion.extractors.base import BaseExtractor # type: ignore
+from ingestion.extractors.base import BaseExtractor
 from models.strava_activity_model import StravaActivity
 
 
@@ -18,7 +18,7 @@ class StravaEndpoints:
         return f'{StravaEndpoints.BASE_URL}/athlete/activities'
 
 
-class StravaExtractor(BaseExtractor):
+class StravaExtractor(BaseExtractor[StravaActivity]):
     """Extracts and validates data from Strava API"""
 
     def __init__(self, access_token: str) -> None:
