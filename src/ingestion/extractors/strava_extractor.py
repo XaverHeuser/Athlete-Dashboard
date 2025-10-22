@@ -3,8 +3,8 @@
 from pydantic import ValidationError
 import requests
 
-from src.models.strava_activity_model import StravaActivity
-from src.ingestion.extractors.base import BaseExtractor
+from models.strava_activity_model import StravaActivity
+from ingestion.extractors.base import BaseExtractor
 
 
 class StravaEndpoints:
