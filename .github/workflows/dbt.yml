@@ -29,14 +29,16 @@ jobs:
       - name: Install dbt (BigQuery)
         run: |
           python -m pip install --upgrade pip
-          pip install dbt-bigquery==1.10.*  # adapter version shown in your logs
+          # Pin to a stable series (adjust to 1.11.* if you want 1.11 GA)
+          pip install "dbt-bigquery==1.10.*"
 
       - name: Configure dbt profile
         env:
           GCP_KEYFILE_JSON: ${{ secrets.GCP_KEYFILE_JSON }}
         run: |
-          echo "$GCP_KEYFILE_JSON" > keyfile.json
           mkdir -p ~/.dbt
+          # Store keyfile in ~/.dbt for a stable absolute path
+          echo "$GCP_KEYFILE_JSON" > ~/.dbt/keyfile.json
           cat > ~/.dbt/profiles.yml << 'YAML'
           dbt_athlete_dashboard:
             target: ci
@@ -46,13 +48,19 @@ jobs:
                 method: service-account
                 project: athlete-dashboard-467718
                 dataset: strava_data
-                keyfile: keyfile.json
+                keyfile: /home/runner/.dbt/keyfile.json
                 location: europe-west1
                 threads: 4
           YAML
 
-      - name: Run dbt deps (if using packages)
-        run: dbt deps
+      - name: Install packages (dbt deps)
+        # Only run if packages.yml exists in the project directory
+        run: |
+          if [ -f ./dbt_athlete_dashboard/packages.yml ]; then
+            dbt deps --profiles-dir ~/.dbt --project-dir ./dbt_athlete_dashboard
+          else
+            echo "No packages.yml found in ./dbt_athlete_dashboard; skipping dbt deps."
+          fi
 
       - name: Build models
         run: dbt run --profiles-dir ~/.dbt --project-dir ./dbt_athlete_dashboard
