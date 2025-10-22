@@ -3,8 +3,8 @@
 from pydantic import ValidationError
 import requests
 
-from models.strava_activity_model import StravaActivity
 from ingestion.extractors.base import BaseExtractor
+from models.strava_activity_model import StravaActivity
 
 
 class StravaEndpoints:
@@ -53,5 +53,7 @@ class StravaExtractor(BaseExtractor):
 
             page += 1
 
-        print(f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.')
+        print(
+            f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.'
+        )
         return all_activities

@@ -1,7 +1,8 @@
 """Defines the Pydantic model for Strava activities."""
 
+from typing import Any, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Any
 
 
 class StravaAthlete(BaseModel):
@@ -62,7 +63,7 @@ class StravaActivity(BaseModel):
     gear_id: Optional[str] = None
     start_latlng: Optional[Any] = None
     end_latlng: Optional[Any] = None
-    
+
     # Nested objects
     athlete: Optional[StravaAthlete] = None
     map: Optional[StravaMap] = None
@@ -93,5 +94,5 @@ class StravaActivity(BaseModel):
     total_photo_count: Optional[int] = None
 
     class Config:
-        extra = "ignore"  # Ignore unexpected fields (Strava adds new ones often)
+        extra = 'ignore'  # Ignore unexpected fields (Strava adds new ones often)
         populate_by_name = True  # Allow alias mapping to nested fields

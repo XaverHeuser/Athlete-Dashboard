@@ -1,29 +1,29 @@
 """This module orchestrates the entire EL process for Strava."""
 
+from google.auth import default
+from google.auth.transport.requests import AuthorizedSession
 import pandas as pd
 
 from ingestion.auth import strava_auth
 from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
 
-from google.auth import default
-from google.auth.transport.requests import AuthorizedSession
 
 def trigger_dbt_job():
-    project = "athlete-dashboard-467718"
-    region = "europe-west1"
-    job_name = "dbt-job"
+    project = 'athlete-dashboard-467718'
+    region = 'europe-west1'
+    job_name = 'dbt-job'
 
-    url = f"https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{job_name}:run"
+    url = f'https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{job_name}:run'
 
-    creds, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    creds, _ = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
     authed_session = AuthorizedSession(creds)
     response = authed_session.post(url)
 
     if response.status_code == 200:
-        print("✅ Successfully triggered dbt-job")
+        print('Successfully triggered dbt-job')
     else:
-        print(f"❌ Failed to trigger dbt-job: {response.status_code} - {response.text}")
+        print(f'Failed to trigger dbt-job: {response.status_code} - {response.text}')
 
 
 def run() -> None:
@@ -45,7 +45,7 @@ def run() -> None:
 
     try:
         loader.load_data(data=df_activities)
-        print('✅ Load successful. Triggering dbt-job...')
+        print('Load successful. Triggering dbt-job...')
         trigger_dbt_job()
     except Exception as e:
-        print(f"❌ Load failed. dbt-job not triggered. Error: {e}")
+        print(f'Load failed. dbt-job not triggered. Error: {e}')
