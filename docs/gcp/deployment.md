@@ -155,7 +155,11 @@ gcloud builds submit \
 gcloud run jobs update JOB-NAME \
   --image REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER_PACKAGE-NAME:latest \
   --region REGION
+
+gcloud run jobs execute JOB-NAME --region REGION
 ```
+
+
 
 ## 10. Schedule the Job
 
