@@ -79,6 +79,20 @@ gcloud builds submit \
   --tag REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-JOB-NAME:latest
 ```
 
+### Build and Push with different Dockerfile
+
+```bash
+docker build -f Dockerfile.dbt -t europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest .
+```
+
+```bash
+docker push europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest 
+```
+
+```bash
+gcloud run jobs update dbt-job --image=europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest --region=europe-west1 
+```
+
 This:
 - Builds your Docker image using your local Dockerfile
 - Pushes it to Google Artifact Registry
@@ -158,7 +172,6 @@ gcloud run jobs update JOB-NAME \
 
 gcloud run jobs execute JOB-NAME --region REGION
 ```
-
 
 
 ## 10. Schedule the Job
