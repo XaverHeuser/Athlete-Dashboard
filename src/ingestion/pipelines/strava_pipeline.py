@@ -1,8 +1,7 @@
 """This module orchestrates the entire EL process for Strava."""
 
-import re
-from typing import Any
-
+from google.auth import default
+from google.auth.transport.requests import AuthorizedSession
 import pandas as pd
 
 from ingestion.auth import strava_auth
@@ -10,22 +9,21 @@ from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
 
 
-def _preprocess_strava_data(data: list[dict[str, Any]]) -> pd.DataFrame:
-    """Flattens nested JSON and cleans column names for BigQuery compatibility."""
-    if not data:
-        return []
+def trigger_dbt_job() -> None:
+    project = 'athlete-dashboard-467718'
+    region = 'europe-west1'
+    job_name = 'dbt-job'
 
-    # Flatten columns from JSON
-    df_raw = pd.json_normalize(data)
+    url = f'https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{job_name}:run'
 
-    # Clean column names
-    df_cleaned = df_raw.copy()
-    df_cleaned.columns = [
-        re.sub(r'[^a-zA-Z0-9_]', '_', col) for col in df_cleaned.columns
-    ]
+    creds, _ = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+    authed_session = AuthorizedSession(creds)
+    response = authed_session.post(url)
 
-    print('Cleaned column names for BigQuery.')
-    return df_cleaned
+    if response.status_code == 200:
+        print('Successfully triggered dbt-job')
+    else:
+        print(f'Failed to trigger dbt-job: {response.status_code} - {response.text}')
 
 
 def run() -> None:
@@ -33,7 +31,6 @@ def run() -> None:
     print('Starting Strava EL pipeline...')
 
     access_token = strava_auth.get_access_token()
-
     client = StravaExtractor(access_token=access_token)
     activities_data = client.fetch_all_activities()
 
@@ -41,9 +38,14 @@ def run() -> None:
         print('No new activities found. Pipeline finished.')
         return
 
-    df_activities_to_load = _preprocess_strava_data(activities_data)
+    # Create dataframe from data
+    df_activities = pd.DataFrame([a.model_dump() for a in activities_data])
 
     loader = BigQueryLoader()
-    loader.load_data(data=df_activities_to_load)
 
-    print('Strava EL pipeline finished successfully.')
+    try:
+        loader.load_data(data=df_activities)
+        print('Load successful. Triggering dbt-job...')
+        trigger_dbt_job()
+    except Exception as e:
+        print(f'Load failed. dbt-job not triggered. Error: {e}')

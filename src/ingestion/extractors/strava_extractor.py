@@ -1,10 +1,10 @@
 """This module contains the extractor for interacting with the Strava API."""
 
-from typing import Any
-
+from pydantic import ValidationError
 import requests
 
-from src.ingestion.extractors.base import BaseExtractor
+from ingestion.extractors.base import BaseExtractor
+from models.strava_activity_model import StravaActivity
 
 
 class StravaEndpoints:
@@ -19,17 +19,17 @@ class StravaEndpoints:
 
 
 class StravaExtractor(BaseExtractor):
-    """Extracts data from Strava API"""
+    """Extracts and validates data from Strava API"""
 
     def __init__(self, access_token: str) -> None:
         self.headers = {'Authorization': f'Bearer {access_token}'}
 
-    def fetch_all_activities(self) -> list[dict[str, Any]]:
+    def fetch_all_activities(self) -> list[StravaActivity]:
         """Fetches all activities."""
         print('Start fetching all activities.')
 
         activities_url = StravaEndpoints.get_activities()
-        all_activities: list[dict[str, Any]] = []
+        all_activities: list[StravaActivity] = []
         page = 1
 
         while True:
@@ -42,8 +42,18 @@ class StravaExtractor(BaseExtractor):
             data = response.json()
             if not data:
                 break
-            all_activities.extend(data)
+
+            invalid_count = 0
+            for item in data:
+                try:
+                    all_activities.append(StravaActivity(**item))
+                except ValidationError as e:
+                    invalid_count += 1
+                    print(f'Validation error: {e.errors()}')
+
             page += 1
 
-        print(f'All activities fetched. Found {len(all_activities)} activities.')
+        print(
+            f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.'
+        )
         return all_activities

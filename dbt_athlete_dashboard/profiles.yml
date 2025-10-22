@@ -1,0 +1,10 @@
+dbt_athlete_dashboard:
+  target: prod
+  outputs:
+    prod:
+      type: bigquery
+      method: oauth
+      project: athlete-dashboard-467718
+      dataset: strava_data
+      location: europe-west1
+      threads: 4
