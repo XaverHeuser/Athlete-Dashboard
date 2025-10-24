@@ -37,8 +37,9 @@ with col1:
 
 with col2:
     st.markdown(f"""
-    ### {athlete['firstname']} {athlete['lastname']}  (*{athlete['username']}*)
+    ### {athlete['firstname']} {athlete['lastname']}  
     {athlete['bio']}  
+    **Username:** {athlete['username']}  
     **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
     **Gender:** {athlete['sex']}  
     """)
