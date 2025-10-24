@@ -5,5 +5,7 @@ sources:
     database: athlete-dashboard-467718     # your GCP project ID
     schema: strava_data                    # dataset name in BigQuery
     tables:
-      - name: raw_activities        # exact table name
-        description: "Raw Strava activities data from BigQuery"
+      - name: raw_activities
+        description: "Raw Strava activities data."
+      - name: raw_athlete_info
+        description: "Strava athlete profile information."

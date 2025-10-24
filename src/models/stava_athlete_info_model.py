@@ -26,5 +26,5 @@ class StravaAthleteInfo(BaseModel):
     weight: Optional[float] = None
     profile_medium: Optional[str] = None
     profile: Optional[str] = None
-    friend: Optional[str] = None
-    follower: Optional[str] = None
+    friend: Optional[int] = None
+    follower: Optional[int] = None
