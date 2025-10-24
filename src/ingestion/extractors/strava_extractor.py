@@ -3,9 +3,9 @@
 from pydantic import ValidationError
 import requests
 
-from src.ingestion.extractors.base import BaseExtractor
-from src.models.stava_athlete_info_model import StravaAthleteInfo
-from src.models.strava_activity_model import StravaActivity
+from ingestion.extractors.base import BaseExtractor
+from models.stava_athlete_info_model import StravaAthleteInfo
+from models.strava_activity_model import StravaActivity
 
 
 class StravaEndpoints:
