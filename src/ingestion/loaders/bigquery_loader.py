@@ -13,33 +13,36 @@ class BigQueryLoader(BaseLoader):
 
     def __init__(self) -> None:
         """Initializes the BigQueryLoader."""
-        GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
-        DATASET = os.environ.get('BIGQUERY_DATASET')
-        TABLE_RAW = os.environ.get('BIGQUERY_TABLE_ACTIVITIES_RAW')
+        self.project_id = os.environ.get('GCP_PROJECT_ID')
+        self.client = bigquery.Client(project=self.project_id)
 
-        self.client = bigquery.Client(
-            project=GCP_PROJECT_ID,
-        )
-
-        self.table_id = f'{GCP_PROJECT_ID}.{DATASET}.{TABLE_RAW}'
-
-        self.job_config = bigquery.LoadJobConfig(
-            write_disposition='WRITE_TRUNCATE',
-            create_disposition='CREATE_IF_NEEDED',
-            autodetect=True,
-        )
-
-    def load_data(self, data: pd.DataFrame) -> None:
+    def load_data(
+        self,
+        data: pd.DataFrame,
+        dataset: str,
+        table_name: str,
+        write_disposition: str = 'WRITE_APPEND',
+        autodetect: bool = True,
+    ) -> None:
+        """Loads data into the specified BigQuery table."""
         if data.empty:
-            print('No data provided to load. Skipping.')
+            print(f'No data provided for table {table_name}. Skipping.')
             return
 
-        print(f'Loading {len(data)} records into BigQuery table: {self.table_id}...')
+        table_id = f'{self.project_id}.{dataset}.{table_name}'
+        print(f'Loading {len(data)} records into {table_id}...')
 
-        # Start the load job
-        job = self.client.load_table_from_dataframe(
-            data, self.table_id, job_config=self.job_config
+        job_config = bigquery.LoadJobConfig(
+            write_disposition=write_disposition,
+            create_disposition='CREATE_IF_NEEDED',
+            autodetect=autodetect,
         )
 
-        job.result()  # Wait for the job to complete
-        print(f'Successfully loaded data into {self.table_id}.')
+        try:
+            job = self.client.load_table_from_dataframe(
+                data, table_id, job_config=job_config
+            )
+            job.result()
+        except Exception as e:
+            print(f'Failed to load data into {table_id}: {e}')
+            raise

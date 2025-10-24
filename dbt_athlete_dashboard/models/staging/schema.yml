@@ -1,8 +1,7 @@
 version: 2
 
 models:
-  - name: staging_activities
-    description: "{{ doc('staging_activities__doc') }}"
+  - name: stg_activities
     columns:
       # Core identifiers
       - name: activity_id
@@ -131,3 +130,66 @@ models:
         description: "Resource state flag from Strava API."
       - name: _staged_at
         description: "Timestamp when data was staged by dbt."
+
+  - name: stg_athlete_info
+    description: >
+      Cleaned and typed staging model for Strava athlete information.
+
+    columns:
+      - name: athlete_id
+        description: "Unique identifier for the athlete."
+        tests:
+          - not_null
+          - unique
+
+      - name: username
+        description: "The athlete's Strava username (may be null if user hides it)."
+      - name: first_name
+        description: "The athlete's first name."
+      - name: last_name
+        description: "The athlete's last name."
+      - name: bio
+        description: "Short biography or about section from the athlete's Strava profile."
+      - name: city
+        description: "City the athlete is located in."
+      - name: state
+        description: "State or region of the athlete."
+      - name: country
+        description: "Country of the athlete."
+      - name: sex
+        description: "The athlete's gender as provided by Strava (e.g., 'M', 'F', or null)."
+        tests:
+          - accepted_values:
+              values: ['M', 'F']
+
+      - name: has_premium
+        description: "Boolean flag indicating if the athlete has a Strava Premium account."
+      - name: has_summit
+        description: "Boolean flag indicating if the athlete has a Summit membership."
+
+      - name: badge_type_id
+        description: "Strava badge type identifier for visual rank or level (nullable)."
+      - name: weight_kg
+        description: "Weight of the athlete in kilograms."
+      - name: profile_medium
+        description: "URL to the athlete's medium-sized profile image."
+      - name: profile
+        description: "URL to the athlete's full-size profile image."
+      - name: friend
+        description: "Friend relationship status relative to the authenticated user."
+      - name: follower
+        description: "Follower relationship status relative to the authenticated user."
+
+      - name: created_at
+        description: "Timestamp when the athlete account was created on Strava."
+        tests:
+          - not_null
+      - name: updated_at
+        description: "Timestamp when the athlete record was last updated."
+        tests:
+          - not_null
+
+      - name: resource_state
+        description: "Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed)."
+      - name: _staged_at
+        description: "Timestamp when this record was staged (dbt load timestamp)."

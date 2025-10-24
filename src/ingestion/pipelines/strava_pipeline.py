@@ -1,5 +1,7 @@
 """This module orchestrates the entire EL process for Strava."""
 
+import os
+
 from google.auth import default
 from google.auth.transport.requests import AuthorizedSession
 import pandas as pd
@@ -30,22 +32,39 @@ def run() -> None:
     """Executes the full Strava Extract and Load pipeline."""
     print('Starting Strava EL pipeline...')
 
+    # Authenticate
     access_token = strava_auth.get_access_token()
     client = StravaExtractor(access_token=access_token)
+
+    # Extract athlete info
+    print('Fetching athlete information...')
+    athlete_info = client.fetch_athlete_info()
+    df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
+
+    # Extract activities
     activities_data = client.fetch_all_activities()
-
-    if not activities_data:
-        print('No new activities found. Pipeline finished.')
-        return
-
-    # Create dataframe from data
     df_activities = pd.DataFrame([a.model_dump() for a in activities_data])
 
+    # Initialize BigQuery loader and load data
     loader = BigQueryLoader()
-
     try:
-        loader.load_data(data=df_activities)
-        print('Load successful. Triggering dbt-job...')
+        if not df_athlete_info.empty:
+            loader.load_data(
+                data=df_athlete_info,
+                dataset=os.environ.get('BIGQUERY_DATASET'),
+                table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_INFO'),
+                write_disposition='WRITE_TRUNCATE',
+            )
+
+        if not df_activities.empty:
+            loader.load_data(
+                data=df_activities,
+                dataset=os.environ.get('BIGQUERY_DATASET'),
+                table_name=os.environ.get('BIGQUERY_RAW_ACTIVITIES'),
+                write_disposition='WRITE_TRUNCATE',
+            )
+
+        print('Triggering dbt-job...')
         trigger_dbt_job()
     except Exception as e:
         print(f'Load failed. dbt-job not triggered. Error: {e}')

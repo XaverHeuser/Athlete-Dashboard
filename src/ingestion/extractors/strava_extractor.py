@@ -4,6 +4,7 @@ from pydantic import ValidationError
 import requests
 
 from ingestion.extractors.base import BaseExtractor
+from models.stava_athlete_info_model import StravaAthleteInfo
 from models.strava_activity_model import StravaActivity
 
 
@@ -11,6 +12,11 @@ class StravaEndpoints:
     """A helper class as a central Strava API URL management."""
 
     BASE_URL = 'https://www.strava.com/api/v3'
+
+    @staticmethod
+    def get_athlete() -> str:
+        """URL to fetch athlete information."""
+        return f'{StravaEndpoints.BASE_URL}/athlete'
 
     @staticmethod
     def get_activities() -> str:
@@ -23,6 +29,25 @@ class StravaExtractor(BaseExtractor):
 
     def __init__(self, access_token: str) -> None:
         self.headers = {'Authorization': f'Bearer {access_token}'}
+
+    def fetch_athlete_info(self) -> StravaAthleteInfo:
+        """Fetches athlete information."""
+        athlete_url = StravaEndpoints.get_athlete()
+        try:
+            response = requests.get(athlete_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            athlete_info = StravaAthleteInfo(**data)
+        except requests.RequestException as e:
+            print(f'HTTP error occurred: {e}')
+            raise
+        except ValidationError as e:
+            print(f'Validation error: {e.errors()}')
+            raise
+        except Exception as e:
+            print(f'An unexpected error occurred: {e}')
+            raise
+        return athlete_info
 
     def fetch_all_activities(self) -> list[StravaActivity]:
         """Fetches all activities."""
