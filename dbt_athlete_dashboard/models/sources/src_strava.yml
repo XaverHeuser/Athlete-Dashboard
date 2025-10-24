@@ -9,3 +9,5 @@ sources:
         description: "Raw Strava activities data."
       - name: raw_athlete_info
         description: "Strava athlete profile information."
+      - name: dim_athlete_info
+        description: "Dimension table for Strava athlete information."
