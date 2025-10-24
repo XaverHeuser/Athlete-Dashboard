@@ -4,6 +4,7 @@ SELECT
     athlete_id,
     INITCAP(firstname) AS firstname,
     INITCAP(lastname) AS lastname,
+    username,
     COALESCE(bio, '') AS bio,
     COALESCE(city, 'Unknown') AS city,
     COALESCE(state, 'Unknown') AS state,
