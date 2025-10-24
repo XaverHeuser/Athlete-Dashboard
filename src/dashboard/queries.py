@@ -17,11 +17,11 @@ except Exception:
 
 
 @st.cache_data  # type: ignore[misc]
-def load_raw_data() -> pd.DataFrame:
+def load_athlete_data() -> pd.DataFrame:
     """Queries the BigQuery table and returns the data as a Pandas DataFrame."""
     # Define your BigQuery SQL query
     query = """
-        SELECT * FROM `athlete-dashboard-467718.strava_data.strava_activities_raw`
+        SELECT * FROM `athlete-dashboard-467718.strava_marts.dim_athlete`
     """
     print('Running BigQuery query...')
     # Run the query and convert the result to a Pandas DataFrame
