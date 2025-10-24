@@ -2,15 +2,15 @@
 
 from typing import Optional
 
-from pydantic import BaseModel # type: ignore
+from pydantic import BaseModel
 
 
 class StravaAthleteInfo(BaseModel):
     """Pydantic model for Strava athlete information returned by the Strava API."""
 
-    id: int
+    id: int = 0
     username: Optional[str] = None
-    resource_state: int
+    resource_state: int = 0
     firstname: Optional[str] = None
     lastname: Optional[str] = None
     bio: Optional[str] = None
@@ -18,10 +18,10 @@ class StravaAthleteInfo(BaseModel):
     state: Optional[str] = None
     country: Optional[str] = None
     sex: Optional[str] = None
-    premium: bool
-    summit: bool
-    created_at: str
-    updated_at: str
+    premium: bool = False
+    summit: bool = False
+    created_at: str = ''
+    updated_at: str = ''
     badge_type_id: Optional[int] = None
     weight: Optional[float] = None
     profile_medium: Optional[str] = None
