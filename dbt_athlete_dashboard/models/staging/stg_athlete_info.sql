@@ -6,8 +6,8 @@ with base AS (
         SAFE_CAST(id AS INT64) AS athlete_id,
 
         SAFE_CAST(username AS STRING) AS username,
-        SAFE_CAST(first_name AS STRING) AS first_name,
-        SAFE_CAST(last_name AS STRING) AS last_name,
+        SAFE_CAST(firstname AS STRING) AS firstname,
+        SAFE_CAST(lastname AS STRING) AS lastname,
         SAFE_CAST(bio AS STRING) AS bio,
         SAFE_CAST(city AS STRING) AS city,
         SAFE_CAST(state AS STRING) AS state,
