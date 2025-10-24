@@ -24,7 +24,7 @@ with base AS (
 
         -- Timestamps
         TIMESTAMP(created_at) AS created_at,
-        TIMESTAMP(updated_at) AS updated_at
+        TIMESTAMP(updated_at) AS updated_at,
 
         -- Metadata
         SAFE_CAST(resource_state AS INT64) AS resource_state,
