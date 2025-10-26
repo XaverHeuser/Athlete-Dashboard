@@ -81,19 +81,12 @@ gcloud builds submit \
 
 ### Build and Push with different Dockerfile
 
-```bash
-docker build -f Dockerfile.dbt -t europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest .
-```
-
-```bash
-docker push europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest 
-```
-
-```bash
-gcloud run jobs update dbt-job --image=europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest --region=europe-west1 
+````bash
+gcloud builds submit --config cloudbuild.yaml .
 ```
 
 This:
+
 - Builds your Docker image using your local Dockerfile
 - Pushes it to Google Artifact Registry
 
@@ -101,7 +94,7 @@ This:
 
 ## 6. Grant Permissions (One-Time Setup)
 
-**Grant Cloud Build and Compute Engine access to Storage & Artifact Registry**
+Grant Cloud Build and Compute Engine access to Storage & Artifact Registry
 
 ```bash
 gcloud projects add-iam-policy-binding PROJECT_ID \
@@ -115,7 +108,8 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
   --condition=None
 ```
 
-**Grant BigQuery permissions for the job runtime**
+Grant BigQuery permissions for the job runtime
+
 ```bash
 gcloud projects add-iam-policy-binding PROJECT_ID \
   --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
@@ -127,7 +121,8 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
   --role="roles/bigquery.dataEditor" \
   --condition=None
 ```
-*(These enable the job to load data into BigQuery.)*
+
+(These enable the job to load data into BigQuery.)
 
 ## 7. Deploy the Cloud Run Job
 
@@ -172,7 +167,6 @@ gcloud run jobs update JOB-NAME \
 
 gcloud run jobs execute JOB-NAME --region REGION
 ```
-
 
 ## 10. Schedule the Job
 

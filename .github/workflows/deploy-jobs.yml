@@ -1,0 +1,79 @@
+name: Build and Deploy Cloud Run Jobs
+
+on:
+    push:
+        branches:
+            - main
+
+env:
+    PROJECT_ID: athlete-dashboard-467718
+    REGION: europe-west1
+    AR_REPO: athlete-dashboard
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                target:
+                    - dockerfile: Dockerfile.dbt
+                      image_name: dbt-job
+                      job_name: dbt-job
+                      context: .
+                    - dockerfile: Dockerfile
+                      image_name: athlete-dashboard-job
+                      job_name: athlete-dashboard-job
+                      context: .
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Auth to Google Cloud (OIDC)
+              uses: google-github-actions/auth@v2
+              with:
+                workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+                service_account: ${{ secrets.DEPLOYER_SA }}
+
+            - name: Setup gcloud
+              uses: google-github-actions/setup-gcloud@v2
+
+            - name: Configure Docker for Artifact Registry
+              run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+            
+            - name: Build image
+              run: |
+                IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ matrix.target.image_name }}"
+                docker build \
+                    -f "${{ matrix.target.dockerfile }}" \
+                    -t "${IMAGE}:latest" \
+                    -t "${IMAGE}:${{ github.sha }}" \
+                    "${{ matrix.target.context }}"
+
+            - name: Push images
+              run: |
+                IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ matrix.target.image_name }}"
+                docker push "${IMAGE}:${{ github.sha }}"
+                docker push "${IMAGE}:latest"
+
+            - name: Update (or create) Cloud Run Job
+              shell: bash
+              run: |
+                set -euo pipefail
+                IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ matrix.target.image_name }}:latest"
+                JOB="${{ matrix.target.job_name }}"
+                if gcloud run jobs describe "$JOB" --region="${{ env.REGION }}" --project="${{ env.PROJECT_ID }}" >/dev/null 2>&1; then
+                    gcloud run jobs update "$JOB" \
+                    --image="$IMAGE" \
+                    --region="${{ env.REGION }}" \
+                    --project="${{ env.PROJECT_ID }}"
+                else
+                    gcloud run jobs create "$JOB" \
+                    --image="$IMAGE" \
+                    --region="${{ env.REGION }}" \
+                    --project="${{ env.PROJECT_ID }}"
+                fi
