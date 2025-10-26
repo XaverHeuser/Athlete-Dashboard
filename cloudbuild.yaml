@@ -1,0 +1,8 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build",
+           "-t", "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest",
+           "-f", "Dockerfile.dbt",
+           "."]
+images:
+  - "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest"
