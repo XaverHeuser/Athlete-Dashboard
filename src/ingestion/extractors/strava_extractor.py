@@ -67,6 +67,7 @@ class StravaExtractor(BaseExtractor):
             response = requests.get(stats_url, headers=self.headers, timeout=10)
             response.raise_for_status()
             data = response.json()
+            data["athlete_id"] = int(athlete_id)
             athlete_stats = StravaAthleteStats(**data)
         except requests.RequestException as e:
             print(f'HTTP error occurred: {e}')

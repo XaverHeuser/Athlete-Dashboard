@@ -25,6 +25,7 @@ class StravaAthleteStatsYearToDateTotals(BaseModel):
     elevation_gain: float
 
 class StravaAthleteStats(BaseModel):
+    athlete_id: int
     biggest_ride_distance: float
     biggest_climb_elevation_gain: float
 
