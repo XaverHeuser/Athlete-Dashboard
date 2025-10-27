@@ -43,4 +43,6 @@ class StravaAthleteStats(BaseModel):
     ytd_ride_totals: StravaAthleteStatsYearToDateTotals
     ytd_run_totals: StravaAthleteStatsYearToDateTotals
     ytd_swim_totals: StravaAthleteStatsYearToDateTotals
+
+    fetched_at: str  # ISO formatted timestamp when the data was fetched
     

@@ -4,6 +4,7 @@ with base as (
     select
         -- Identifiers (may exist in your raw table; keep if present)
         SAFE_CAST(athlete_id AS INT64) AS athlete_id,
+        timestamp(fetched_at) as fetched_at,
 
         -- Top-level stats (meters)
         SAFE_CAST(biggest_ride_distance AS FLOAT64) AS biggest_ride_distance_m,
