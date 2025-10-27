@@ -1,29 +1,49 @@
-"""This module includes queries from bigquery for streamlit."""
+"""Central module for loading data from BigQuery for the Streamlit dashboard."""
 
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import pandas as pd
 import streamlit as st
 
+# --- BigQuery client setup ---
 try:
     creds = service_account.Credentials.from_service_account_info(
-        st.secrets['gcp_service_account']
+        st.secrets["gcp_service_account"]
     )
     client = bigquery.Client(credentials=creds, project=creds.project_id)
 except Exception:
-    # Fallback for local development
-    # GOOGLE_APPLICATION_CREDENTIALS environment variable must be set
+    # Local dev fallback: GOOGLE_APPLICATION_CREDENTIALS must be set
     client = bigquery.Client()
 
 
-@st.cache_data  # type: ignore[misc]
+# ---------- Queries ----------
+
+@st.cache_data(show_spinner=False)
 def load_athlete_data() -> pd.DataFrame:
-    """Queries the BigQuery table and returns the data as a Pandas DataFrame."""
-    # Define your BigQuery SQL query
+    """Load athlete metadata (one row per athlete)."""
     query = """
-        SELECT * FROM `athlete-dashboard-467718.strava_marts.dim_athlete`
+        SELECT *
+        FROM `athlete-dashboard-467718.strava_marts.dim_athlete_info`
     """
-    print('Running BigQuery query...')
-    # Run the query and convert the result to a Pandas DataFrame
-    df = client.query(query).to_dataframe()
-    return df
+    return client.query(query).to_dataframe()
+
+
+@st.cache_data(show_spinner=False)
+def load_latest_stats() -> pd.DataFrame:
+    """Load the latest athlete statistics snapshot (one row per athlete)."""
+    query = """
+        SELECT *
+        FROM `athlete-dashboard-467718.strava_marts.fct_athlete_stats_latest`
+    """
+    return client.query(query).to_dataframe()
+
+
+@st.cache_data(show_spinner=False)
+def load_stats_history() -> pd.DataFrame:
+    """Load all historical athlete statistics snapshots."""
+    query = """
+        SELECT *
+        FROM `athlete-dashboard-467718.strava_marts.fct_athlete_stats_snapshot`
+        ORDER BY snapshot_date
+    """
+    return client.query(query).to_dataframe()
