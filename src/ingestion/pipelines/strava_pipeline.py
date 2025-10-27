@@ -37,9 +37,12 @@ def run() -> None:
     client = StravaExtractor(access_token=access_token)
 
     # Extract athlete info
-    print('Fetching athlete information...')
     athlete_info = client.fetch_athlete_info()
     df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
+
+    # Extract athlete stats
+    athlete_stats = client.fetch_athlete_stats(athlete_id=str(athlete_info.id))
+    df_athlete_stats = pd.DataFrame([athlete_stats.model_dump()])
 
     # Extract activities
     activities_data = client.fetch_all_activities()
@@ -53,6 +56,14 @@ def run() -> None:
                 data=df_athlete_info,
                 dataset=os.environ.get('BIGQUERY_DATASET'),
                 table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_INFO'),
+                write_disposition='WRITE_TRUNCATE',
+            )
+
+        if not df_athlete_stats.empty:
+            loader.load_data(
+                data=df_athlete_stats,
+                dataset=os.environ.get('BIGQUERY_DATASET'),
+                table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_STATS'),
                 write_disposition='WRITE_TRUNCATE',
             )
 

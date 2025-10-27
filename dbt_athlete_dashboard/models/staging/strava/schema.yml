@@ -193,3 +193,65 @@ models:
         description: "Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed)."
       - name: _staged_at
         description: "Timestamp when this record was staged (dbt load timestamp)."
+
+  - name: stg_athlete_stats
+    description: >
+      Cleaned and typed staging model for Strava athlete statistics.
+    
+    columns:
+      - name: athlete_id
+        description: "Unique identifier for the athlete."
+        tests:
+          - not_null
+          - unique
+
+      - name: biggest_ride_distance_m
+        description: "Longest single ride distance in meters."
+
+      - name: biggest_climb_elevation_m
+        description: "Greatest single climb elevation gain in meters."
+
+      - name: recent_ride_totals_distance_m
+        description: "Total distance of rides in the recent period (meters)."
+
+      - name: recent_ride_totals_moving_time_s
+        description: "Total moving time of rides in the recent period (seconds)."
+
+      - name: recent_ride_totals_elevation_gain_m
+        description: "Total elevation gain of rides in the recent period (meters)."
+
+      - name: recent_run_totals_distance_m
+        description: "Total distance of runs in the recent period (meters)."
+
+      - name: recent_run_totals_moving_time_s
+        description: "Total moving time of runs in the recent period (seconds)."
+
+      - name: recent_run_totals_elevation_gain_m
+        description: "Total elevation gain of runs in the recent period (meters)."
+
+      - name: recent_swim_totals_distance_m
+        description: "Total distance of swims in the recent period (meters)."
+
+      - name: recent_swim_totals_moving_time_s
+        description: "Total moving time of swims in the recent period (seconds)."
+
+      - name: recent_swim_totals_elevation_gain_m
+        description: "Total elevation gain of swims in the recent period (meters)."
+
+      - name: all_ride_totals_distance_m
+        description: "All-time total distance of rides (meters)."
+
+      - name: all_ride_totals_moving_time_s
+        description: "All-time total moving time of rides (seconds)."
+
+      - name: all_ride_totals_elevation_gain_m
+        description: "All-time total elevation gain of rides (meters)."
+
+      - name: all_run_totals_distance_m
+        description: "All-time total distance of runs (meters)."
+
+      - name: all_run_totals_moving_time_s
+        description: "All-time total moving time of runs (seconds)."
+
+      - name: all_run_totals_elevation_gain_m
+        description: "All-time total elevation gain of runs (meters)."
