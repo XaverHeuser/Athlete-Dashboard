@@ -47,3 +47,14 @@ models:
 
       - name: mart_loaded_at
         description: "Timestamp when this record was last loaded into the mart layer."
+
+  - name: fct_athlete_stats_snapshot
+    columns:
+      - name: athlete_id
+        tests:
+          - not_null
+
+  - name: fct_athlete_stats_latest
+    tests:
+      - unique:
+          column_name: athlete_id
