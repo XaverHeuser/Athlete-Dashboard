@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 
+
 class StravaAthleteStatsRecentTotals(BaseModel):
     count: int
     distance: float
@@ -10,6 +11,7 @@ class StravaAthleteStatsRecentTotals(BaseModel):
     elevation_gain: float
     achievement_count: int
 
+
 class StravaAthleteStatsAllTotals(BaseModel):
     count: int
     distance: float
@@ -17,12 +19,14 @@ class StravaAthleteStatsAllTotals(BaseModel):
     elapsed_time: int
     elevation_gain: float
 
+
 class StravaAthleteStatsYearToDateTotals(BaseModel):
     count: int
     distance: float
     moving_time: float
     elapsed_time: float
     elevation_gain: float
+
 
 class StravaAthleteStats(BaseModel):
     athlete_id: int
@@ -45,4 +49,3 @@ class StravaAthleteStats(BaseModel):
     ytd_swim_totals: StravaAthleteStatsYearToDateTotals
 
     fetched_at: str  # ISO formatted timestamp when the data was fetched
-    

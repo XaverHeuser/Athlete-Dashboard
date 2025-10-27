@@ -1,13 +1,14 @@
 """This module contains the extractor for interacting with the Strava API."""
 
-from pydantic import ValidationError
-import requests
 from datetime import datetime, timezone
 
+from pydantic import ValidationError
+import requests
+
 from ingestion.extractors.base import BaseExtractor
+from models.strava_activity_model import StravaActivity
 from models.strava_athlete_info_model import StravaAthleteInfo
 from models.strava_athlete_stats_model import StravaAthleteStats
-from models.strava_activity_model import StravaActivity
 
 
 class StravaEndpoints:
@@ -39,7 +40,7 @@ class StravaExtractor(BaseExtractor):
 
     def fetch_athlete_info(self) -> StravaAthleteInfo:
         """Fetches athlete information."""
-        print(f'Start fetching athlete information.')
+        print('Start fetching athlete information.')
         athlete_url = StravaEndpoints.get_athlete()
 
         try:
@@ -58,9 +59,8 @@ class StravaExtractor(BaseExtractor):
             raise
         return athlete_info
 
-    
     def fetch_athlete_stats(self, athlete_id: str) -> StravaAthleteStats:
-        """Fetches athlete statistics.""" 
+        """Fetches athlete statistics."""
         print('Start fetching athlete statistics.')
         stats_url = StravaEndpoints.get_athlete_stats(athlete_id)
 
@@ -68,8 +68,8 @@ class StravaExtractor(BaseExtractor):
             response = requests.get(stats_url, headers=self.headers, timeout=10)
             response.raise_for_status()
             data = response.json()
-            data["athlete_id"] = int(athlete_id)
-            data["fetched_at"] = datetime.now(timezone.utc).isoformat()
+            data['athlete_id'] = int(athlete_id)
+            data['fetched_at'] = datetime.now(timezone.utc).isoformat()
             athlete_stats = StravaAthleteStats(**data)
         except requests.RequestException as e:
             print(f'HTTP error occurred: {e}')
@@ -81,7 +81,6 @@ class StravaExtractor(BaseExtractor):
             print(f'An unexpected error occurred: {e}')
             raise
         return athlete_stats
-
 
     def fetch_all_activities(self) -> list[StravaActivity]:
         """Fetches all activities."""
