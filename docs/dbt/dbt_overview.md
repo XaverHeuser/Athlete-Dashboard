@@ -78,7 +78,7 @@ dbt run
 ```
 
 Builds or updates all SQL models.
-Use --select to limit which ones to build:
+Use `--select` to limit which ones to build:
 
 ```bash
 dbt run --select stg_activities
@@ -116,6 +116,8 @@ run snapshot
 Captures changes in mutable data over time.
 See [dbt Snapshots](./dbt_snapshots.md) for setup details.
 
+---
+
 ## Command Reference
 
 | Command                | Description                                    |
@@ -129,6 +131,8 @@ See [dbt Snapshots](./dbt_snapshots.md) for setup details.
 | `dbt source freshness` | Checks if source data is current.              |
 | `dbt run --select`     | Run specific models only.                      |
 
+---
+
 ## Example Data Flow
 
 raw.orders ──> stg_orders ──> fct_orders ──> rpt_orders_daily
@@ -141,6 +145,8 @@ raw.orders ──> stg_orders ──> fct_orders ──> rpt_orders_daily
 | **Reports**    | `rpt_` | Aggregated summaries for BI        | 1 row = time period   |
 
 For naming conventions, see [dbt Guidelines](./dbt_guidelines.md)
+
+---
 
 ## Best Practices
 
@@ -156,9 +162,11 @@ For naming conventions, see [dbt Guidelines](./dbt_guidelines.md)
 | **Version Control** | Commit SQL + YAML + seeds to Git.                      |
 | **CI/CD**           | Automate `dbt build` in your pipeline.                 |
 
+---
+
 ## BigQuery Integration
 
-Example profiles.yml setup:
+Example `profiles.yml` setup:
 
 ```yaml
 strava_project:
@@ -175,6 +183,8 @@ strava_project:
 
 See [dbt Profiles](./dbt_profiles.md) for details on authentication, service accounts and environments.
 
+---
+
 ## Where to Go Next
 
 | Topic                                 | Description                                |
@@ -186,12 +196,16 @@ See [dbt Profiles](./dbt_profiles.md) for details on authentication, service acc
 | [dbt Snapshots](./dbt_snapshots.md)   | Capturing historical changes               |
 | [dbt Profiles](./dbt_profiles.md)     | Connecting dbt to BigQuery                 |
 
+---
+
 ## References
 
 - [dbt Official Documentation](https://docs.getdbt.com/)
 - [dbt Learn (Free Courses)](https://learn.getdbt.com/catalog)
 - [dbt Community Slack](https://www.getdbt.com/community)
 - [dbt Labs GitHub](https://github.com/dbt-labs)
+
+---
 
 ## Final Notes
 
@@ -200,4 +214,4 @@ See [dbt Profiles](./dbt_profiles.md) for details on authentication, service acc
 - Documentation isn’t optional — it’s part of your model definition.
 - Keep your transformations simple, modular, and testable.
 
-“In dbt, you don’t move data — you make it meaningful.”
+> “In dbt, you don’t move data — you make it meaningful.”

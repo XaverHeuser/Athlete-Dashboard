@@ -104,7 +104,9 @@ models:
           - not_null
 ```
 
-> Add a schema.yml in every staging folder for documentation and tests.
+> Add a `schema.yml` in every staging folder for documentation and tests.
+
+---
 
 ## Key Design Patterns
 
@@ -128,6 +130,8 @@ If you need to combine data from multiple sources, do that in intermediate or fa
 
 Staging models should produce the same output every run.
 
+---
+
 ## File Structure Example
 
 ```pgsql
@@ -139,14 +143,16 @@ models/
 │   └── schema.yml
 ```
 
-- One .sql file per source table.
-- One shared schema.yml per folder.
+- One `.sql` file per source table.
+- One shared `schema.yml` per folder.
+
+---
 
 ## Jinja & Macros for Staging
 
 Use macros to avoid repeating common cleaning logic.
 
-Example:
+### Example jinja
 
 ```jinja
 -- macros/clean_string.sql
@@ -155,13 +161,15 @@ Example:
 {% endmacro %}
 ```
 
-Usage:
+### Usage jinja
 
 ```sql
 select
   {{ clean_string('email') }} as email_cleaned
 from {{ source('raw', 'users') }}
 ```
+
+---
 
 ## Materialization
 
@@ -178,27 +186,19 @@ models:
     +materialized: view
 ```
 
+---
+
 ## Staging Checklist
 
-- Model named with stg_ prefix
+- Model named with `stg_` prefix
 - 1 model = 1 raw source
-- Uses {{ source() }} not hardcoded paths
+- Uses `{{ source() }}` not hardcoded paths
 - All columns renamed, typed, and cleaned
 - No aggregations or joins
-- Has schema.yml with tests + descriptions
+- Has `schema.yml` with tests + descriptions
 - Materialized as view
 
-## Related Docs
-
-| Topic                                 | Description                                |
-| ------------------------------------- | ------------------------------------------ |
-| [dbt Guidelines](./dbt_guidelines.md) | Core modeling rules and naming conventions |
-| [dbt Staging](./dbt_staging.md)       | How to build clean staging models          |
-| [dbt Marts](./dbt_marts.md)           | Facts, dimensions, and reporting models    |
-| [dbt Testing](./dbt_testing.md)       | Schema.yml structure and data tests        |
-| [dbt Snapshots](./dbt_snapshots.md)   | Capturing historical changes               |
-| [dbt Profiles](./dbt_profiles.md)     | Connecting dbt to BigQuery                 |
-
+---
 
 ## Final Notes
 
@@ -206,4 +206,4 @@ models:
 - Build from sources → staging → marts in clear steps.
 - Keep staging simple, transparent, and reproducible.
 
-“If your staging is clean, your marts stay sane.”
+> “If your staging is clean, your marts stay sane.”

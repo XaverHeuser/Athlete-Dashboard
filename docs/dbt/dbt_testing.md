@@ -115,7 +115,7 @@ where activity_id is null
 
 ## Custom Tests
 
-When built-ins aren’t enough, write your own tests as SQL files under /tests/.
+When built-ins aren’t enough, write your own tests as SQL files under `/tests/`.
 
 ### Example Custom Tests
 
@@ -204,7 +204,6 @@ This acts as a cross-model constraint check.
 | **Dimensions (`dim_`)** | Key uniqueness and completeness            | `unique`, `not_null`, `accepted_values` |
 | **Reports (`rpt_`)**    | Aggregation sanity checks                  | Custom SQL tests (e.g., totals > 0)     |
 
-
 ---
 
 ## CI/CD Integration
@@ -251,6 +250,8 @@ jobs:
 | **Combine built-in and custom tests** | Balance coverage and maintainability.            |
 | **Use `dbt build` in CI**             | Ensures models and tests are run in sequence.    |
 
+---
+
 ## Example Folder Structure
 
 ```pgsql
@@ -279,6 +280,8 @@ dbt_project/
 | “Test failed but no rows shown” | Using ephemeral models           | Materialize upstream model or add `--store-failures` |
 | “Relationship test too slow”    | Missing index or small dimension | Use incremental dimensions or limit test scope       |
 | “Schema.yml ignored”            | Missing `version: 2` header      | Always include it                                    |
+
+---
 
 ## Final Notes
 

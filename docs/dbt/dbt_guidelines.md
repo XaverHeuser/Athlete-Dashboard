@@ -5,7 +5,7 @@ Following these guidelines ensures consistency, clarity, and scalability — esp
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 - Maintain **clean, readable, and predictable** model structures.
 - Keep a clear **data lineage** between layers.
@@ -14,7 +14,7 @@ Following these guidelines ensures consistency, clarity, and scalability — esp
 
 ---
 
-## 🧱 Core Modeling Principles
+## Core Modeling Principles
 
 | Guideline | Description |
 |------------|--------------|
@@ -29,7 +29,7 @@ Following these guidelines ensures consistency, clarity, and scalability — esp
 
 ---
 
-## 🏗️ Model Layering
+## Model Layering
 
 Our dbt project is organized in **four conceptual layers**.  
 Each layer has a clear purpose, naming convention, and granularity.
@@ -45,9 +45,9 @@ See [dbt Staging](./dbt_staging.md) and [dbt Marts](./dbt_marts.md) for detailed
 
 ---
 
-## 🧾 Naming Conventions
+## Naming Conventions
 
-### ✅ Models
+### Models
 
 | Layer | Prefix | Example |
 |--------|--------|----------|
@@ -61,7 +61,7 @@ See [dbt Staging](./dbt_staging.md) and [dbt Marts](./dbt_marts.md) for detailed
 
 ---
 
-### ✅ Columns
+### Columns
 
 - Use **snake_case** for all column names.  
   
@@ -77,6 +77,8 @@ See [dbt Staging](./dbt_staging.md) and [dbt Marts](./dbt_marts.md) for detailed
 - Prefix or suffix derived metrics if needed (distance_m, avg_speed_mps).
 - Align naming conventions with your BI layer (for seamless handoff).
 
+---
+
 ## File & Folder Naming
 
 | Type         | Convention           | Example                            |
@@ -86,16 +88,18 @@ See [dbt Staging](./dbt_staging.md) and [dbt Marts](./dbt_marts.md) for detailed
 | Schema files | One per folder       | `schema.yml`                       |
 | Test files   | snake_case           | `test_positive_distance.sql`       |
 
+---
+
 ## Dependencies and ref() Usage
 
-- Always reference upstream models via {{ ref('model_name') }} — never hardcode schema.table.
+- Always reference upstream models via `{{ ref('model_name') }}` — never hardcode `schema.table`.
 - This enables dbt to:
   - Build dependency DAGs.
   - Run models in the correct order.
   - Track lineage in docs.
-- For external sources, use {{ source('source_name', 'table_name') }}.
+- For external sources, use `{{ source('source_name', 'table_name') }}`.
 
-Example_
+### Example
 
 ```sql
 select
@@ -107,6 +111,8 @@ join {{ ref('fct_activities') }} as act
   on a.athlete_id = act.athlete_id
 ```
 
+---
+
 ## Materialization Rules
 
 | Layer          | Recommended Materialization | Notes                            |
@@ -117,18 +123,20 @@ join {{ ref('fct_activities') }} as act
 | **Reports**    | `table` or `incremental`    | Aggregated data; may be large.   |
 | **Snapshots**  | `table`                     | Automatically managed by dbt.    |
 
-Define this in dbt_project.yml or inside model configs:
+Define this in `dbt_project.yml` or inside model configs:
 
 ```yaml
 models:
   +materialized: view
 ```
 
+---
+
 ## Jinja & Macros
 
-Use Jinja templates and macros for reusable logic, but avoid overengineering.
+> Use Jinja templates and macros for reusable logic, but avoid overengineering.
 
-Example macro:
+### Example macro
 
 ```jinja
 -- macros/clean_string.sql
@@ -137,7 +145,7 @@ Example macro:
 {% endmacro %}
 ```
 
-Usage:
+### Usage
 
 ```sql
 select
@@ -145,15 +153,17 @@ select
 from {{ ref('stg_customers') }}
 ```
 
+---
+
 ## Testing & Documentation Standards
 
-Every model must have a corresponding schema.yml file that defines:
+Every model must have a corresponding `schema.yml` file that defines:
 
 - Model-level description
 - Column-level descriptions
 - Tests (e.g., not_null, unique, etc.)
 
-Example:
+### Example schema
 
 ```yaml
 version: 2
@@ -169,6 +179,8 @@ models:
 ```
 
 See [dbt Testing](./dbt_testing.md) for more.
+
+---
 
 ## Example Transformation Flow
 
@@ -196,14 +208,18 @@ Each model layer adds value while maintaining clear separation of responsibility
 | **Freshness checks** | Automate `dbt source freshness` via CI/CD.                |
 | **Environments**     | Use `dev`, `prod` datasets via `profiles.yml`.            |
 
+---
+
 ## Example Checklist for New Models
 
 - Define “1 row = X” in the model header comment
-- Use ref() instead of hardcoded table names
-- Write a clear model description in schema.yml
-- Add not_null and unique tests for key fields
+- Use `ref()` instead of hardcoded table names
+- Write a clear model description in `schema.yml`
+- Add `not_null` and `unique` tests for key fields
 - Ensure naming matches layer prefix convention
-- Commit both .sql and .yml files together
+- Commit both `.sql` and `.yml` files together
+
+---
 
 ## Related Docs
 
@@ -212,9 +228,11 @@ Each model layer adds value while maintaining clear separation of responsibility
 | [dbt Guidelines](./dbt_guidelines.md) | Core modeling rules and naming conventions |
 | [dbt Staging](./dbt_staging.md)       | How to build clean staging models          |
 | [dbt Marts](./dbt_marts.md)           | Facts, dimensions, and reporting models    |
-| [dbt Testing](./dbt_testing.md)       | Schema.yml structure and data tests        |
+| [dbt Testing](./dbt_testing.md)       | `Schema.yml` structure and data tests        |
 | [dbt Snapshots](./dbt_snapshots.md)   | Capturing historical changes               |
 | [dbt Profiles](./dbt_profiles.md)     | Connecting dbt to BigQuery                 |
+
+---
 
 ## Final Notes
 
@@ -222,4 +240,4 @@ Each model layer adds value while maintaining clear separation of responsibility
 - Your dbt DAG is a reflection of your logic — keep it simple and traceable.
 - Remember: clarity scales, complexity breaks.
 
-“In dbt, models are code. Treat them like code — reviewed, tested, and documented.”
+> “In dbt, models are code. Treat them like code — reviewed, tested, and documented.”
