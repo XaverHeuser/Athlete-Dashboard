@@ -1,46 +1,152 @@
-# Workflow (DRAFT!)
+# Athlete Dashboard – Architecture (ELT)
 
-This workflow is designed as an ETL (Extract, Transform, Load) pipeline. It automates the process of fetching data from a source, processing it into a useful format, storing it efficiently, and finally presenting it in an interactive dashboard.
+*Last updated: 2025-10-28*
 
-### 1. Data Ingestion (Scheduled Extraction) (Not Implemented yet)
+## 0) Executive Summary
 
-This is the automated "Extract" phase, which runs on a schedule without any user interaction.
+This project follows a modern **ELT** pattern on Google Cloud: a scheduled Cloud Run job **extracts** activities from Strava and **loads** raw JSON into BigQuery (`raw`), and **transforms** data inside BigQuery with SQL/dbt into `staging` and `marts`. A Streamlit app (planned) will query the `mart` layer for fast, simple visualizations.
 
-- Trigger: A scheduler service like Google Cloud Scheduler triggers your Python script at a set interval (e.g., every hour or once daily).
-- Execution: The trigger invokes a Google Cloud Run job.
-- Action:
-    - The Python script authenticates with the Strava API using OAuth2 tokens.
-    - It requests all new activities that have occurred since the last successful run. This is crucial to avoid re-downloading your entire history every time.
-    - The script pulls the raw activity data (e.g., GPS coordinates, heart rate, power, time, distance) and saves it directly into a "raw data" table in BigQuery.
+## 1) Current Status
 
-*Why this is smart: This process is completely automated and runs in the background. It ensures your data is consistently kept up-to-date in your database.*
+* Repository scaffolding present: Dockerfiles for app and dbt, Cloud Build config, dbt project folder, `src` for Python jobs, `notebooks` for exploration.
+* Implementation status (as of this document):
 
-### 2. Data Transformation (Wrangling & Enrichment) (Not Implemented yet)
+  * **Extract/Load**: In progress (incremental Strava fetch planned).
+  * **Transform (dbt/BigQuery)**: In progress; dbt project initialized, models in progress.
+  * **Presentation (Streamlit)**: In progress.
 
-This is the "Transform" phase, where raw data is turned into valuable information. This can be part of the same Cloud Run job or a subsequent one.
+## 2) High-Level Architecture
 
-- Trigger: Can be triggered immediately after the ingestion step completes.
-- Execution: A Python script runs in Cloud Run.
-- Action:
-    - The script queries the "raw data" table in BigQuery.
-    - It performs all the heavy lifting and calculations:
-    - Cleaning: Handles missing data points (e.g., no heart rate data for a run).
-    - Enrichment: Calculates new metrics like Training Stress Score (TSS), power zones, heart rate zones, or year-over-year progress.
-    - Aggregation: Creates summary tables, for example, weekly/monthly mileage, total elevation gain, or personal bests for different distances (e.g., fastest 5k, 10k).
-    - This newly processed, cleaned, and aggregated data is then loaded into new, analysis-ready "mart" tables in BigQuery.
+```
++------------------+        +---------------------+        +------------------------------+
+| Google Cloud     |        | Cloud Run:          |        | BigQuery                     |
+| Scheduler        +------->+ "extract-load" job  +------->+ raw.strava_activities        |
+| (cron)           |        | (Python, Docker)    |        |  (Bronze)                    |
++------------------+        +---------------------+        +---------------+--------------+
+                                                                     | (dbt transforms)
+                                                                     v
+                                                          +----------+-----------+
+                                                          | BigQuery (staging)   |
+                                                          | cleaned/normalized  |
+                                                          +----------+-----------+
+                                                                     | (dbt)
+                                                                     v
+                                                          +----------+-----------+
+                                                          | BigQuery (mart)     |
+                                                          | aggregates/marts    |
+                                                          +----------+-----------+
+                                                                     |
+                                                                     v
+                                                          +----------+-----------+
+                                                          | Streamlit Dashboard |
+                                                          | (query mart tables) |
+                                                          +---------------------+
+```
 
-*Why this is smart: Your dashboard won't have to do these calculations on the fly. It will query simple, pre-computed tables, making it incredibly fast.*
+## 3) Components
 
-### 3. Data Presentation (The Dashboard) (Not Implemented yet)
+### 3.1 Cloud Scheduler
 
-This is the "Load" (from the user's perspective) and visualization phase, where the user interacts with the application.
+* Triggers the Cloud Run **extract-load** service on an daily basis.
+* Cron examples: `0 7 * * *` CET.
 
-- Trigger: A user navigates to your Streamlit dashboard's URL.
-- Execution: The Streamlit application, hosted on a service like Streamlit Community Cloud or your own server, starts up.
-- Action:
-    - When the user loads the page or applies a filter (e.g., "Show me all my runs from last year"), Streamlit executes a query.
-    - This query is sent to BigQuery, targeting the clean, pre-processed "mart" tables.
-    - BigQuery runs the simple query (e.g., SELECT * FROM monthly_summary WHERE year = 2024) and returns the results in milliseconds.
-    - Streamlit uses this data to instantly render interactive charts, maps, and tables for the user.
-    
-*Why this is smart: The user experiences a fast, snappy dashboard because all the slow, heavy data processing has already been done behind the scenes. The application is only performing quick lookups on analysis-ready data.*
+### 3.2 Cloud Run (Extract & Load)
+
+* Container built from `Dockerfile`.
+* Entrypoint Python script (in `src/`) performs:
+
+  1. **Auth** with Strava via OAuth2 refresh token (stored in Secret Manager).
+  2. **Incremental pull**: request new/updated activities since the last successful watermark (persisted in `raw._ingestion_state` or in Secret Manager/Parameter Store).
+  3. **Load** Dataframes from JSON payloads into BigQuery table `raw.strava_activities` (schema: pass-through of Strava fields + metadata columns like `ingested_at`, `source`, `activity_id`).
+  4. **Idempotency**: upsert by `activity_id`; deduplicate on repeated fetches.
+  5. **Observability**: structured logs to Cloud Logging; non-200 responses retried with backoff.
+
+### 3.3 BigQuery Datasets
+
+* **`raw` (Bronze)**: immutable(ish) event-level JSON from Strava; minimal shaping only.
+* **`staging`**: cleaned, typed tables; examples:
+
+  * `staging.activities` (typed fields, units normalized, coordinates geo-typed where appropriate)
+* **`marts`**: denormalized marts & aggregates optimized for the dashboard; examples:
+
+  * TBD.
+
+### 3.4 Transformations with dbt (or Dataform)
+
+* Separate container (`Dockerfile.dbt`) to run dbt against BigQuery.
+* **Model flow**: `raw` → `staging` (staging + type casting) → `mart` (aggregates/marts).
+* **Scheduling**: run dbt after each successful load (Cloud Scheduler chain, Cloud Build, or a single Orchestrator job that runs EL then T).
+* **Tests**: dbt tests for uniqueness (`activity_id`), non-null constraints, referential integrity across child tables.
+
+### 3.5 Streamlit Frontend (Planned)
+
+* Queries `mart` tables only for performance and simplicity.
+* Example pages:
+
+  * **Overview**: mileage/time/elevation by period; activity mix.
+  * **Trends**: rolling 7/28/90-day charts; YoY comparisons.
+  * **Records**: fastest 5k/10k, longest ride/run, peak power/HR (if available).
+  * **Map**: route visualizations (if polyline/coords available in `staging`).
+
+## 4) Data Contracts & Schemas
+
+TBD.
+
+## 5) Orchestration & Scheduling
+
+Two common setups:
+
+1. **Split jobs**: Scheduler → Run EL container → (on success) Scheduler/Trigger → Run dbt container.
+2. **Unified job**: one Cloud Run entrypoint that performs EL, then invokes dbt (`dbt deps && dbt run && dbt test`).
+
+Watermarking:
+
+* Store `last_successful_start_date` (epoch seconds) for Strava `/athlete/activities?after=...` and update on success.
+
+Retries/alerts:
+
+* HTTP retries (exponential backoff), transient error retries for BigQuery load jobs.
+* Optional: alerting via Cloud Monitoring policy on Cloud Run 5xx or job failures.
+
+## 6) Security & Secrets
+
+* **Strava OAuth**: store client_id, client_secret, refresh_token in **Secret Manager**; refresh access token at runtime.
+* **GCP Auth**: service account with least privilege; roles: `BigQuery Data Editor` on project/datasets; `Secret Manager Secret Accessor`.
+* **Network**: public egress allowed; optionally VPC connector if needed.
+* **PII**: athlete name/email not stored unless required; prefer athlete numeric ID.
+
+## 7) DevEx & CI/CD
+
+* **Cloud Build** builds containers from `Dockerfile` and `Dockerfile.dbt` and can deploy to Cloud Run.
+* **Formatting/Linting**: ruff, mypy configured in repo.
+* **Local dev**: `.env` + `streamlit secrets` for BigQuery billing project and credentials; run EL locally with a service account key (do not commit).
+* **dbt**: `profiles.yml` (BigQuery target) stored via environment variables/Secret Manager; run `dbt run` and `dbt test` locally against a sandbox dataset.
+
+## 8) Observability
+
+* **Cloud Logging**: structured logs with request IDs and activity IDs.
+* **BigQuery**: job history + INFORMATION_SCHEMA for lineage/latency metrics.
+* **dbt docs**: optional `dbt docs generate` and host via Cloud Run static container.
+
+## 9) Open Questions / TODO
+
+* Define final `staging/*` and `mart/*` models and acceptance criteria (SLAs for freshness, query times).
+* Decide on Strava **streams** ingestion (route points, HR/power streams) and table design.
+* Evaluate Strava **webhooks** for near‑real‑time updates vs. polling.
+* Add first Streamlit MVP page wired to `mart.activity_summary_*`.
+* Add integration tests (fixture activities → expected aggregates).
+
+## 10) Appendix
+
+**Why ELT over ETL?**
+
+* Pushes heavy transforms into BigQuery for elasticity, cost visibility, and reprocessing on demand while keeping raw data intact.
+
+**Naming conventions**
+
+* Datasets: `raw`, `staging`, `mart`.
+* Tables: snake_case; staged models prefixed with `stg_` in dbt.
+
+**Timezones**
+
+* Store timestamps in UTC; surface Europe/Berlin (user’s TZ) in the dashboard.
