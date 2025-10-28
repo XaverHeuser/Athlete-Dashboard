@@ -1,25 +1,29 @@
 # Deploying a Python Script to Google Cloud Run Jobs Using Docker
 
 This guide explains how to deploy a Python script to Google Cloud Run Jobs using Docker and Google Cloud Build.
+It’s ideal for scheduled or on-demand data processing tasks (e.g., ETL jobs, API ingestion, or analytics pipelines).
+
+---
 
 ## 1. Prerequisites
 
 Make sure you have:
 
-- A Google Cloud Project
-- The gcloud CLI installed and authenticated
+- A Google Cloud Project with billing enabled
+- The Google Cloud CLI (gcloud) installed and authenticated
 
 ```bash
 gcloud auth login
 gcloud config set project PROJECT-ID
 ```
 
-- Billing enabled
-- APIs enabled:
+Enable the required APIs:
 
 ```bash
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com bigquery.googleapis.com
 ```
+
+---
 
 ## 2. Project Structure
 
@@ -37,9 +41,13 @@ project/
 └── Dockerfile
 ```
 
+Your entry point `(src/main.py)` should contain the logic to run your job.
+
+---
+
 ## 3. Create the Dockerfile
 
-In the root directory, create a Dockerfile:
+In the root directory, create a `Dockerfile`:
 
 ```dockerfile
 # Use a lightweight Python image
@@ -59,9 +67,13 @@ COPY . .
 CMD ["python", "src/main.py"]
 ```
 
+> Tip: Use `.dockerignore` to exclude unnecessary files (e.g., `.git`, `__pycache__`, etc.) for faster builds.
+
+---
+
 ## 4. Create an Artifact Registry for Docker Images
 
-Create the repository once (replace region if needed):
+Artifact Registry stores your container images.
 
 ```bash
 gcloud artifacts repositories create REPO-NAME \
@@ -70,38 +82,93 @@ gcloud artifacts repositories create REPO-NAME \
   --description="Docker repo for Cloud Run Jobs"
 ```
 
+Example:
+
+```bash
+gcloud artifacts repositories create cloudrun-jobs \
+  --repository-format=docker \
+  --location=europe-west1 \
+  --description="Docker repo for Cloud Run Jobs"
+```
+
+---
+
 ## 5. Build and Push Your Docker Image
 
-Run this command from your project root:
+### Build and push directly with Cloud Build
 
 ```bash
 gcloud builds submit \
   --tag REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-JOB-NAME:latest
 ```
 
+Example:
+
+```bash
+gcloud builds submit \
+  --tag europe-west1-docker.pkg.dev/my-project/cloudrun-jobs/athlete-job:latest
+```
+
+### Optional: Build & Push Locally
+
+If you prefer local Docker builds:
+
+```bash
+docker build -t europe-west1-docker.pkg.dev/PROJECT_ID/REPO_NAME/dbt-job:latest .
+docker push europe-west1-docker.pkg.dev/PROJECT_ID/REPO_NAME/dbt-job:latest
+```
+
+Then update the job to use the new image:
+
+```bash
+gcloud run jobs update dbt-job \
+  --image=europe-west1-docker.pkg.dev/PROJECT_ID/REPO_NAME/dbt-job:latest \
+  --region=europe-west1
+```
+
 ### Build and Push with different Dockerfile
+
+Local:
 
 ```bash
 docker build -f Dockerfile.dbt -t europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest .
-```
-
-```bash
 docker push europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest 
 ```
+
+Or create cloudbuild.yaml:
+
+```yaml
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build",
+           "-t", "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest",
+           "-f", "Dockerfile.dbt",
+           "."]
+images:
+  - "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest"
+```
+
+Build image with yaml:
+
+```bash
+gcloud builds submit --config cloudbuild.yaml .
+```
+
+Then update the job to use the new image:
 
 ```bash
 gcloud run jobs update dbt-job --image=europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest --region=europe-west1 
 ```
 
-This:
-- Builds your Docker image using your local Dockerfile
-- Pushes it to Google Artifact Registry
-
 *If you change your code later, rerun this command to build and push an updated image.*
+
+---
 
 ## 6. Grant Permissions (One-Time Setup)
 
-**Grant Cloud Build and Compute Engine access to Storage & Artifact Registry**
+Cloud Run Jobs and Cloud Build need permissions to access Artifact Registry, Cloud Storage, and BigQuery.
+
+### Cloud Build & Compute Engine Access
 
 ```bash
 gcloud projects add-iam-policy-binding PROJECT_ID \
@@ -115,7 +182,8 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
   --condition=None
 ```
 
-**Grant BigQuery permissions for the job runtime**
+### BigQuery Access for the Job Runtime
+
 ```bash
 gcloud projects add-iam-policy-binding PROJECT_ID \
   --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
@@ -127,7 +195,8 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
   --role="roles/bigquery.dataEditor" \
   --condition=None
 ```
-*(These enable the job to load data into BigQuery.)*
+
+---
 
 ## 7. Deploy the Cloud Run Job
 
@@ -138,6 +207,8 @@ gcloud run jobs create JOB-NAME \
   --image REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER-JOB-NAME:latest \
   --region REGION
 ```
+
+---
 
 ## 8. Run the Job
 
@@ -156,23 +227,27 @@ gcloud run jobs executions describe [EXECUTION_NAME] --region REGION
 
 *Logs also appear in Cloud Console → Logging → Logs Explorer.*
 
+---
+
 ## 9. Updating Code Later
 
-When you change your Python code:
+When you modify your Python code:
 
 ```bash
-# Rebuild and push
+# Rebuild and push the new image
 gcloud builds submit \
-  --tag REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER_PACKAGE-NAME:latest
+  --tag REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/JOB_NAME:latest
 
-# Redeploy the job to use the new image
-gcloud run jobs update JOB-NAME \
-  --image REGION-docker.pkg.dev/PROJECT_ID/REPO-NAME/DOCKER_PACKAGE-NAME:latest \
+# Update the Cloud Run Job to use the new image
+gcloud run jobs update JOB_NAME \
+  --image REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/JOB_NAME:latest \
   --region REGION
 
-gcloud run jobs execute JOB-NAME --region REGION
+# (Optional) Run immediately
+gcloud run jobs execute JOB_NAME --region REGION
 ```
 
+---
 
 ## 10. Schedule the Job
 
@@ -186,12 +261,23 @@ gcloud scheduler jobs create http JOB-NAME-schedule \
   --oidc-service-account-email="PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 ```
 
+---
+
 ## Summary
 
-| Step  | Command |
-|-------|---------|
-| Build image	                  | gcloud builds submit --tag <artifact-url>
-| Deploy job	                  | gcloud run jobs create athlete-job --image <artifact-url>
-| Run job	                      | gcloud run jobs execute athlete-job
-| Update job after code changes	| Rebuild → gcloud run jobs update
-| Check logs	                  | gcloud run jobs executions list / describe
+| Action                       | Command                                                  |
+| ---------------------------- | -------------------------------------------------------- |
+| **Build image**              | `gcloud builds submit --tag <artifact-url>`              |
+| **Deploy job**               | `gcloud run jobs create JOB_NAME --image <artifact-url>` |
+| **Run job manually**         | `gcloud run jobs execute JOB_NAME`                       |
+| **Update after code change** | Rebuild → `gcloud run jobs update JOB_NAME`              |
+| **Check logs**               | `gcloud run jobs executions list / describe`             |
+
+---
+
+## Best Practices
+
+- Use specific image tags (e.g., :v1.0.0) for reproducibility.
+- Keep dependencies pinned in requirements.txt.
+- Store secrets in Secret Manager, not environment variables.
+- Use Cloud Build triggers to automate image deployment from Git commits.
