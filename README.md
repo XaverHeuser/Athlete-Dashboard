@@ -1,75 +1,112 @@
 # Athlete-Dashboard
 
+> Personal, extensible, and self-hosted dashboard for athletic activities powered by a modern ELT stack on Google Cloud.
+
+---
+
 ## Project Goal & Motivation
 
-This project aims to create a personal, extensible, and self-hosted dashboard for athletic activities. By pulling data from APIs like Strava and Garmin, it provides full ownership of your training history and enables custom data analysis and visualizations that go beyond the capabilities of the original platforms.
-It also serves as a practical learning project for building a modern ELT data pipeline using Google Cloud Platform (GCP) and Python — taking advantage of BigQuery for scalable transformations and analytics
+Create a personal data platform for your training history. Pull activities from Strava (and later Garmin), load raw JSON into BigQuery, and transform it with dbt into fast, analytics-ready tables that a Streamlit dashboard can query.
+
+---
 
 ## Project Status
 
-Status: 🚧 In Development 🚧
+> **Status**: *In Development* - Architecture and scaffolding exist; core components are being implemented.
 
-This project is currently in the architectural and initial development phase.
-The core workflow has been designed, but implementation of several components is still ongoing.
+- Containers: Dockerfile (EL job) and Dockerfile.dbt (dbt runner)
+- Infra scaffolding: cloudbuild.yaml
+- dbt project: dbt_athlete_dashboard/
+- Python src for ingestion: src/
+- Exploration: notebooks/
 
-## Key Features (Planned)
+---
 
-- Automated Data Sync: Automatically fetches new activities from the Strava API on a given schedule.
-- Historical Archive: Securely stores your entire activity history in a personal BigQuery data warehouse.
-- Interactive Dashboard: A web-based frontend built with Streamlit to visualize trends, summaries, and individual activities.
-- Custom Analytics: Calculates and tracks custom metrics like Training Stress Score (TSS), weekly/monthly totals, and personal records.
-- Multi-Source Ready: Designed to be easily extended to support other data sources like Garmin Connect in the future.
+## Key Features
+
+- Automated Data Sync (Cloud Scheduler → Cloud Run)
+- Historical Archive (BigQuery raw/staging/marts)
+- Interactive Dashboard (Streamlit)
+- Custom Analytics (TSS/TRIMP-like, PRs, YoY trends) *(Planned)*
+- Multi‑Source Ready *(Strava now; Garmin next)*
+
+
 
 ## Technology Stack
 
-| Component            | Technology                     | Description                                     |
-|----------------------|--------------------------------|-------------------------------------------------|
-| Data Source          | Strava API                     | Source of raw activity data                     |
-| Cloud Provider       | Google Cloud Platform          | End-to-end hosting environment                  |
-| Data Storage         | BigQuery                       | Central data warehouse (Bronze → Silver → Gold) |
-| ELT & Wrangling      | Python 3.9+ on Cloud Run       | Extraction and loading                          |
-| Transformation Layer | BigQuery SQL + dbt / Dataform  | Transformations executed directly in BigQuery   |
-| Scheduling           | Google Cloud Scheduler         | Triggers Cloud Run jobs                         |
-| Frontend             | Streamlit                      | Visualizes data via interactive dashboards      |
+| Component      | Technology               | Description                             |
+| -------------- | ------------------------ | --------------------------------------- |
+| Data Source    | Strava API               | Source of raw activity data             |
+| Cloud          | Google Cloud Platform    | Hosting for Run, Scheduler, BQ, Secrets |
+| Data Warehouse | BigQuery                 | Bronze → staging → marts datasets         |
+| EL             | Python 3.9+ on Cloud Run | Extract & Load raw JSON into `raw`      |
+| T              | dbt (BigQuery)           | SQL transforms to `staging`/`marts`       |
+| Scheduling     | Cloud Scheduler          | Triggers EL job (this triggers dbt-job)    |
+| Frontend       | Streamlit                | Queries `marts` for fast UX              |
 
-
-## Roadmap
-
-- [ ] Phase 1: Core ELT Pipeline
-    - [ ] Implement Strava API authentication and data fetching.
-    - [ ] Set up BigQuery datasets: raw, silver, and gold
-    - [ ] Implement transformation logic in dbt/Dataform
-    - [ ] Deploy extraction and load to Cloud Run; schedule via Cloud Scheduler.
-
-- [ ] Phase 2: Dashboard V1
-    - [ ] Develop a basic Streamlit dashboard to show key stats (mileage, time).
-    - [ ] Add filters for date ranges and activity types.
-
-- [ ] Phase 3: Enhancements
-    - [ ] Add support for Garmin API.
-    - [ ] Implement more advanced metrics (TSS, Fitness/Fatigue).
-    - [ ] Experiment with PostgreSQL as an alternative data store.
-    - [ ] Experiment with other Transformation tools.
-
-## Getting Started
-
-TBD
+---
 
 ## Project Structure
 
-TBD
+```bash
+Athlete-Dashboard/
+├─ .github/                     # CI configs (future)
+├─ dbt_athlete_dashboard/       # dbt project (models, seeds, tests, macros)
+├─ docs/                        # Documentation (architecture, how‑tos)
+├─ notebooks/                   # Jupyter exploration
+├─ src/                         # Python EL job (Strava → BigQuery)
+├─ Dockerfile                   # EL container
+├─ Dockerfile.dbt               # dbt runner container
+├─ cloudbuild.yaml              # Build/deploy pipelines
+├─ requirements*.txt            # Python deps (core/dev/dbt)
+└─ README.md
+```
 
-## Workflow
+---
 
-This project follows a modern ELT (Extract → Load → Transform) architecture instead of the traditional ETL pattern.
+## Workflow (ELT)
 
-- Extract: A scheduled Cloud Run job pulls activity data from the Strava API.
-- Load: The raw JSON data is loaded directly into BigQuery (raw.strava_activities).
-- Transform: All cleaning, enrichment, and aggregation are done inside BigQuery using SQL-based transformations orchestrated by dbt, Dataform, or BigQuery Scheduled Queries.
+### 1. Extract & Load (Cloud Run)
 
-This approach leverages BigQuery’s native scalability, eliminates the need for external ETL servers, and keeps the raw data available for future reprocessing.
-For a detailed breakdown of the services, triggers, and data flow, please see the [Architecture Document](docs/architecture/architecture.md).
+- Refresh Strava OAuth token (Secret Manager), fetch **incremental** activities since the last watermark.
+- Load raw payloads into BigQuery `raw.strava_activities` with metadata (`ingested_at`, `activity_id`, `source`).
+- Idempotent upsert by `activity_id` (dedupe).
+
+### 2. Transform (dbt on BigQuery)
+
+- `raw → staging`: type casting, unit normalization, cleanup.
+- `staging → marts`: aggregates (daily/monthly summaries, PRs, training load).
+- dbt tests: uniqueness, not-null, references.
+
+### 3. Present (Streamlit)
+
+- Pages: Overview, Trends, Records, Maps.
+- Read-only queries against `marts` only.
+
+See [Architecture Docs](./docs/architecture/architecture.md) for more info.
+
+---
+
+## Getting Started (Local Dev)
+
+TBD.
+
+---
+
+## Deploying on GCP (Sketch)
+
+> See [GCP Deployment docs](./docs/gcp/deployment.md)
+
+---
+
+## Roadmap
+
+- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests)
+- Phase 2: Streamlit MVP (overview + filters)
+- Phase 3: Garmin + advanced metrics (TSS/Fitness/Fatigue), optional Postgres path
+
+---
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
