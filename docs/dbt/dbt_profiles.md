@@ -164,7 +164,7 @@ Then in `profiles.yml`:
 
 ```yaml
 method: service-account
-keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+keyfile: '{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}'
 ```
 
 ---
@@ -186,13 +186,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
       - name: Install dbt
         run: pip install dbt-bigquery
 
       - name: Configure BigQuery credentials
-        run: echo "$GCP_KEY" > /tmp/keyfile.json
+        run: echo '$GCP_KEY' > /tmp/keyfile.json
         env:
           GCP_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
 
@@ -260,6 +260,7 @@ dbt run
 ---
 
 ## Example Folder Structure
+
 ```bash
 ~/.dbt/
 │

@@ -91,15 +91,15 @@ version: 2
 
 models:
   - name: stg_activities
-    description: "Cleaned and standardized Strava activity data."
+    description: 'Cleaned and standardized Strava activity data.'
     columns:
       - name: activity_id
-        description: "Unique identifier for each activity."
+        description: 'Unique identifier for each activity.'
         tests:
           - not_null
           - unique
       - name: athlete_id
-        description: "Foreign key linking to the athlete dimension."
+        description: 'Foreign key linking to the athlete dimension.'
         tests:
           - not_null
 ```

@@ -97,15 +97,15 @@ version: 2
 
 models:
   - name: fct_activities
-    description: "Fact table representing individual Strava activities."
+    description: 'Fact table representing individual Strava activities.'
     columns:
       - name: activity_id
-        description: "Unique identifier for each activity."
+        description: 'Unique identifier for each activity.'
         tests:
           - not_null
           - unique
       - name: athlete_id
-        description: "Foreign key to dim_athletes."
+        description: 'Foreign key to dim_athletes.'
         tests:
           - relationships:
               to: ref('dim_athletes')

@@ -28,12 +28,12 @@ st.image(
 st.subheader('Personal Details')
 st.markdown(
     f"""
-**Username:** {athlete['username']}  # noqa W291
-**Bio:** {athlete['bio']}  # noqa W291
-**Athlete ID:** {athlete['athlete_id']}  # noqa W291
-**Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  # noqa W291
-**Gender:** {athlete['sex']}  # noqa W291
-**Premium Member:** {athlete['is_premium_user']}  # noqa W291
+**Username:** {athlete['username']}  
+**Bio:** {athlete['bio']}  
+**Athlete ID:** {athlete['athlete_id']}  
+**Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
+**Gender:** {athlete['sex']}  
+**Premium Member:** {athlete['is_premium_user']}  
 **Created At:** {athlete['created_at']}
-"""
+"""  # noqa: W291
 )

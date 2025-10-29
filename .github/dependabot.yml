@@ -1,26 +1,26 @@
 version: 2
 updates:
   # 1. Python Dependencies (requirements.txt or pyproject.toml)
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: 'pip'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 5
     commit-message:
-      prefix: "deps(pip):"
-      include: "scope"
+      prefix: 'deps(pip):'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "security"
+      - 'dependencies'
+      - 'security'
 
   # 2. GitHub Actions (z. B. actions/checkout, setup-python)
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     commit-message:
-      prefix: "deps(actions):"
-      include: "scope"
+      prefix: 'deps(actions):'
+      include: 'scope'
     labels:
-      - "ci"
+      - 'ci'
       

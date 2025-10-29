@@ -30,10 +30,10 @@ with col2:
         f"""
         ### {athlete['firstname']} {athlete['lastname']}
         {athlete['bio']}
-        **Username:** {athlete['username']}  # noqa W291
-        **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  # noqa W291
+        **Username:** {athlete['username']}  
+        **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
         **Gender:** {athlete['sex']}
-        """
+        """  # noqa: W291
     )
 
 st.markdown('---')

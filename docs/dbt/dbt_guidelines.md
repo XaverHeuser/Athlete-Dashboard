@@ -169,10 +169,10 @@ Every model must have a corresponding `schema.yml` file that defines:
 version: 2
 models:
   - name: stg_activities
-    description: "Cleans and standardizes raw Strava activity data."
+    description: 'Cleans and standardizes raw Strava activity data.'
     columns:
       - name: activity_id
-        description: "Unique identifier for each activity."
+        description: 'Unique identifier for each activity.'
         tests:
           - not_null
           - unique
