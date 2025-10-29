@@ -30,11 +30,11 @@ with col2:
         f"""
         ### {athlete['firstname']} {athlete['lastname']}
         {athlete['bio']}
-        **Username:** {athlete['username']}  # noqa W291
-        **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  # noqa W291
+        **Username:** {athlete['username']}  
+        **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
         **Gender:** {athlete['sex']}
-        """
-    )
+        """ 
+    ) # noqa: W291
 
 st.markdown('---')
 
@@ -57,5 +57,5 @@ col1.metric('YTD Ride Distance', f'{stats["ytd_ride_distance_m"] / 1000:.1f} km'
 col2.metric('YTD Run Distance', f'{stats["ytd_run_distance_m"] / 1000:.1f} km')
 col3.metric('YTD Swim Distance', f'{stats["ytd_swim_distance_m"] / 1000:.1f} km')
 
-st.caption(f'Last updated: {pd.to_datetime(stats['snapshot_ts']).date()}')
+st.caption(f'Last updated: {pd.to_datetime(stats["snapshot_ts"]).date()}')
 st.markdown('---')
