@@ -16,7 +16,7 @@ Create a personal data platform for your training history. Pull activities from 
 
 - Containers: Dockerfile (EL job) and Dockerfile.dbt (dbt runner)
 - Infra scaffolding: cloudbuild.yaml
-- dbt project: dbt_athlete_dashboard/
+- dbt project: dbt/
 - Python src for ingestion: src/
 - Exploration: notebooks/
 
@@ -51,7 +51,7 @@ Create a personal data platform for your training history. Pull activities from 
 ```bash
 Athlete-Dashboard/
 ├─ .github/                     # CI configs (future)
-├─ dbt_athlete_dashboard/       # dbt project (models, seeds, tests, macros)
+├─ dbt/                         # dbt project (models, seeds, tests, macros)
 ├─ docs/                        # Documentation (architecture, how‑tos)
 ├─ notebooks/                   # Jupyter exploration
 ├─ src/                         # Python EL job (Strava → BigQuery)
