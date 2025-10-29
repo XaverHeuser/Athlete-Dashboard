@@ -7,46 +7,46 @@ models:
 
     columns:
       - name: athlete_id
-        description: "Unique identifier for the athlete (primary key)."
+        description: 'Unique identifier for the athlete (primary key).'
         tests:
           - not_null
           - unique
       - name: firstname
-        description: "Athlete's first name, formatted in title case."
+        description: 'Athlete's first name, formatted in title case.'
       - name: lastname
-        description: "Athlete's last name, formatted in title case."
+        description: 'Athlete's last name, formatted in title case.'
       - name: username
-        description: "Athlete's username on Strava."
+        description: 'Athlete's username on Strava.'
       - name: bio
-        description: "Short biography text from the athlete's profile."
+        description: 'Short biography text from the athlete's profile.'
       - name: city
-        description: "City associated with the athlete's location (default 'Unknown')."
+        description: 'City associated with the athlete's location (default 'Unknown').'
       - name: state
-        description: "State or region of the athlete (default 'Unknown')."
+        description: 'State or region of the athlete (default 'Unknown').'
       - name: country
-        description: "Country of the athlete (default 'Unknown')."
+        description: 'Country of the athlete (default 'Unknown').'
       - name: sex
-        description: "Gender of the athlete (as reported by Strava: 'M', 'F', or NULL)."
+        description: 'Gender of the athlete (as reported by Strava: 'M', 'F', or NULL).'
         tests:
           - accepted_values:
               values: ['M', 'F']
 
       - name: is_premium_user
-        description: "Boolean flag indicating if the athlete has Premium or Summit membership."
+        description: 'Boolean flag indicating if the athlete has Premium or Summit membership.'
       - name: weight_kg
-        description: "Athlete's weight in kilograms (rounded to 1 decimal)."
+        description: 'Athlete's weight in kilograms (rounded to 1 decimal).'
       - name: profile_medium_img_url
-        description: "URL for the athlete's medium-sized profile image."
+        description: 'URL for the athlete's medium-sized profile image.'
       - name: profile_img_url
-        description: "URL for the athlete's full-sized profile image."
+        description: 'URL for the athlete's full-sized profile image.'
 
       - name: created_at
-        description: "Timestamp when the athlete account was created on Strava."
+        description: 'Timestamp when the athlete account was created on Strava.'
         tests:
           - not_null
 
       - name: mart_loaded_at
-        description: "Timestamp when this record was last loaded into the mart layer."
+        description: 'Timestamp when this record was last loaded into the mart layer.'
 
   - name: fct_athlete_stats_snapshot
     columns:

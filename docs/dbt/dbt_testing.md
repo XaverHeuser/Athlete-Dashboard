@@ -47,22 +47,22 @@ version: 2
 
 models:
   - name: stg_activities
-    description: "Cleans and standardizes Strava activity data."
+    description: 'Cleans and standardizes Strava activity data.'
     columns:
       - name: activity_id
-        description: "Unique identifier for each activity."
+        description: 'Unique identifier for each activity.'
         tests:
           - not_null
           - unique
       - name: athlete_id
-        description: "Foreign key to dim_athletes."
+        description: 'Foreign key to dim_athletes.'
         tests:
           - not_null
           - relationships:
               to: ref('dim_athletes')
               field: athlete_id
       - name: activity_type
-        description: "Type of sport or activity (e.g., Run, Ride, Swim)."
+        description: 'Type of sport or activity (e.g., Run, Ride, Swim).'
         tests:
           - accepted_values:
               values: ['Run', 'Ride', 'Swim']
@@ -108,7 +108,7 @@ where activity_id is null
 | **`unique`**              | Ensures column values are unique.               | `- unique`                                                      | `select column, count(*) from table group by column having count(*) > 1;`      |
 | **`accepted_values`**     | Restricts a column to predefined values.        | `- accepted_values: {values: ['Run','Ride']}`                   | `select * from table where column not in ('Run','Ride');`                      |
 | **`relationships`**       | Validates foreign key integrity between models. | `- relationships: {to: ref('dim_athletes'), field: athlete_id}` | `select * from child where athlete_id not in (select athlete_id from parent);` |
-| **`expression_is_true`**  | Ensures a condition holds for all rows.         | `- expression_is_true: {expression: "distance_m > 0"}`          | `select * from table where not (distance_m > 0);`                              |
+| **`expression_is_true`**  | Ensures a condition holds for all rows.         | `- expression_is_true: {expression: 'distance_m > 0'}`          | `select * from table where not (distance_m > 0);`                              |
 | **`not_accepted_values`** | Fails if a column contains disallowed values.   | `- not_accepted_values: {values: ['Error','Unknown']}`          | `select * from table where column in ('Error','Unknown');`                     |
 
 ---
@@ -226,7 +226,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - name: Install dbt
         run: pip install dbt-bigquery
       - name: Run dbt build

@@ -20,4 +20,4 @@ ENV DBT_PROFILES_DIR=/app
 ENV DBT_PROJECT_DIR=/app/dbt
 
 # Default command
-CMD ["bash", "-c", "dbt debug && dbt deps && dbt run && dbt test"]
+CMD ['bash', '-c', 'dbt debug && dbt deps && dbt run && dbt test']

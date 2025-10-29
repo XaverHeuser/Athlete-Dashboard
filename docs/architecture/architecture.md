@@ -20,7 +20,7 @@ This project follows a modern **ELT** pattern on Google Cloud: a scheduled Cloud
 ```
 +------------------+        +---------------------+        +------------------------------+
 | Google Cloud     |        | Cloud Run:          |        | BigQuery                     |
-| Scheduler        +------->+ "extract-load" job  +------->+ raw.strava_activities        |
+| Scheduler        +------->+ 'extract-load' job  +------->+ raw.strava_activities        |
 | (cron)           |        | (Python, Docker)    |        |  (Bronze)                    |
 +------------------+        +---------------------+        +---------------+--------------+
                                                                      | (dbt transforms)

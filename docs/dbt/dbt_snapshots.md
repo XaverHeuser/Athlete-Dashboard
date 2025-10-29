@@ -206,7 +206,7 @@ version: 2
 
 snapshots:
   - name: athletes_snapshot
-    description: "Tracks historical attribute changes for each athlete."
+    description: 'Tracks historical attribute changes for each athlete.'
     columns:
       - name: athlete_id
         tests:

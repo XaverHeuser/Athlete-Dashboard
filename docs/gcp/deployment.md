@@ -64,7 +64,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run your script
-CMD ["python", "src/main.py"]
+CMD ['python', 'src/main.py']
 ```
 
 > Tip: Use `.dockerignore` to exclude unnecessary files (e.g., `.git`, `__pycache__`, etc.) for faster builds.
@@ -140,12 +140,12 @@ Or create cloudbuild.yaml:
 ```yaml
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ["build",
-           "-t", "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest",
-           "-f", "Dockerfile.dbt",
-           "."]
+    args: ['build',
+           '-t', 'europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest',
+           '-f', 'Dockerfile.dbt',
+           '.']
 images:
-  - "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest"
+  - 'europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/dbt-job:latest'
 ```
 
 Build image with yaml:

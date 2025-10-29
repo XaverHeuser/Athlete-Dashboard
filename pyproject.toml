@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ['setuptools>=68', 'wheel']
+build-backend = 'setuptools.build_meta'
 
 [project]
-name = "athlete-dashboard"
-version = "0.1.0"
-requires-python = ">=3.9"
+name = 'athlete-dashboard'
+version = '0.1.0'
+requires-python = '>=3.9'
 
 [tool.setuptools.packages.find]
-include = ["src"]
+include = ['src']

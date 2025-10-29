@@ -6,14 +6,14 @@ sources:
     schema: strava_data                    # dataset name in BigQuery
     tables:
       - name: raw_activities
-        description: "Raw Strava activities data."
+        description: 'Raw Strava activities data.'
       - name: raw_athlete_info
-        description: "Strava athlete profile information."
+        description: 'Strava athlete profile information.'
       - name: raw_athlete_stats
-        description: "Strava athlete statistics data."
+        description: 'Strava athlete statistics data.'
       - name: dim_athlete_info
-        description: "Dimension table for Strava athlete information."
+        description: 'Dimension table for Strava athlete information.'
       - name: fct_athlete_stats_snapshot
-        description: "Fact table for Strava athlete statistics snapshots."
+        description: 'Fact table for Strava athlete statistics snapshots.'
       - name: fct_athlete_stats_latest
-        description: "Fact table for latest Strava athlete statistics."
+        description: 'Fact table for latest Strava athlete statistics.'
