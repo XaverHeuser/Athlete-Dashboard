@@ -1,4 +1,4 @@
-dbt_athlete_dashboard:
+dbt:
   target: prod
   outputs:
     prod:
