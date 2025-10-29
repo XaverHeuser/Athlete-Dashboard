@@ -35,5 +35,5 @@ st.markdown(
 **Gender:** {athlete['sex']}  
 **Premium Member:** {athlete['is_premium_user']}  
 **Created At:** {athlete['created_at']}
-"""
-) # noqa: W291
+"""  # noqa: W291
+)

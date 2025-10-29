@@ -33,8 +33,8 @@ with col2:
         **Username:** {athlete['username']}  
         **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
         **Gender:** {athlete['sex']}
-        """ 
-    ) # noqa: W291
+        """  # noqa: W291
+    )
 
 st.markdown('---')
 
