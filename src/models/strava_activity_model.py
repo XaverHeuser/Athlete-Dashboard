@@ -4,7 +4,6 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
-
 class StravaAthlete(BaseModel):
     id: Optional[int] = None
     resource_state: Optional[int] = None
@@ -26,7 +25,7 @@ class StravaActivity(BaseModel):
     moving_time: Optional[int] = None
     elapsed_time: Optional[int] = None
     total_elevation_gain: Optional[float] = None
-    type: Optional[str] = None
+    type: Optional[str] = None # 'Deprecated. Prefer to use sport_type'
     sport_type: Optional[str] = None
     workout_type: Optional[float] = None
     id: int
@@ -54,10 +53,10 @@ class StravaActivity(BaseModel):
     commute: Optional[bool] = None
     manual: Optional[bool] = None
     private: Optional[bool] = None
-    visibility: Optional[str] = None
     flagged: Optional[bool] = None
     has_kudoed: Optional[bool] = None
     from_accepted_tag: Optional[bool] = None
+    visibility: Optional[str] = None
 
     # Equipment & mapping
     gear_id: Optional[str] = None
@@ -87,7 +86,7 @@ class StravaActivity(BaseModel):
     elev_low: Optional[float] = None
 
     # Upload info
-    upload_id: Optional[float] = None
+    upload_id: Optional[int] = None
     upload_id_str: Optional[str] = None
     external_id: Optional[str] = None
     pr_count: Optional[int] = None
