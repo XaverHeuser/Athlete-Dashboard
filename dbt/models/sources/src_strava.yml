@@ -11,9 +11,3 @@ sources:
         description: 'Strava athlete profile information.'
       - name: raw_athlete_stats
         description: 'Strava athlete statistics data.'
-      - name: dim_athlete_info
-        description: 'Dimension table for Strava athlete information.'
-      - name: fct_athlete_stats_snapshot
-        description: 'Fact table for Strava athlete statistics snapshots.'
-      - name: fct_athlete_stats_latest
-        description: 'Fact table for latest Strava athlete statistics.'
