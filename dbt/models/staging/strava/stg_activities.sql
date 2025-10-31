@@ -94,4 +94,4 @@ base_enriched AS (
     FROM base_raw br
 )
 
-SELECT * FROM base_enriched;
+SELECT * FROM base_enriched
