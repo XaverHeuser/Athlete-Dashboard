@@ -149,4 +149,3 @@ try:
 
 except Exception as e:
     st.warning(f"Trend chart not available: {e}")
-

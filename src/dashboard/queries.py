@@ -47,3 +47,15 @@ def load_stats_history() -> pd.DataFrame:
         ORDER BY snapshot_date
     """
     return client.query(query).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_activities() -> pd.DataFrame:
+    """Load all activities from fact table."""
+    query = """
+        SELECT *
+        FROM `athlete-dashboard-467718.strava_marts.fct_activities`
+        ORDER BY start_date_local DESC
+    """
+    return client.query(query).to_dataframe()
+
