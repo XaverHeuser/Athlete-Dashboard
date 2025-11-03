@@ -8,18 +8,17 @@ import streamlit as st
 # --- BigQuery client setup ---
 try:
     creds = service_account.Credentials.from_service_account_info(
-        st.secrets['gcp_service_account']
+        st.secrets["gcp_service_account"]
     )
     client = bigquery.Client(credentials=creds, project=creds.project_id)
 except Exception:
-    # Local dev fallback: GOOGLE_APPLICATION_CREDENTIALS must be set
+    # Local dev fallback (requires GOOGLE_APPLICATION_CREDENTIALS)
     client = bigquery.Client()
 
 
 # ---------- Queries ----------
 
-
-@st.cache_data(show_spinner=False)  # type: ignore[misc]
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_athlete_data() -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
     query = """
@@ -29,9 +28,9 @@ def load_athlete_data() -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-@st.cache_data(show_spinner=False)  # type: ignore[misc]
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_latest_stats() -> pd.DataFrame:
-    """Load the latest athlete statistics snapshot (one row per athlete)."""
+    """Load the latest athlete statistics snapshot."""
     query = """
         SELECT *
         FROM `athlete-dashboard-467718.strava_marts.fct_athlete_stats_latest`
@@ -39,7 +38,7 @@ def load_latest_stats() -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-@st.cache_data(show_spinner=False)  # type: ignore[misc]
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_stats_history() -> pd.DataFrame:
     """Load all historical athlete statistics snapshots."""
     query = """
