@@ -8,7 +8,7 @@ import streamlit as st
 # --- BigQuery client setup ---
 try:
     creds = service_account.Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"]
+        st.secrets['gcp_service_account']
     )
     client = bigquery.Client(credentials=creds, project=creds.project_id)
 except Exception:
@@ -17,6 +17,7 @@ except Exception:
 
 
 # ---------- Queries ----------
+
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_athlete_data() -> pd.DataFrame:
@@ -58,4 +59,3 @@ def load_activities() -> pd.DataFrame:
         ORDER BY start_date_local DESC
     """
     return client.query(query).to_dataframe()
-

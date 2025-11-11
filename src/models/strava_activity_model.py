@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+
 class StravaAthlete(BaseModel):
     id: Optional[int] = None
     resource_state: Optional[int] = None
@@ -25,7 +26,7 @@ class StravaActivity(BaseModel):
     moving_time: Optional[int] = None
     elapsed_time: Optional[int] = None
     total_elevation_gain: Optional[float] = None
-    type: Optional[str] = None # 'Deprecated. Prefer to use sport_type'
+    type: Optional[str] = None  # 'Deprecated. Prefer to use sport_type'
     sport_type: Optional[str] = None
     workout_type: Optional[float] = None
     id: int
