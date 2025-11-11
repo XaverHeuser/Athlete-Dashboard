@@ -1,4 +1,4 @@
-name: 'dbt'
+name: 'athlete_dashboard'
 version: '1.0.0'
 config-version: 2
 
@@ -20,7 +20,7 @@ clean-targets:
 
 # Project-wide configurations
 models:
-  dbt_:
+  athlete_dashboard:
     
     # Default (if not overridden)
     +materialized: view
@@ -38,6 +38,6 @@ models:
 
 
 snapshots:
-  dbt:
+  athlete_dashboard:
     +target_schema: strava_snapshots   # creates a dataset for snapshots
     

@@ -1,5 +1,6 @@
 """Detailed Athlete Profile."""
 
+import pandas as pd
 from queries import load_athlete_data
 import streamlit as st
 
@@ -22,10 +23,12 @@ st.title(f'{athlete["firstname"]} {athlete["lastname"]}')
 st.image(
     athlete['profile_img_url'],
     caption=f'{athlete["firstname"]} {athlete["lastname"]}',
-    width=300,
+    width=320,
 )
 
-st.subheader('Personal Details')
+st.divider()
+st.subheader('👤 Personal Details')
+
 st.markdown(
     f"""
 **Username:** {athlete['username']}  
@@ -33,7 +36,14 @@ st.markdown(
 **Athlete ID:** {athlete['athlete_id']}  
 **Location:** {athlete['city']}, {athlete['state']}, {athlete['country']}  
 **Gender:** {athlete['sex']}  
-**Premium Member:** {athlete['is_premium_user']}  
-**Created At:** {athlete['created_at']}
+**Premium Member:** {'✅ Yes' if athlete['is_premium_user'] else '❌ No'}  
+**Weight:** {athlete['weight_kg']} kg  
+**Account Created:** {pd.to_datetime(athlete['created_at']).date()}  
+**First Activity:** {pd.to_datetime(athlete['first_activity_date']).date()}  
+**Last Activity:** {pd.to_datetime(athlete['last_activity_date']).date()}  
+**Total Activities:** {int(athlete['total_activities'])}
 """  # noqa: W291
 )
+
+st.divider()
+st.caption(f'Data last loaded at: {pd.to_datetime(athlete["mart_loaded_at"])}')

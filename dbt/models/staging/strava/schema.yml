@@ -2,134 +2,185 @@ version: 2
 
 models:
   - name: stg_activities
+    description: "Staging model for Strava activities. One row = one Strava activity. Casts types, normalizes units, and adds basic derived metrics and time breakdowns."
     columns:
+
       # Core identifiers
       - name: activity_id
-        description: 'Unique identifier for each activity.'
+        description: "Unique identifier for each activity in Strava."
         tests:
           - not_null
           - unique
 
       - name: athlete_id
-        description: 'Unique identifier of the athlete who performed the activity.'
+        description: "Unique identifier of the athlete who performed the activity."
         tests:
           - not_null
 
       - name: map_id
-        description: 'Identifier for the Strava map object linked to this activity.'
+        description: "Identifier of the map object associated with this activity in Strava. Used to look up polylines and map metadata."
+
+      - name: gear_id
+        description: "Identifier of the gear (bike, shoes) used for this activity."
 
       # Basic info
-      - name: name
-        description: 'Activity name as entered in Strava (e.g., Morning Ride).'
+      - name: activity_name
+        description: "Activity title as recorded in Strava (e.g. 'Morning Ride')."
         tests:
           - not_null
 
-      - name: type
-        description: 'Deprecated Strava activity type field (legacy).'
-
       - name: sport_type
-        description: 'Current Strava activity sport type (e.g., Run, Ride, Swim).'
+        description: "Canonical Strava sport type (Run, Ride, Swim, VirtualRide, etc.)."
         tests:
           - not_null
           # - accepted_values:
-          #   arguments:
           #     values: ['Ride', 'Run', 'Swim', 'Hike', 'Walk', 'VirtualRide', 'WeightTraining', 'InlineSkate']
 
-      - name: distance_m
-        description: 'Distance covered in meters.'
+      - name: workout_type
+        description: "Workout sub-type / interval type (Strava field, sometimes null)."
 
+      - name: distance_m
+        description: "Distance covered in meters."
 
       - name: moving_time_s
-        description: 'Time spent moving, in seconds.'
+        description: "Active moving time in seconds (excludes pauses)."
+
       - name: elapsed_time_s
-        description: 'Total elapsed time including pauses, in seconds.'
+        description: "Total elapsed time in seconds (includes pauses)."
+
       - name: elevation_gain_m
-        description: 'Total elevation gain in meters.'
+        description: "Total elevation gain in meters."
 
       # Timestamps
       - name: start_date_utc
-        description: 'Start time in UTC.'
+        description: "Activity start time in UTC, as reported by Strava."
         tests:
           - not_null
 
       - name: start_date_local
-        description: 'Start time in the athletes local timezone.'
+        description: "Activity start time localized to the athlete's timezone."
+        tests:
+          - not_null
+
       - name: timezone
-        description: 'Timezone string (e.g. Europe/Vienna).'
+        description: "IANA timezone label for the activity (e.g. 'Europe/Vienna')."
+
+      - name: utc_offset_s
+        description: "UTC offset of the activity's local time, in seconds."
+
+      # Time breakdowns (derived)
+      - name: activity_date_local
+        description: "Local calendar date (YYYY-MM-DD) of the activity start."
+
+      - name: activity_year
+        description: "Local activity start year (e.g. 2025)."
+
+      - name: activity_month
+        description: "Local activity start month number (1-12)."
+
+      - name: activity_weekday
+        description: "Day of week of the start time (1=Sunday in BigQuery, 2=Monday, ... 7=Saturday)."
+
+      - name: activity_hour_local
+        description: "Hour of day (0-23) when the activity started, in local time."
 
       # Location
       - name: location_city
-        description: 'City of activity (if available).'
+        description: "City of the activity, if provided by Strava."
       - name: location_state
-        description: 'State or region of activity.'
+        description: "Region / state of the activity, if provided."
       - name: location_country
-        description: 'Country where the activity occurred.'
+        description: "Country of the activity."
 
-      # Performance
-      - name: avg_speed_mps
-        description: 'Average speed in meters per second.'
-      - name: max_speed_mps
-        description: 'Maximum speed in meters per second.'
-      - name: avg_heartrate
-        description: 'Average heart rate (bpm).'
-      - name: max_heartrate
-        description: 'Maximum heart rate (bpm).'
-      - name: avg_cadence
-        description: 'Average cadence (rpm).'
-      - name: avg_temp_c
-        description: 'Average temperature (°C).'
-      - name: energy_kj
-        description: 'Energy output in kilojoules.'
-      - name: avg_watts
-        description: 'Average power output in watts.'
-      - name: max_watts
-        description: 'Maximum power output in watts.'
-      - name: weighted_watts
-        description: 'Weighted average power over the activity.'
-
-      # Meta flags
-      - name: is_trainer
-        description: 'TRUE if performed on a trainer (indoor).'
-      - name: is_commute
-        description: 'TRUE if marked as commute.'
-      - name: is_manual
-        description: 'TRUE if manually entered activity.'
-      - name: is_private
-        description: 'TRUE if private activity.'
-      - name: is_flagged
-        description: 'TRUE if flagged on Strava.'
-      - name: has_heartrate
-        description: 'TRUE if heart rate data available.'
-      - name: visibility
-        description: 'Visibility setting of the activity.'
-
-      # Engagement
+      # Engagement / social
       - name: achievement_count
-        description: 'Number of achievements earned.'
+        description: "Number of segment achievements earned in this activity."
       - name: kudos_count
-        description: 'Number of kudos received.'
+        description: "Number of kudos received from other athletes."
       - name: comment_count
-        description: 'Number of comments.'
+        description: "Number of comments left on this activity."
+      - name: athlete_count
+        description: "Number of athletes in the activity (e.g. group ride)."
       - name: photo_count
-        description: 'Number of photos uploaded.'
+        description: "Number of photos associated with this activity."
+
+      # Boolean flags
+      - name: is_trainer
+        description: "TRUE if the activity was performed on a trainer (indoor ride / treadmill)."
+      - name: is_commute
+        description: "TRUE if the activity is marked as a commute."
+      - name: is_manual
+        description: "TRUE if this activity was manually entered (not recorded via device)."
+      - name: is_flagged
+        description: "TRUE if the activity is flagged in Strava."
+      - name: has_heartrate
+        description: "TRUE if heart rate data is present for this activity."
+      - name: visibility
+        description: "Visibility setting for this activity (e.g. 'everyone', 'followers_only', etc.)."
+
+      # Performance (core telemetry)
+      - name: avg_speed_mps
+        description: "Average moving speed in meters per second (distance/moving_time as understood by Strava)."
+
+      - name: max_speed_mps
+        description: "Maximum speed in meters per second."
+
+      - name: avg_heartrate
+        description: "Average heart rate in beats per minute."
+      - name: max_heartrate
+        description: "Maximum heart rate in beats per minute."
+
+      - name: avg_cadence
+        description: "Average cadence (typically RPM for cycling, or steps/min for running depending on sport)."
+
+      - name: avg_temp_c
+        description: "Average temperature in Celsius for the activity."
+      - name: energy_kj
+        description: "Total reported work in kilojoules."
+      - name: avg_watts
+        description: "Average power in watts."
+      - name: max_watts
+        description: "Maximum instantaneous power in watts."
+      - name: weighted_watts
+        description: "Weighted average power (Strava's 'weighted_average_watts')."
+
+      - name: elev_high_m
+        description: "Highest elevation reached during the activity, in meters."
+      - name: elev_low_m
+        description: "Lowest elevation reached during the activity, in meters."
+
+      # Derived performance metrics
+      - name: avg_pace_min_per_km
+        description: "Average pace in minutes per kilometer, computed as (moving_time / distance). Lower is faster."
+
+      - name: avg_speed_kph
+        description: "Average moving speed in kilometers per hour (converted from avg_speed_mps)."
+
+      - name: max_speed_kph
+        description: "Maximum speed in kilometers per hour (converted from max_speed_mps)."
+
+      - name: avg_speed_overall_kph
+        description: "Overall door-to-door speed in km/h, computed as distance / elapsed_time (includes pauses)."
+
+      - name: idle_time_s
+        description: "Seconds not moving = elapsed_time_s - moving_time_s. Higher often means lots of stopping (traffic lights, coffee, photos)."
 
       # Map info
       - name: map_polyline
-        description: 'Encoded map polyline for the route.'
-      - name: map_resource_state
-        description: 'Strava map resource state integer.'
+        description: "Encoded polyline of the route for mapping / visualization."
 
-      # Upload / Metadata
+      # Upload / lineage
       - name: upload_id
-        description: 'Upload identifier for this activity.'
+        description: "Upload identifier from Strava for this activity."
       - name: upload_id_str
-        description: 'Upload identifier as string.'
+        description: "Upload identifier as string (Strava sometimes provides both int and string forms)."
       - name: external_id
-        description: 'External reference (e.g., from device file).'
-      - name: resource_state
-        description: 'Resource state flag from Strava API.'
+        description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
+
       - name: _staged_at
-        description: 'Timestamp when data was staged by dbt.'
+        description: "Warehouse timestamp when this row was staged via dbt."
+        tests:
+          - not_null
 
   - name: stg_athlete_info
     description: >
