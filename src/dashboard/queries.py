@@ -19,7 +19,7 @@ except Exception:
 # ---------- Queries ----------
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_athlete_data() -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
     query = """
@@ -29,7 +29,7 @@ def load_athlete_data() -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_latest_stats() -> pd.DataFrame:
     """Load the latest athlete statistics snapshot."""
     query = """
@@ -39,7 +39,7 @@ def load_latest_stats() -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_stats_history() -> pd.DataFrame:
     """Load all historical athlete statistics snapshots."""
     query = """
@@ -50,7 +50,7 @@ def load_stats_history() -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_activities() -> pd.DataFrame:
     """Load all activities from fact table."""
     query = """
