@@ -4,7 +4,7 @@ google-cloud-bigquery==3.38.0
 matplotlib==3.10.7 
 numpy==2.3.3
 pandas==2.3.3
-polyline==2.0.3
+polyline==2.0.4
 pyarrow==21.0.0
 pydantic==2.12.5
 python-dotenv==1.2.1
