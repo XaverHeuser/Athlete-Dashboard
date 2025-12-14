@@ -119,7 +119,7 @@ def load_time_series(
     if conditions:
         where_clause = "WHERE " + " AND ".join(conditions)
 
-    query = f"""
+    query = f"""  # nosec B608: metric, table and columns are allowlisted; values are parameterized
         SELECT
             {time_col} AS period,
             SUM({metric}) AS value
