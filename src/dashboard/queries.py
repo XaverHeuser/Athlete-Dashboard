@@ -65,56 +65,73 @@ def load_activities() -> pd.DataFrame:
 def load_time_series(
     granularity: str,
     metric: str,
-    sport_type: str | None = None,  # <-- NEU
+    sport_type: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> pd.DataFrame:
-    """
-    Load aggregated time series.
-    - If sport_type is None: all sports aggregated
-    - Else: filtered to one sport
-    """
 
     table_map = {
-        'daily': 'athlete-dashboard-467718.strava_marts.fct_activities_daily',
-        'weekly': 'athlete-dashboard-467718.strava_marts.fct_activities_weekly',
-        'monthly': 'athlete-dashboard-467718.strava_marts.fct_activities_monthly',
-        'yearly': 'athlete-dashboard-467718.strava_marts.fct_activities_yearly',
+        "daily": "athlete-dashboard-467718.strava_marts.fct_activities_daily",
+        "weekly": "athlete-dashboard-467718.strava_marts.fct_activities_weekly",
+        "monthly": "athlete-dashboard-467718.strava_marts.fct_activities_monthly",
+        "yearly": "athlete-dashboard-467718.strava_marts.fct_activities_yearly",
     }
 
     time_col_map = {
-        'daily': 'activity_date',
-        'weekly': 'activity_week',
-        'monthly': 'activity_month',
-        'yearly': 'activity_year',
+        "daily": "activity_date",
+        "weekly": "activity_week",
+        "monthly": "activity_month",
+        "yearly": "activity_year",
     }
+
+    if granularity not in table_map:
+        raise ValueError("Invalid granularity")
+
+    if metric not in {
+        "total_distance_m",
+        "total_activities",
+        "total_moving_time_s",
+    }:
+        raise ValueError("Invalid metric")
 
     table = table_map[granularity]
     time_col = time_col_map[granularity]
 
-    where_clauses = []
+    conditions = []
+    params = []
 
     if sport_type:
-        where_clauses.append(f"sport_type = '{sport_type}'")
+        conditions.append("sport_type = @sport_type")
+        params.append(
+            bigquery.ScalarQueryParameter("sport_type", "STRING", sport_type)
+        )
 
     if start_date and end_date:
-        where_clauses.append(f"{time_col} BETWEEN '{start_date}' AND '{end_date}'")
+        conditions.append(f"{time_col} BETWEEN @start_date AND @end_date")
+        params.extend(
+            [
+                bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
+                bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
+            ]
+        )
 
-    where_sql = ''
-    if where_clauses:
-        where_sql = 'WHERE ' + ' AND '.join(where_clauses)
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
 
     query = f"""
         SELECT
             {time_col} AS period,
             SUM({metric}) AS value
         FROM `{table}`
-        {where_sql}
+        {where_clause}
         GROUP BY period
         ORDER BY period
     """
 
-    return client.query(query).to_dataframe()
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+
+    return client.query(query, job_config=job_config).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
