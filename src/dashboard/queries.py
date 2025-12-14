@@ -69,30 +69,29 @@ def load_time_series(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> pd.DataFrame:
-
     table_map = {
-        "daily": "athlete-dashboard-467718.strava_marts.fct_activities_daily",
-        "weekly": "athlete-dashboard-467718.strava_marts.fct_activities_weekly",
-        "monthly": "athlete-dashboard-467718.strava_marts.fct_activities_monthly",
-        "yearly": "athlete-dashboard-467718.strava_marts.fct_activities_yearly",
+        'daily': 'athlete-dashboard-467718.strava_marts.fct_activities_daily',
+        'weekly': 'athlete-dashboard-467718.strava_marts.fct_activities_weekly',
+        'monthly': 'athlete-dashboard-467718.strava_marts.fct_activities_monthly',
+        'yearly': 'athlete-dashboard-467718.strava_marts.fct_activities_yearly',
     }
 
     time_col_map = {
-        "daily": "activity_date",
-        "weekly": "activity_week",
-        "monthly": "activity_month",
-        "yearly": "activity_year",
+        'daily': 'activity_date',
+        'weekly': 'activity_week',
+        'monthly': 'activity_month',
+        'yearly': 'activity_year',
     }
 
     if granularity not in table_map:
-        raise ValueError("Invalid granularity")
+        raise ValueError('Invalid granularity')
 
     if metric not in {
-        "total_distance_m",
-        "total_activities",
-        "total_moving_time_s",
+        'total_distance_m',
+        'total_activities',
+        'total_moving_time_s',
     }:
-        raise ValueError("Invalid metric")
+        raise ValueError('Invalid metric')
 
     table = table_map[granularity]
     time_col = time_col_map[granularity]
@@ -101,25 +100,21 @@ def load_time_series(
     params = []
 
     if sport_type:
-        conditions.append("sport_type = @sport_type")
-        params.append(
-            bigquery.ScalarQueryParameter("sport_type", "STRING", sport_type)
-        )
+        conditions.append('sport_type = @sport_type')
+        params.append(bigquery.ScalarQueryParameter('sport_type', 'STRING', sport_type))
 
     if start_date and end_date:
-        conditions.append(f"{time_col} BETWEEN @start_date AND @end_date")
-        params.extend(
-            [
-                bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
-                bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
-            ]
-        )
+        conditions.append(f'{time_col} BETWEEN @start_date AND @end_date')
+        params.extend([
+            bigquery.ScalarQueryParameter('start_date', 'DATE', start_date),
+            bigquery.ScalarQueryParameter('end_date', 'DATE', end_date),
+        ])
 
-    where_clause = ""
+    where_clause = ''
     if conditions:
-        where_clause = "WHERE " + " AND ".join(conditions)
-
-    query = f"""  # nosec B608: metric, table and columns are allowlisted; values are parameterized
+        where_clause = 'WHERE ' + ' AND '.join(conditions)
+    # nosec B608: metric, table and columns are allowlisted; values are parameterized
+    query = f"""
         SELECT
             {time_col} AS period,
             SUM({metric}) AS value
