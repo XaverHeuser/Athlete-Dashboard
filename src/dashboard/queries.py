@@ -113,7 +113,7 @@ def load_time_series(
     where_clause = ''
     if conditions:
         where_clause = 'WHERE ' + ' AND '.join(conditions)
-    
+
     query = f"""
         SELECT
             {time_col} AS period,
@@ -122,7 +122,7 @@ def load_time_series(
         {where_clause}
         GROUP BY period
         ORDER BY period
-    """ # nosec B608: metric, table and columns are allowlisted; values are parameterized
+    """  # nosec B608: metric, table and columns are allowlisted; values are parameterized
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
 
