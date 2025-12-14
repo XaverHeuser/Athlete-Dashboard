@@ -59,3 +59,78 @@ def load_activities() -> pd.DataFrame:
         ORDER BY start_date_local DESC
     """
     return client.query(query).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_time_series(
+    granularity: str,
+    metric: str,
+    sport_type: str | None = None,  # <-- NEU
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> pd.DataFrame:
+    """
+    Load aggregated time series.
+    - If sport_type is None: all sports aggregated
+    - Else: filtered to one sport
+    """
+
+    table_map = {
+        'daily': 'athlete-dashboard-467718.strava_marts.fct_activities_daily',
+        'weekly': 'athlete-dashboard-467718.strava_marts.fct_activities_weekly',
+        'monthly': 'athlete-dashboard-467718.strava_marts.fct_activities_monthly',
+        'yearly': 'athlete-dashboard-467718.strava_marts.fct_activities_yearly',
+    }
+
+    time_col_map = {
+        'daily': 'activity_date',
+        'weekly': 'activity_week',
+        'monthly': 'activity_month',
+        'yearly': 'activity_year',
+    }
+
+    table = table_map[granularity]
+    time_col = time_col_map[granularity]
+
+    where_clauses = []
+
+    if sport_type:
+        where_clauses.append(f"sport_type = '{sport_type}'")
+
+    if start_date and end_date:
+        where_clauses.append(f"{time_col} BETWEEN '{start_date}' AND '{end_date}'")
+
+    where_sql = ''
+    if where_clauses:
+        where_sql = 'WHERE ' + ' AND '.join(where_clauses)
+
+    query = f"""
+        SELECT
+            {time_col} AS period,
+            SUM({metric}) AS value
+        FROM `{table}`
+        {where_sql}
+        GROUP BY period
+        ORDER BY period
+    """
+
+    return client.query(query).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_sport_types() -> list[str]:
+    """
+    Load distinct sport types from activity facts.
+    """
+    query = """
+        SELECT DISTINCT sport_type
+        FROM `athlete-dashboard-467718.strava_marts.fct_activities_daily`
+        WHERE sport_type IS NOT NULL
+        ORDER BY sport_type
+    """
+
+    df: pd.DataFrame = client.query(query).to_dataframe()
+
+    sport_types: list[str] = [str(x) for x in df['sport_type'].dropna().tolist()]
+
+    return sport_types
