@@ -9,6 +9,7 @@ from ingestion.extractors.base import BaseExtractor
 from models.strava_activity_model import StravaActivity
 from models.strava_athlete_info_model import StravaAthleteInfo
 from models.strava_athlete_stats_model import StravaAthleteStats
+from models.strava_gear_model import StravaGear
 
 
 class StravaEndpoints:
@@ -30,6 +31,11 @@ class StravaEndpoints:
     def get_activities() -> str:
         """URL to fetch activities."""
         return f'{StravaEndpoints.BASE_URL}/athlete/activities'
+
+    @staticmethod
+    def get_gear_details(gear_id: str) -> str:
+        """URL to fetch gear details."""
+        return f'{StravaEndpoints.BASE_URL}/gear/{gear_id}'
 
 
 class StravaExtractor(BaseExtractor):
@@ -115,3 +121,19 @@ class StravaExtractor(BaseExtractor):
             f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.'
         )
         return all_activities
+
+    def fetch_gear_details(self, gear_id: str) -> StravaGear:
+        """Fetches gear details by gear ID."""
+        print(f'Start fetching gear details for gear ID: {gear_id}')
+        gear_url = StravaEndpoints.get_gear_details(gear_id)
+
+        try:
+            response = requests.get(gear_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            return StravaGear(**response.json())
+        except requests.RequestException as e:
+            print(f'HTTP error occurred: {e}')
+            raise
+        except Exception as e:
+            print(f'An unexpected error occurred: {e}')
+            raise
