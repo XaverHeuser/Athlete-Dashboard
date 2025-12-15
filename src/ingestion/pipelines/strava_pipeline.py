@@ -48,6 +48,14 @@ def run() -> None:
     activities_data = client.fetch_all_activities()
     df_activities = pd.DataFrame([a.model_dump() for a in activities_data])
 
+    # Extract gear details
+    gear_details = []
+    for gear_id in df_activities['gear_id'].unique():
+        if gear_id and gear_id is not None:
+            gear = client.fetch_gear_details(gear_id=gear_id)
+            gear_details.append(gear.model_dump())
+    df_gear_details = pd.DataFrame(gear_details)
+
     # Initialize BigQuery loader and load data
     loader = BigQueryLoader()
     try:
@@ -72,6 +80,14 @@ def run() -> None:
                 data=df_activities,
                 dataset=os.environ.get('BIGQUERY_DATASET'),
                 table_name=os.environ.get('BIGQUERY_RAW_ACTIVITIES'),
+                write_disposition='WRITE_TRUNCATE',
+            )
+
+        if not df_gear_details.empty:
+            loader.load_data(
+                data=df_gear_details,
+                dataset=os.environ.get('BIGQUERY_DATASET'),
+                table_name=os.environ.get('BIGQUERY_RAW_GEAR_DETAILS'),
                 write_disposition='WRITE_TRUNCATE',
             )
 
