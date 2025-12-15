@@ -306,3 +306,11 @@ models:
 
       - name: all_run_totals_elevation_gain_m
         description: 'All-time total elevation gain of runs (meters).'
+
+  - name: stg_seen_gear_ids
+    columns:
+      - name: gear_id
+        tests:
+          - not_null
+          - unique
+          
