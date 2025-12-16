@@ -3,9 +3,8 @@ Overview of athlete's gears from Strava API
 Structured by gear type, KPI-driven, minimal charts.
 """
 
-import streamlit as st
-import pandas as pd
 from queries import load_gear_details
+import streamlit as st
 
 # -------------------------------------------------
 # Page config
@@ -38,9 +37,7 @@ df['model_name'] = df['model_name'].fillna('')
 df['frame_type'] = df['frame_type'].fillna('')
 df['weight_kg'] = df['weight_kg'].round(2)
 
-df['status'] = df['is_retired'].map(
-    {True: 'Retired', False: 'Active'}
-)
+df['status'] = df['is_retired'].map({True: 'Retired', False: 'Active'})
 
 # -------------------------------------------------
 # Global KPIs
@@ -50,7 +47,7 @@ st.subheader('Overall')
 c1, c2, c3, c4 = st.columns(4)
 
 c1.metric('Total Gears', len(df))
-c2.metric('Total Distance (km)', f"{df['total_distance_km'].sum():,.1f}")
+c2.metric('Total Distance (km)', f'{df["total_distance_km"].sum():,.1f}')
 c3.metric('Active Gears', int((~df['is_retired']).sum()))
 c4.metric('Retired Gears', int(df['is_retired'].sum()))
 
@@ -76,11 +73,11 @@ for gear_type in GEAR_TYPE_ORDER:
     k1.metric('Count', len(subset))
     k2.metric(
         'Total Distance (km)',
-        f"{subset['total_distance_km'].sum():,.1f}",
+        f'{subset["total_distance_km"].sum():,.1f}',
     )
     k3.metric(
         'Avg Distance (km)',
-        f"{subset['total_distance_km'].mean():,.0f}",
+        f'{subset["total_distance_km"].mean():,.0f}',
     )
     k4.metric(
         'Active',
@@ -128,29 +125,25 @@ for gear_type in GEAR_TYPE_ORDER:
     import altair as alt
 
     with st.expander('Distance distribution'):
-        chart_df = (
-            subset[['name', 'total_distance_km']]
-            .sort_values('total_distance_km', ascending=False)
+        chart_df = subset[['name', 'total_distance_km']].sort_values(
+            'total_distance_km', ascending=False
         )
 
         chart = (
             alt.Chart(chart_df)
             .mark_bar()
             .encode(
-                x=alt.X(
-                    'name:N',
-                    sort='-y',
-                    title='Gear',
-                    axis=alt.Axis(labelAngle=0)
-                ),
+                x=alt.X('name:N', sort='-y', title='Gear', axis=alt.Axis(labelAngle=0)),
                 y=alt.Y(
                     'total_distance_km:Q',
                     title='Distance (km)',
-                    axis=alt.Axis(format=',.0f')
+                    axis=alt.Axis(format=',.0f'),
                 ),
                 tooltip=[
                     alt.Tooltip('name:N', title='Gear'),
-                    alt.Tooltip('total_distance_km:Q', title='Distance (km)', format=',.1f'),
+                    alt.Tooltip(
+                        'total_distance_km:Q', title='Distance (km)', format=',.1f'
+                    ),
                 ],
             )
             .properties(height=350)
