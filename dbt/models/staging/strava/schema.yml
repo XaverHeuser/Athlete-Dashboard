@@ -306,3 +306,18 @@ models:
 
       - name: all_run_totals_elevation_gain_m
         description: 'All-time total elevation gain of runs (meters).'
+
+  - name: stg_gear_info
+    description: >
+      Cleaned and typed staging model for Strava gear information.
+    
+    columns:
+      - name: gear_id
+        description: 'Unique identifier for the gear.'
+        tests:
+          - not_null
+          - unique
+
+      - name: name
+        description: 'Name of the gear as given by the athlete.'
+        

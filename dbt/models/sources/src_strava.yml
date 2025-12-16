@@ -11,3 +11,5 @@ sources:
         description: 'Strava athlete profile information.'
       - name: raw_athlete_stats
         description: 'Strava athlete statistics data.'
+      - name: raw_gear_details
+        description: 'Strava gear details data.'

@@ -62,6 +62,16 @@ def load_activities() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_gear_details() -> pd.DataFrame:
+    """Load gear details from dimension table."""
+    query = """
+        SELECT *
+        FROM `athlete-dashboard-467718.strava_marts.dim_gear`
+    """
+    return client.query(query).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_time_series(
     granularity: str,
     metric: str,
