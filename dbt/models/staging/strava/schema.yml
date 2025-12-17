@@ -320,4 +320,19 @@ models:
 
       - name: name
         description: 'Name of the gear as given by the athlete.'
-        
+
+  - name: stg_activity_streams
+    description: >
+      Staging model for Strava activity streams. Each row represents a single data point in an activity's telemetry stream.
+    
+    columns:
+      - name: activity_id
+        description: 'Identifier of the activity this stream data point belongs to.'
+        tests:
+          - not_null
+
+      - name: stream_type
+        description: 'Type of the stream data (e.g., time, distance, altitude, heartrate, cadence, watts, etc.).'
+        tests:
+          - not_null
+            
