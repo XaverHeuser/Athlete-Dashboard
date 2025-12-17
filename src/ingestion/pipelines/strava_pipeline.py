@@ -9,6 +9,8 @@ import pandas as pd
 from ingestion.auth import strava_auth
 from ingestion.extractors.strava_extractor import StravaExtractor
 from ingestion.loaders.bigquery_loader import BigQueryLoader
+from ingestion.schemas.strava_activity_streams_schema import ACTIVITY_STREAMS_SCHEMA
+from ingestion.transformers.strava_streams import explode_streams
 
 
 def trigger_dbt_job() -> None:
@@ -36,6 +38,9 @@ def run() -> None:
     access_token = strava_auth.get_access_token()
     client = StravaExtractor(access_token=access_token)
 
+    # Initialize BigQuery loader and load data
+    loader = BigQueryLoader()
+
     # Extract athlete info
     athlete_info = client.fetch_athlete_info()
     df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
@@ -48,6 +53,28 @@ def run() -> None:
     activities_data = client.fetch_all_activities()
     df_activities = pd.DataFrame([a.model_dump() for a in activities_data])
 
+    # Extract streams
+    BATCH_SIZE = 5
+    buffer = []
+
+    for activity in activities_data:
+        buffer.extend(
+            explode_streams(
+                activity.id, client.fetch_activity_streams(activity_id=str(activity.id))
+            )
+        )
+
+        if len(buffer) >= BATCH_SIZE * 5000:
+            df = pd.DataFrame([r.model_dump() for r in buffer])
+            loader.load_data(
+                data=df,
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
+                write_disposition='WRITE_APPEND',
+                schema=ACTIVITY_STREAMS_SCHEMA,
+            )
+            buffer.clear()
+
     # Extract gear details
     gear_details = []
     for gear_id in df_activities['gear_id'].unique():
@@ -56,8 +83,6 @@ def run() -> None:
             gear_details.append(gear.model_dump())
     df_gear_details = pd.DataFrame(gear_details)
 
-    # Initialize BigQuery loader and load data
-    loader = BigQueryLoader()
     try:
         if not df_athlete_info.empty:
             loader.load_data(
