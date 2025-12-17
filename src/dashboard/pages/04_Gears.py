@@ -5,14 +5,12 @@ Structured by gear type, KPI-driven, minimal charts.
 
 from queries import load_gear_details
 import streamlit as st
+from dashboard.ui.constants import GEAR_TYPE_ORDER
 
 # -------------------------------------------------
 # Page config
 # -------------------------------------------------
-st.set_page_config(
-    page_title='👟Gear Overview',
-    layout='wide',
-)
+st.set_page_config(page_title='Gear Overview', page_icon='👟', layout='wide')
 
 st.title('Gear Overview')
 st.caption('Complete overview of all bikes, shoes and other gear')
@@ -56,7 +54,6 @@ st.divider()
 # -------------------------------------------------
 # Section per Gear Type
 # -------------------------------------------------
-GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']
 
 for gear_type in GEAR_TYPE_ORDER:
     subset = df[df['gear_type'] == gear_type].copy()
