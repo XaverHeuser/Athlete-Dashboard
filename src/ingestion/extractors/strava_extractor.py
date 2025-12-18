@@ -1,6 +1,6 @@
 """This module contains the extractor for interacting with the Strava API."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from pydantic import ValidationError
@@ -89,16 +89,22 @@ class StravaExtractor(BaseExtractor):
             raise
         return athlete_stats
 
-    def fetch_all_activities(self) -> list[StravaActivity]:
+    def fetch_all_activities(self, days: int = 3) -> list[StravaActivity]:
         """Fetches all activities."""
         print('Start fetching all activities.')
+
+        after = int(
+            (datetime.now(timezone.utc) - timedelta(days=days))
+            .replace(hour=0, minute=0, second=0)
+            .timestamp()
+        )
 
         activities_url = StravaEndpoints.get_activities()
         all_activities: list[StravaActivity] = []
         page = 1
 
         while True:
-            params = {'per_page': 200, 'page': page}
+            params = {'per_page': 200, 'page': page, 'after': after}
 
             response = requests.get(
                 activities_url, headers=self.headers, params=params, timeout=10

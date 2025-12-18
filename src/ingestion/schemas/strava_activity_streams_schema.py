@@ -9,5 +9,5 @@ ACTIVITY_STREAMS_SCHEMA = [
     bigquery.SchemaField('value_bool', 'BOOL'),
     bigquery.SchemaField('value_lat', 'FLOAT64'),
     bigquery.SchemaField('value_lng', 'FLOAT64'),
-    bigquery.SchemaField('loaded_at', 'TIMESTAMP'),
+    bigquery.SchemaField('ingested_at', 'TIMESTAMP'),
 ]
