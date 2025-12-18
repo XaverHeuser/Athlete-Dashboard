@@ -1,20 +1,20 @@
 """UI Constants for the Dashboard"""
 
 SPORT_COLORS = {
-    "Run": "#DA5234",
-    "Ride": "#A75ABA", 
-    "Swim": "#D6837A",
-    "InlineSkate": "#1967D2",   
-    "WeightTraining": "#7C7C7C",
+    'Run': '#DA5234',
+    'Ride': '#A75ABA',
+    'Swim': '#D6837A',
+    'InlineSkate': '#1967D2',
+    'WeightTraining': '#7C7C7C',
 }
-DEFAULT_COLOR = "#bdbdbd"
+DEFAULT_COLOR = '#bdbdbd'
 
 
 KPI_ICONS = {
-    "distance": "📏",
-    "speed": "⚡",
-    "heartrate": "❤️",
-    "time": "⏱️",
+    'distance': '📏',
+    'speed': '⚡',
+    'heartrate': '❤️',
+    'time': '⏱️',
 }
 
 GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']

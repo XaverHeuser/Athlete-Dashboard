@@ -1,11 +1,12 @@
 """Helper functions for visualizing activities in the dashboard."""
 
-import streamlit as st
 import pandas as pd
 import polyline
 import pydeck as pdk
+import streamlit as st
 
 from dashboard.ui.constants import DEFAULT_COLOR, SPORT_COLORS
+
 
 # =========================
 # Helper: Map rendering
@@ -20,24 +21,24 @@ def show_activity_map(
         coords = polyline.decode(map_polyline)
 
         if len(coords) < 5:
-            st.caption("Route too short to display")
+            st.caption('Route too short to display')
             return
 
-        df = pd.DataFrame(coords, columns=["lat", "lng"])
-        path = df[["lng", "lat"]].values.tolist()
+        df = pd.DataFrame(coords, columns=['lat', 'lng'])
+        path = df[['lng', 'lat']].values.tolist()
 
         layer = pdk.Layer(
-            "PathLayer",
-            data=[{"path": path}],
-            get_path="path",
+            'PathLayer',
+            data=[{'path': path}],
+            get_path='path',
             get_color=[255, 87, 34],
             width_scale=3,
             width_min_pixels=3,
         )
 
         view_state = pdk.ViewState(
-            latitude=df["lat"].mean(),
-            longitude=df["lng"].mean(),
+            latitude=df['lat'].mean(),
+            longitude=df['lng'].mean(),
             zoom=zoom,
         )
 
@@ -51,7 +52,7 @@ def show_activity_map(
         )
 
     except Exception:
-        st.caption("Failed to render map")
+        st.caption('Failed to render map')
 
 
 # =========================
