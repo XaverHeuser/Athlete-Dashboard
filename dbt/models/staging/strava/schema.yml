@@ -177,11 +177,6 @@ models:
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
 
-      - name: _staged_at
-        description: "Warehouse timestamp when this row was staged via dbt."
-        tests:
-          - not_null
-
   - name: stg_athlete_info
     description: >
       Cleaned and typed staging model for Strava athlete information.
@@ -242,8 +237,6 @@ models:
 
       - name: resource_state
         description: 'Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed).'
-      - name: _staged_at
-        description: 'Timestamp when this record was staged (dbt load timestamp).'
 
   - name: stg_athlete_stats
     description: >
