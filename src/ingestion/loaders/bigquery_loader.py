@@ -1,6 +1,7 @@
 """This module contains the loader for interacting with Google's BigQuery."""
 
 import os
+from typing import Optional
 
 from google.cloud import bigquery
 import pandas as pd
@@ -22,7 +23,7 @@ class BigQueryLoader(BaseLoader):
         dataset: str,
         table_name: str,
         write_disposition: str = 'WRITE_APPEND',
-        autodetect: bool = True,
+        schema: Optional[list[bigquery.SchemaField]] = None,
     ) -> None:
         """Loads data into the specified BigQuery table."""
         if data.empty:
@@ -35,8 +36,13 @@ class BigQueryLoader(BaseLoader):
         job_config = bigquery.LoadJobConfig(
             write_disposition=write_disposition,
             create_disposition='CREATE_IF_NEEDED',
-            autodetect=autodetect,
         )
+        # If a schema is provided, use it; otherwise, enable autodetect
+        if schema is not None:
+            job_config.schema = schema
+            job_config.autodetect = False
+        else:
+            job_config.autodetect = True
 
         try:
             job = self.client.load_table_from_dataframe(

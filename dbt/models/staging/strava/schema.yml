@@ -177,11 +177,6 @@ models:
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
 
-      - name: _staged_at
-        description: "Warehouse timestamp when this row was staged via dbt."
-        tests:
-          - not_null
-
   - name: stg_athlete_info
     description: >
       Cleaned and typed staging model for Strava athlete information.
@@ -242,8 +237,6 @@ models:
 
       - name: resource_state
         description: 'Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed).'
-      - name: _staged_at
-        description: 'Timestamp when this record was staged (dbt load timestamp).'
 
   - name: stg_athlete_stats
     description: >
@@ -320,4 +313,19 @@ models:
 
       - name: name
         description: 'Name of the gear as given by the athlete.'
-        
+
+  - name: stg_activity_streams
+    description: >
+      Staging model for Strava activity streams. Each row represents a single data point in an activity's telemetry stream.
+    
+    columns:
+      - name: activity_id
+        description: 'Identifier of the activity this stream data point belongs to.'
+        tests:
+          - not_null
+
+      - name: stream_type
+        description: 'Type of the stream data (e.g., time, distance, altitude, heartrate, cadence, watts, etc.).'
+        tests:
+          - not_null
+            

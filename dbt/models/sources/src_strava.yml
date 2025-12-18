@@ -13,3 +13,5 @@ sources:
         description: 'Strava athlete statistics data.'
       - name: raw_gear_details
         description: 'Strava gear details data.'
+      - name: raw_activity_streams
+        description: 'Strava activity streams data.'

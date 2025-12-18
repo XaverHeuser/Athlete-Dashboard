@@ -46,7 +46,6 @@ SELECT
     map_id,
     map_polyline,
 
-    _staged_at,
     CURRENT_TIMESTAMP() AS _loaded_at
 
 FROM stg

@@ -1,6 +1,7 @@
 """This module contains the extractor for interacting with the Strava API."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from typing import Any, cast
 
 from pydantic import ValidationError
 import requests
@@ -88,16 +89,22 @@ class StravaExtractor(BaseExtractor):
             raise
         return athlete_stats
 
-    def fetch_all_activities(self) -> list[StravaActivity]:
+    def fetch_all_activities(self, days: int = 3) -> list[StravaActivity]:
         """Fetches all activities."""
         print('Start fetching all activities.')
+
+        after = int(
+            (datetime.now(timezone.utc) - timedelta(days=days))
+            .replace(hour=0, minute=0, second=0)
+            .timestamp()
+        )
 
         activities_url = StravaEndpoints.get_activities()
         all_activities: list[StravaActivity] = []
         page = 1
 
         while True:
-            params = {'per_page': 200, 'page': page}
+            params = {'per_page': 200, 'page': page, 'after': after}
 
             response = requests.get(
                 activities_url, headers=self.headers, params=params, timeout=10
@@ -121,6 +128,31 @@ class StravaExtractor(BaseExtractor):
             f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.'
         )
         return all_activities
+
+    def fetch_activity_streams(self, activity_id: str) -> dict[str, Any]:
+        """Fetches activity streams by activity ID and stream types."""
+        stream_url = f'https://www.strava.com/api/v3/activities/{activity_id}/streams'
+        params = {
+            'keys': 'time,distance,latlng,altitude,velocity_smooth,heartrate,cadence,watts,temp,moving,grade_smooth',
+            'key_by_type': 'true',
+        }
+
+        try:
+            response = requests.get(
+                stream_url, headers=self.headers, params=params, timeout=10
+            )
+            if response.status_code == 404:
+                print(f'No streams available for activity {activity_id}')
+                return {}
+
+            response.raise_for_status()
+            return cast(dict[str, Any], response.json())
+        except requests.RequestException as e:
+            print(f'HTTP error occurred: {e}')
+            raise
+        except Exception as e:
+            print(f'An unexpected error occurred: {e}')
+            raise
 
     def fetch_gear_details(self, gear_id: str) -> StravaGear:
         """Fetches gear details by gear ID."""

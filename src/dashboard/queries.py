@@ -156,3 +156,36 @@ def load_sport_types() -> list[str]:
     sport_types: list[str] = [str(x) for x in df['sport_type'].dropna().tolist()]
 
     return sport_types
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_activity_streams(activity_id: int) -> pd.DataFrame:
+    """
+    Load time-series streams for a single activity.
+    """
+
+    query = """
+        SELECT
+            sequence_index,
+            time_s,
+            distance_m,
+            heartrate_bpm,
+            velocity_smooth_mps,
+            altitude_m,
+            cadence_rpm,
+            power_w,
+            grade_smooth_pct,
+            lat,
+            lng
+        FROM `athlete-dashboard-467718.strava_marts.fct_activity_streams`
+        WHERE activity_id = @activity_id
+        ORDER BY sequence_index
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter('activity_id', 'INT64', activity_id)
+        ]
+    )
+
+    return client.query(query, job_config=job_config).to_dataframe()
