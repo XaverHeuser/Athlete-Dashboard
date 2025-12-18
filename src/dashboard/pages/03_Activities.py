@@ -173,7 +173,6 @@ for _, row in visible.iterrows():
                 unsafe_allow_html=True,
             )
 
-        # TODO: Fix maps
         with cols[1]:
             with st.expander('Show route'):
                 if pd.notna(row['map_polyline']):

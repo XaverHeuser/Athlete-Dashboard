@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import os
+from typing import Any
 
 from google.auth import default
 from google.auth.transport.requests import AuthorizedSession
@@ -60,7 +61,7 @@ def run() -> None:
 
     # Extract streams
     BATCH_SIZE = 5
-    buffer = []
+    buffer: list[dict[str, Any]] = []
 
     for activity in activities_data:
         streams = explode_streams(
