@@ -137,8 +137,11 @@ def load_time_series(
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
 
+
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_weekly_summary(start_week: str | None = None, end_week: str | None = None) -> pd.DataFrame:
+def load_weekly_summary(
+    start_week: str | None = None, end_week: str | None = None
+) -> pd.DataFrame:
     """
     Load weekly summary statistics for the athlete.
     """
@@ -154,14 +157,14 @@ def load_weekly_summary(start_week: str | None = None, end_week: str | None = No
     params = {}
 
     if start_week:
-        query += " AND activity_week >= %(start_week)s"
-        params["start_week"] = start_week
+        query += ' AND activity_week >= %(start_week)s'
+        params['start_week'] = start_week
 
     if end_week:
-        query += " AND activity_week <= %(end_week)s"
-        params["end_week"] = end_week
+        query += ' AND activity_week <= %(end_week)s'
+        params['end_week'] = end_week
 
-    query += " ORDER BY activity_week"
+    query += ' ORDER BY activity_week'
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
