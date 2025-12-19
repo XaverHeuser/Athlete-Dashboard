@@ -29,13 +29,13 @@ with control_col2:
     metric = st.selectbox(
         'Metric',
         [
-            'total_distance_m',
+            'total_distance_km',
+            'total_moving_time_h',
             'total_activities',
-            'total_moving_time_s',
         ],
         format_func=lambda x: {
-            'total_distance_m': 'Total Distance (km)',
-            'total_moving_time_s': 'Moving Time (hours)',
+            'total_distance_km': 'Total Distance (km)',
+            'total_moving_time_h': 'Moving Time (hours)',
             'total_activities': 'Number of Activities',
         }[x],
     )
@@ -99,11 +99,9 @@ if df_ts.empty:
 # UNIT NORMALIZATION
 # =========================
 
-if metric == 'total_distance_m':
-    df_ts['value'] = df_ts['value'] / 1000
+if metric == 'total_distance_km':
     y_title = 'Distance (km)'
-elif metric == 'total_moving_time_s':
-    df_ts['value'] = df_ts['value'] / 3600
+elif metric == 'total_moving_time_h':
     y_title = 'Moving Time (hours)'
 else:
     y_title = 'Activities'
