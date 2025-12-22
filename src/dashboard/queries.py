@@ -5,7 +5,10 @@ from google.oauth2 import service_account
 import pandas as pd
 import streamlit as st
 
-# --- BigQuery client setup ---
+
+# ------------------
+# BIGQUERY CLIENT
+# ------------------
 try:
     creds = service_account.Credentials.from_service_account_info(
         st.secrets['gcp_service_account']
@@ -96,11 +99,7 @@ def load_time_series(
     if granularity not in table_map:
         raise ValueError('Invalid granularity')
 
-    if metric not in {
-        'total_distance_km',
-        'total_moving_time_h',
-        'total_activities',
-    }:
+    if metric not in {'total_distance_km', 'total_moving_time_h', 'total_activities'}:
         raise ValueError('Invalid metric')
 
     table = table_map[granularity]

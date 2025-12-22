@@ -8,6 +8,7 @@ import streamlit as st
 
 from dashboard.ui.constants import GEAR_TYPE_ORDER
 
+
 # -------------------------------------------------
 # Page config
 # -------------------------------------------------
@@ -69,18 +70,9 @@ for gear_type in GEAR_TYPE_ORDER:
     k1, k2, k3, k4 = st.columns(4)
 
     k1.metric('Count', len(subset))
-    k2.metric(
-        'Total Distance (km)',
-        f'{subset["total_distance_km"].sum():,.1f}',
-    )
-    k3.metric(
-        'Avg Distance (km)',
-        f'{subset["total_distance_km"].mean():,.0f}',
-    )
-    k4.metric(
-        'Active',
-        int((~subset['is_retired']).sum()),
-    )
+    k2.metric('Total Distance (km)', f'{subset["total_distance_km"].sum():,.1f}')
+    k3.metric('Avg Distance (km)', f'{subset["total_distance_km"].mean():,.0f}')
+    k4.metric('Active', int((~subset['is_retired']).sum()))
 
     # -----------------------------
     # Table
@@ -111,11 +103,7 @@ for gear_type in GEAR_TYPE_ORDER:
         )
     )
 
-    st.dataframe(
-        table_df,
-        use_container_width=True,
-        hide_index=True,
-    )
+    st.dataframe(table_df, use_container_width=True, hide_index=True)
 
     # -----------------------------
     # Optional minimal chart
