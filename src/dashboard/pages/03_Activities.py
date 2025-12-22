@@ -54,9 +54,7 @@ with row1_col3:
     if year_filter != 'All':
         month_options = ['All'] + sorted(
             df_activities
-            .loc[
-                df_activities['activity_year'] == year_filter, 'activity_month'
-            ]
+            .loc[df_activities['activity_year'] == year_filter, 'activity_month']
             .dropna()
             .unique()
             .tolist()
