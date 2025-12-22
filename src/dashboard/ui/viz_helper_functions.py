@@ -145,11 +145,7 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
             x=alt.X('sport_type:N', title=None),
             xOffset=alt.XOffset('week_label:N', title='Week'),
             y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
-            color=alt.Color(
-                'sport_type:N',
-                scale=COLOR_SCALE_MAIN_SPORTS,
-                legend=None,
-            ),
+            color=alt.Color('sport_type:N', scale=COLOR_SCALE_MAIN_SPORTS, legend=None),
             tooltip=[
                 alt.Tooltip('sport_type:N', title='Sport'),
                 alt.Tooltip('week_label:N', title='Week'),
