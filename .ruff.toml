@@ -2,16 +2,23 @@ line-length = 88
 target-version = 'py39'
 fix = true
 
+[format]
+quote-style = 'single'
+preview = true
+skip-magic-trailing-comma = true
+
 [lint]
 select = ['E', 'W', 'F', 'C', 'B', 'I', 'UP']
 ignore = ['E501']
-exclude = ['notebooks/']
+
+[lint.pydocstyle]
+convention = 'pep257'
+
+[lint.mccabe]
+max-complexity = 10
 
 [lint.isort]
 combine-as-imports = true
 force-sort-within-sections = true
-
-[format]
-quote-style = 'single'
-preview = true
-skip-magic-trailing-comma = false
+lines-after-imports = 2
+split-on-trailing-comma = false

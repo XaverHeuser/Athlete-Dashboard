@@ -3,9 +3,9 @@
 import pandas as pd
 from queries import load_activities
 import streamlit as st
+from ui.constants import KPI_ICONS, PAGE_SIZE
+from ui.viz_helper_functions import show_activity_map, sport_badge
 
-from dashboard.ui.constants import KPI_ICONS, PAGE_SIZE
-from dashboard.ui.viz_helper_functions import show_activity_map, sport_badge
 
 # =========================
 # Configuration
@@ -46,18 +46,15 @@ with row1_col1:
 
 with row1_col2:
     year_options = ['All'] + sorted(
-        df_activities['activity_year'].dropna().unique().tolist(),
-        reverse=True,
+        df_activities['activity_year'].dropna().unique().tolist(), reverse=True
     )
     year_filter = st.selectbox('Year', options=year_options)
 
 with row1_col3:
     if year_filter != 'All':
         month_options = ['All'] + sorted(
-            df_activities.loc[
-                df_activities['activity_year'] == year_filter,
-                'activity_month',
-            ]
+            df_activities
+            .loc[df_activities['activity_year'] == year_filter, 'activity_month']
             .dropna()
             .unique()
             .tolist()

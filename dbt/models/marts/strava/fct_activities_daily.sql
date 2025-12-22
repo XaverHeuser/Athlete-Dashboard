@@ -26,8 +26,8 @@ SELECT
     s.sport_type,
     d.date AS activity_date,
 
-    COALESCE(SUM(a.distance_m), 0) AS total_distance_m,
-    COALESCE(SUM(a.moving_time_s), 0) AS total_moving_time_s,
+    COALESCE(SUM(a.distance_m) / 1000, 0) AS total_distance_km,
+    COALESCE(SUM(a.moving_time_s) / 3600.0, 0) AS total_moving_time_h,
     COALESCE(SUM(a.elevation_gain_m), 0) AS total_elevation_gain_m,
     COALESCE(COUNT(a.activity_id), 0) AS total_activities
 

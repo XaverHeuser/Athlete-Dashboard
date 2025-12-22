@@ -9,13 +9,16 @@ SPORT_COLORS = {
 }
 DEFAULT_COLOR = '#bdbdbd'
 
-
-KPI_ICONS = {
-    'distance': '📏',
-    'speed': '⚡',
-    'heartrate': '❤️',
-    'time': '⏱️',
+MAIN_SPORT_COLORS = {
+    'Run': '#DA5234',
+    'Ride': '#A75ABA',
+    'Swim': '#D6837A',
+    'WeightTraining': '#7C7C7C',
 }
+
+MAIN_SPORTS = ['Run', 'Ride', 'Swim', 'WeightTraining']
+
+KPI_ICONS = {'distance': '📏', 'speed': '⚡', 'heartrate': '❤️', 'time': '⏱️'}
 
 GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']
 

@@ -4,6 +4,7 @@ import pandas as pd
 from queries import load_athlete_data
 import streamlit as st
 
+
 # --- Page config ---
 st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='centered')
 

@@ -5,7 +5,10 @@ from google.oauth2 import service_account
 import pandas as pd
 import streamlit as st
 
-# --- BigQuery client setup ---
+
+# ------------------
+# BIGQUERY CLIENT
+# ------------------
 try:
     creds = service_account.Credentials.from_service_account_info(
         st.secrets['gcp_service_account']
@@ -96,11 +99,7 @@ def load_time_series(
     if granularity not in table_map:
         raise ValueError('Invalid granularity')
 
-    if metric not in {
-        'total_distance_m',
-        'total_activities',
-        'total_moving_time_s',
-    }:
+    if metric not in {'total_distance_km', 'total_moving_time_h', 'total_activities'}:
         raise ValueError('Invalid metric')
 
     table = table_map[granularity]
@@ -135,7 +134,38 @@ def load_time_series(
     """  # nosec B608: metric, table and columns are allowlisted; values are parameterized
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
+    return client.query(query, job_config=job_config).to_dataframe()
 
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_weekly_summary(
+    start_week: str | None = None, end_week: str | None = None
+) -> pd.DataFrame:
+    """
+    Load weekly summary statistics for the athlete.
+    """
+    query = """
+        SELECT
+            sport_type,
+            activity_week,
+            total_distance_km,
+            total_moving_time_h,
+        FROM `athlete-dashboard-467718.strava_marts.fct_activities_weekly`
+        WHERE 1 = 1
+    """
+    params = {}
+
+    if start_week:
+        query += ' AND activity_week >= %(start_week)s'
+        params['start_week'] = start_week
+
+    if end_week:
+        query += ' AND activity_week <= %(end_week)s'
+        params['end_week'] = end_week
+
+    query += ' ORDER BY activity_week'
+
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
 
 

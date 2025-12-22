@@ -4,10 +4,9 @@ import altair as alt
 from queries import load_sport_types, load_time_series
 import streamlit as st
 
+
 st.set_page_config(
-    page_title='Athlete Statistics Overview',
-    page_icon='📈',
-    layout='wide',
+    page_title='Athlete Statistics Overview', page_icon='📈', layout='wide'
 )
 
 # =========================
@@ -20,22 +19,16 @@ control_col1, control_col2, control_col3 = st.columns(3)
 
 with control_col1:
     granularity = st.selectbox(
-        'Time Granularity',
-        ['daily', 'weekly', 'monthly', 'yearly'],
-        index=2,
+        'Time Granularity', ['daily', 'weekly', 'monthly', 'yearly'], index=2
     )
 
 with control_col2:
     metric = st.selectbox(
         'Metric',
-        [
-            'total_distance_m',
-            'total_activities',
-            'total_moving_time_s',
-        ],
+        ['total_distance_km', 'total_moving_time_h', 'total_activities'],
         format_func=lambda x: {
-            'total_distance_m': 'Total Distance (km)',
-            'total_moving_time_s': 'Moving Time (hours)',
+            'total_distance_km': 'Total Distance (km)',
+            'total_moving_time_h': 'Moving Time (hours)',
             'total_activities': 'Number of Activities',
         }[x],
     )
@@ -44,10 +37,7 @@ sport_types = load_sport_types()
 sport_type_options = ['All Sports'] + sport_types
 
 with control_col3:
-    sport_type = st.selectbox(
-        'Sport Type',
-        options=sport_type_options,
-    )
+    sport_type = st.selectbox('Sport Type', options=sport_type_options)
 
 sport_filter = None if sport_type == 'All Sports' else sport_type
 
@@ -56,9 +46,7 @@ sport_filter = None if sport_type == 'All Sports' else sport_type
 # =========================
 
 df_ts_all = load_time_series(
-    granularity=granularity,
-    metric=metric,
-    sport_type=sport_filter,
+    granularity=granularity, metric=metric, sport_type=sport_filter
 )
 
 if df_ts_all.empty:
@@ -73,10 +61,7 @@ min_date = df_ts_all['period'].min()
 max_date = df_ts_all['period'].max()
 
 start_date, end_date = st.date_input(
-    'Time Range',
-    value=(min_date, max_date),
-    min_value=min_date,
-    max_value=max_date,
+    'Time Range', value=(min_date, max_date), min_value=min_date, max_value=max_date
 )
 
 # =========================
@@ -99,11 +84,9 @@ if df_ts.empty:
 # UNIT NORMALIZATION
 # =========================
 
-if metric == 'total_distance_m':
-    df_ts['value'] = df_ts['value'] / 1000
+if metric == 'total_distance_km':
     y_title = 'Distance (km)'
-elif metric == 'total_moving_time_s':
-    df_ts['value'] = df_ts['value'] / 3600
+elif metric == 'total_moving_time_h':
     y_title = 'Moving Time (hours)'
 else:
     y_title = 'Activities'
