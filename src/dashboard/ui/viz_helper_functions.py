@@ -51,7 +51,8 @@ def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
     order = alt.Order('sport_type:N', sort='descending')
 
     arc_labels = (
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_text(radius=90, size=12, fontWeight='bold')
         .encode(
             theta=theta,
@@ -62,13 +63,15 @@ def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
     )
 
     center_text = (
-        alt.Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
+        alt
+        .Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
         .mark_text(fontSize=20, fontWeight='bold', color='white')
         .encode(text='label:N')
     )
 
     chart = alt.layer(
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_arc(innerRadius=60)
         .encode(
             theta=theta,
@@ -114,7 +117,8 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
     df['is_latest'] = df['activity_week'].eq(latest_week)
 
     chart = (
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
         .encode(
             x=alt.X('week_label:N', title=None, sort=None),
@@ -139,7 +143,8 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
     df['week_label'] = df['activity_week'].dt.strftime('KW %V')
 
     return (
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_bar()
         .encode(
             x=alt.X('sport_type:N', title=None),

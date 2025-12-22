@@ -116,7 +116,8 @@ for gear_type in GEAR_TYPE_ORDER:
         )
 
         chart = (
-            alt.Chart(chart_df)
+            alt
+            .Chart(chart_df)
             .mark_bar()
             .encode(
                 x=alt.X('name:N', sort='-y', title='Gear', axis=alt.Axis(labelAngle=0)),
