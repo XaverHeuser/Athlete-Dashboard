@@ -34,8 +34,7 @@ class BigQueryLoader(BaseLoader):
         print(f'Loading {len(data)} records into {table_id}...')
 
         job_config = bigquery.LoadJobConfig(
-            write_disposition=write_disposition,
-            create_disposition='CREATE_IF_NEEDED',
+            write_disposition=write_disposition, create_disposition='CREATE_IF_NEEDED'
         )
         # If a schema is provided, use it; otherwise, enable autodetect
         if schema is not None:

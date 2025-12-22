@@ -67,13 +67,7 @@ def run() -> None:
         streams = explode_streams(
             activity.id, client.fetch_activity_streams(activity_id=str(activity.id))
         )
-        buffer.extend(
-            {
-                **r.model_dump(),
-                'ingested_at': ingested_at,
-            }
-            for r in streams
-        )
+        buffer.extend({**r.model_dump(), 'ingested_at': ingested_at} for r in streams)
 
         if len(buffer) >= BATCH_SIZE * 5000:
             df = pd.DataFrame(buffer)
@@ -91,10 +85,7 @@ def run() -> None:
     for gear_id in df_activities['gear_id'].unique():
         if gear_id and gear_id is not None:
             gear = client.fetch_gear_details(gear_id=gear_id)
-            gear_details.append({
-                **gear.model_dump(),
-                'ingested_at': ingested_at,
-            })
+            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at})
     df_gear_details = pd.DataFrame(gear_details)
 
     try:

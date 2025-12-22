@@ -3,15 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from models.strava_stream_model import (
-    StravaActivityStreamRow,
-    StravaStreamsResponse,
-)
+from models.strava_stream_model import StravaActivityStreamRow, StravaStreamsResponse
 
 
 def explode_streams(
-    activity_id: int,
-    raw_streams: dict[str, Any],
+    activity_id: int, raw_streams: dict[str, Any]
 ) -> list[StravaActivityStreamRow]:
     """
     Explodes Strava activity streams JSON into row-based Bronze records.

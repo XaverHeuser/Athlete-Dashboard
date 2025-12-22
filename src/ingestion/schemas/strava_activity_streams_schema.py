@@ -1,5 +1,6 @@
 from google.cloud import bigquery
 
+
 ACTIVITY_STREAMS_SCHEMA = [
     bigquery.SchemaField('activity_id', 'INT64'),
     bigquery.SchemaField('stream_type', 'STRING'),
