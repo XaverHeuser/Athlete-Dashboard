@@ -103,7 +103,7 @@ for gear_type in GEAR_TYPE_ORDER:
         )
     )
 
-    st.dataframe(table_df, use_container_width=True, hide_index=True)
+    st.dataframe(table_df, width='stretch', hide_index=True)
 
     # -----------------------------
     # Optional minimal chart
