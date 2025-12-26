@@ -1,6 +1,7 @@
 {{ config(
     materialized='incremental',
-    unique_key='gear_id'
+    unique_key='gear_id',
+    on_schema_change='fail'
 ) }}
 
 WITH ranked AS (
@@ -27,6 +28,20 @@ WITH ranked AS (
     FROM {{ source('strava_data', 'raw_gear_details') }}
 )
 
-SELECT *
+SELECT
+    gear_id,
+    name,
+    nickname,
+    is_primary,
+    is_retired,
+    distance_m,
+    distance_km,
+    brand_name,
+    model_name,
+    frame_type,
+    description,
+    weight_kg,
+    notification_distance_km,
+    ingested_at
 FROM ranked
 WHERE rn = 1
