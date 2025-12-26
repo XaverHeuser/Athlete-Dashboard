@@ -2,16 +2,128 @@ version: 2
 
 sources:
   - name: strava_data                      # matches first arg in source()
+    description: "Raw Strava data ingested from the Strava API. This data is unmodeled and may change upstream."
     database: athlete-dashboard-467718     # your GCP project ID
     schema: strava_data                    # dataset name in BigQuery
+
     tables:
+      # ---------------------------------------------------------------------
+      # Activities
+      # ---------------------------------------------------------------------
       - name: raw_activities
-        description: 'Raw Strava activities data.'
-      - name: raw_athlete_info
-        description: 'Strava athlete profile information.'
-      - name: raw_athlete_stats
-        description: 'Strava athlete statistics data.'
-      - name: raw_gear_details
-        description: 'Strava gear details data.'
+        description: >
+          Raw activity-level records from Strava.
+          One row per activity per ingestion run.
+          Duplicates across runs are expected.
+        config:
+          loaded_at_field: ingested_at
+          freshness:
+            warn_after:  { count: 16, period: hour }
+            error_after: { count: 36, period: hour }
+        columns:
+          - name: id
+            description: "Strava activity identifier."
+            tests:
+              - not_null
+
+          - name: athlete.id
+            description: "Identifier of the athlete who performed the activity."
+            tests:
+              - not_null
+
+          - name: ingested_at
+            description: "UTC timestamp when this row was ingested into BigQuery."
+
+      # ---------------------------------------------------------------------
+      # Activity Streams
+      # ---------------------------------------------------------------------
       - name: raw_activity_streams
-        description: 'Strava activity streams data.'
+        description: >
+          Raw time-series streams for Strava activities.
+          One row per (activity_id, stream_type, sequence_index).
+        config:
+          loaded_at_field: ingested_at
+          freshness:
+            warn_after:  { count: 16, period: hour }
+            error_after: { count: 36, period: hour }
+        columns:
+          - name: activity_id
+            description: "Foreign key to raw_activities.id."
+            tests:
+              - not_null
+
+          - name: stream_type
+            description: "Stream type (heartrate, cadence, watts, etc.)."
+            tests:
+              - not_null
+          
+          - name: sequence_index
+            description: "Sequence number within the stream."
+            tests:
+              - not_null
+
+          - name: ingested_at
+            description: "UTC timestamp when this row was ingested."
+
+      # ---------------------------------------------------------------------
+      # Athlete Profile
+      # ---------------------------------------------------------------------
+      - name: raw_athlete_info
+        description: >
+          Snapshot of the athlete profile returned by the Strava API.
+          This table is overwritten on each run.
+        config:
+          loaded_at_field: ingested_at
+          freshness:
+            warn_after:  { count: 36, period: hour }
+            error_after: { count: 72, period: hour }
+        columns:
+          - name: id
+            description: "Primary identifier for the athlete."
+            tests:
+              - not_null
+
+          - name: ingested_at
+            description: "UTC timestamp when this snapshot was ingested."
+
+      # ---------------------------------------------------------------------
+      # Athlete Statistics
+      # ---------------------------------------------------------------------
+      - name: raw_athlete_stats
+        description: >
+          Aggregated lifetime and recent statistics for the athlete.
+          This table is overwritten on each run.
+        config:
+          loaded_at_field: ingested_at
+          freshness:
+            warn_after:  { count: 36, period: hour }
+            error_after: { count: 72, period: hour }
+        columns:
+          - name: athlete_id
+            description: "Primary identifier for the athlete."
+            tests:
+              - not_null
+
+          - name: ingested_at
+            description: "UTC timestamp when this snapshot was ingested."
+
+      # ---------------------------------------------------------------------
+      # Gear Details
+      # ---------------------------------------------------------------------
+      - name: raw_gear_details
+        description: >
+          Details about athlete gear such as bikes and shoes.
+          Append-only; updates over time are expected.
+        config:
+          loaded_at_field: ingested_at
+          freshness:
+            warn_after:  { count: 36, period: hour }
+            error_after: { count: 72, period: hour }
+        columns:
+          - name: id
+            description: "Primary identifier for the gear."
+            tests:
+              - not_null
+
+          - name: ingested_at
+            description: "UTC timestamp when this row was ingested."
