@@ -1,6 +1,7 @@
 version: 2
 
 models:
+  # Activities
   - name: stg_activities
     description: "Staging model for Strava activities. One row = one Strava activity. Casts types, normalizes units, and adds basic derived metrics and time breakdowns."
     columns:
@@ -177,129 +178,7 @@ models:
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
 
-  - name: stg_athlete_info
-    description: >
-      Cleaned and typed staging model for Strava athlete information.
-
-    columns:
-      - name: athlete_id
-        description: 'Unique identifier for the athlete.'
-        tests:
-          - not_null
-          - unique
-
-      - name: username
-        description: 'The athletes Strava username (may be null if user hides it).'
-      - name: first_name
-        description: 'The athletes first name.'
-      - name: last_name
-        description: 'The athletes last name.'
-      - name: bio
-        description: 'Short biography or about section from the athletes Strava profile.'
-      - name: city
-        description: 'City the athlete is located in.'
-      - name: state
-        description: 'State or region of the athlete.'
-      - name: country
-        description: 'Country of the athlete.'
-      - name: sex
-        description: 'The athletes gender as provided by Strava (e.g., M, F or null).'
-        tests:
-          - accepted_values:
-              values: ['M', 'F']
-
-      - name: has_premium
-        description: 'Boolean flag indicating if the athlete has a Strava Premium account.'
-      - name: has_summit
-        description: 'Boolean flag indicating if the athlete has a Summit membership.'
-
-      - name: badge_type_id
-        description: 'Strava badge type identifier for visual rank or level (nullable).'
-      - name: weight_kg
-        description: 'Weight of the athlete in kilograms.'
-      - name: profile_medium
-        description: 'URL to the athletes medium-sized profile image.'
-      - name: profile
-        description: 'URL to the athletes full-size profile image.'
-      - name: friend
-        description: 'Friend relationship status relative to the authenticated user.'
-      - name: follower
-        description: 'Follower relationship status relative to the authenticated user.'
-
-      - name: created_at
-        description: 'Timestamp when the athlete account was created on Strava.'
-        tests:
-          - not_null
-      - name: updated_at
-        description: 'Timestamp when the athlete record was last updated.'
-        tests:
-          - not_null
-
-      - name: resource_state
-        description: 'Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed).'
-
-  - name: stg_athlete_stats
-    description: >
-      Cleaned and typed staging model for Strava athlete statistics.
-    
-    columns:
-      - name: athlete_id
-        description: 'Unique identifier for the athlete.'
-        tests:
-          - not_null
-          - unique
-
-      - name: biggest_ride_distance_m
-        description: 'Longest single ride distance in meters.'
-
-      - name: biggest_climb_elevation_m
-        description: 'Greatest single climb elevation gain in meters.'
-
-      - name: recent_ride_totals_distance_m
-        description: 'Total distance of rides in the recent period (meters).'
-
-      - name: recent_ride_totals_moving_time_s
-        description: 'Total moving time of rides in the recent period (seconds).'
-
-      - name: recent_ride_totals_elevation_gain_m
-        description: 'Total elevation gain of rides in the recent period (meters).'
-
-      - name: recent_run_totals_distance_m
-        description: 'Total distance of runs in the recent period (meters).'
-
-      - name: recent_run_totals_moving_time_s
-        description: 'Total moving time of runs in the recent period (seconds).'
-
-      - name: recent_run_totals_elevation_gain_m
-        description: 'Total elevation gain of runs in the recent period (meters).'
-
-      - name: recent_swim_totals_distance_m
-        description: 'Total distance of swims in the recent period (meters).'
-
-      - name: recent_swim_totals_moving_time_s
-        description: 'Total moving time of swims in the recent period (seconds).'
-
-      - name: recent_swim_totals_elevation_gain_m
-        description: 'Total elevation gain of swims in the recent period (meters).'
-
-      - name: all_ride_totals_distance_m
-        description: 'All-time total distance of rides (meters).'
-
-      - name: all_ride_totals_moving_time_s
-        description: 'All-time total moving time of rides (seconds).'
-
-      - name: all_ride_totals_elevation_gain_m
-        description: 'All-time total elevation gain of rides (meters).'
-
-      - name: all_run_totals_distance_m
-        description: 'All-time total distance of runs (meters).'
-
-      - name: all_run_totals_moving_time_s
-        description: 'All-time total moving time of runs (seconds).'
-
-      - name: all_run_totals_elevation_gain_m
-        description: 'All-time total elevation gain of runs (meters).'
-
+  # Activity Streams
   - name: stg_activity_streams
     description: >
       Staging model for Strava activity streams. Each row represents a single data point in an activity's telemetry stream.
@@ -314,7 +193,67 @@ models:
         description: 'Type of the stream data (e.g., time, distance, altitude, heartrate, cadence, watts, etc.).'
         tests:
           - not_null
+  
+  # Athlete Profile
+  - name: stg_athlete_info
+    description: >
+      Cleaned and typed staging model for Strava athlete profile information.
+      Contains personal, geographic, and account-related attributes for a single athlete,
+      as returned by the Strava API.
 
+    config:
+      contract:
+        enforced: false
+
+    columns:
+      # Identifiers
+      - name: athlete_id
+        description: "Unique identifier for the athlete."
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+
+      - name: firstname
+        description: "Athlete's first name."
+        data_type: STRING
+
+      - name: lastname
+        description: "Athlete's last name."
+        data_type: STRING
+
+  # Athlete Statistics
+  - name: stg_athlete_stats
+    description: >
+      Cleaned and typed staging model for Strava athlete statistics.
+      Contains lifetime, recent, and year-to-date aggregated metrics
+      for a single athlete, as returned by the Strava API.
+    
+    config:
+      contract:
+        enforced: false
+
+    columns:
+      # Identifiers & metadata
+      - name: athlete_id
+        description: "Unique identifier for the athlete."
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+
+      - name: fetched_at
+        description: "Timestamp when the statistics snapshot was fetched from the Strava API."
+        data_type: TIMESTAMP
+
+      - name: _staged_at
+        description: "Timestamp when this record was staged in dbt."
+        data_type: TIMESTAMP
+
+      # Other columns are defined in stg_athlete_stats.sql
+      # as they are numerous and derived.
+
+  # Gear Details
   - name: stg_gear_details
     description: >
       Staging model for Strava gear details.

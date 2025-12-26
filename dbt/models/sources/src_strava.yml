@@ -7,9 +7,7 @@ sources:
     schema: strava_data                    # dataset name in BigQuery
 
     tables:
-      # ---------------------------------------------------------------------
       # Activities
-      # ---------------------------------------------------------------------
       - name: raw_activities
         description: >
           Raw activity-level records from Strava.
@@ -34,9 +32,7 @@ sources:
           - name: ingested_at
             description: "UTC timestamp when this row was ingested into BigQuery."
 
-      # ---------------------------------------------------------------------
       # Activity Streams
-      # ---------------------------------------------------------------------
       - name: raw_activity_streams
         description: >
           Raw time-series streams for Strava activities.
@@ -65,9 +61,7 @@ sources:
           - name: ingested_at
             description: "UTC timestamp when this row was ingested."
 
-      # ---------------------------------------------------------------------
       # Athlete Profile
-      # ---------------------------------------------------------------------
       - name: raw_athlete_info
         description: >
           Snapshot of the athlete profile returned by the Strava API.
@@ -86,9 +80,7 @@ sources:
           - name: ingested_at
             description: "UTC timestamp when this snapshot was ingested."
 
-      # ---------------------------------------------------------------------
       # Athlete Statistics
-      # ---------------------------------------------------------------------
       - name: raw_athlete_stats
         description: >
           Aggregated lifetime and recent statistics for the athlete.
@@ -107,9 +99,7 @@ sources:
           - name: ingested_at
             description: "UTC timestamp when this snapshot was ingested."
 
-      # ---------------------------------------------------------------------
       # Gear Details
-      # ---------------------------------------------------------------------
       - name: raw_gear_details
         description: >
           Details about athlete gear such as bikes and shoes.
