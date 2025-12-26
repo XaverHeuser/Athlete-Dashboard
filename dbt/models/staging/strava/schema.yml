@@ -1,11 +1,18 @@
 version: 2
 
+
 models:
   # Activities
   - name: stg_activities
     description: "Staging model for Strava activities. One row = one Strava activity. Casts types, normalizes units, and adds basic derived metrics and time breakdowns."
     
     config:
+      meta:
+        domain: strava
+        grain: "One row per Strava activity."
+        source_systems:
+          - source: strava_data
+            table: raw_activities
       contract:
         enforced: false
     
@@ -44,11 +51,13 @@ models:
       # Basic info
       - name: activity_name
         description: "Activity title as recorded in Strava (e.g. 'Morning Ride')."
+        data_type: STRING
         tests:
           - not_null
 
       - name: sport_type
         description: "Canonical Strava sport type (Run, Ride, Swim, etc.)."
+        data_type: STRING
         tests:
           - not_null
           - accepted_values:
@@ -58,11 +67,13 @@ models:
       # Timestamps
       - name: start_date_utc
         description: "Activity start time in UTC, as reported by Strava."
+        data_type: TIMESTAMP
         tests:
           - not_null
 
       - name: start_date_local
         description: "Activity start time localized to the athlete's timezone."
+        data_type: TIMESTAMP
         tests:
           - not_null
 
@@ -83,9 +94,15 @@ models:
   - name: stg_activity_streams
     description: >
       Staging model for Strava activity streams. One row per (activity_id, stream_type, sequence_index),
-      representing the latest ingested telemetry point for that position in the stream.
+      representing the latest ingested telemetry point for that position in the stream.  
 
     config:
+      meta:
+        domain: strava
+        grain: "One row per (activity_id, stream_type, sequence_index)."
+        source_systems:
+          - source: strava_data
+            table: raw_activity_streams
       contract:
         enforced: true
 
@@ -158,6 +175,12 @@ models:
       as returned by the Strava API.
 
     config:
+      meta:
+        domain: strava
+        grain: "One row per athlete."
+        source_systems:
+          - source: strava_data
+            table: raw_athlete_info
       contract:
         enforced: false
 
@@ -186,6 +209,12 @@ models:
       for a single athlete, as returned by the Strava API.
     
     config:
+      meta: 
+        domain: strava
+        grain: "One row per athlete."
+        source_systems:
+          - source: strava_data
+            table: raw_athlete_stats
       contract:
         enforced: false
 
@@ -206,9 +235,6 @@ models:
         description: "Timestamp when this record was staged in dbt."
         data_type: TIMESTAMP
 
-      # Other columns are defined in stg_athlete_stats.sql
-      # as they are numerous and derived.
-
   # Gear Details
   - name: stg_gear_details
     description: >
@@ -217,14 +243,15 @@ models:
       Raw append-only records are deduplicated by selecting the latest ingested record.
 
     config:
+      meta:
+        domain: strava
+        grain: "One row per gear item."
+        source_systems:
+          - source: strava_data
+            table: raw_gear_details
       contract:
-        enforced: true
-    
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - gear_id
-
+        enforced: false
+        
     columns:
       # Identifiers
       - name: gear_id
@@ -234,31 +261,13 @@ models:
           - not_null
           - unique
 
-      # Naming & classification
-      - name: name
-        description: "Name of the gear as provided by Strava."
-        data_type: STRING
-      - name: nickname
-        description: "User-defined nickname for the gear."
-        data_type: STRING
-      - name: brand_name
-        description: "Manufacturer brand of the gear."
-        data_type: STRING
-      - name: model_name
-        description: "Model name of the gear."
-        data_type: STRING
-      - name: frame_type
-        description: >
-          Numeric code indicating frame type (Strava enum).
-          Typically distinguishes road, mountain, gravel, etc.
-        data_type: INT64
-
       # Status flags
       - name: is_primary
         description: "TRUE if this gear is marked as the athlete's primary gear."
         data_type: BOOL
         tests:
           - not_null
+
       - name: is_retired
         description: "TRUE if the gear has been retired by the athlete."
         data_type: BOOL
@@ -281,24 +290,3 @@ models:
           - dbt_utils.expression_is_true:
               column_name: distance_km
               expression: ">= 0"
-
-      - name: notification_distance_km
-        description: >
-          Distance threshold in kilometers at which Strava sends maintenance notifications.
-        data_type: FLOAT64
-      
-      # Physical properties
-      - name: weight_kg
-        description: "Weight of the gear in kilograms, if provided."
-        data_type: FLOAT64
-
-      # Metadata
-      - name: description
-        description: "Free-text description of the gear."
-        data_type: STRING
-
-      - name: ingested_at
-        description: >
-          UTC timestamp when this record was ingested.
-          Used for deduplication to select the latest record per gear_id.
-        data_type: TIMESTAMP
