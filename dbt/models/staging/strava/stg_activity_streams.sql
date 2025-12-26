@@ -1,6 +1,9 @@
 {{ config(
     materialized='incremental',
-    unique_key='stream_pk'
+    unique_key='stream_pk',
+    on_schema_change='fail',
+    partition_by={"field": "ingested_at", "data_type": "timestamp", "granularity": "day"},
+    cluster_by=["activity_id", "stream_type"]
 ) }}
 
 WITH ranked AS (
@@ -33,6 +36,16 @@ WITH ranked AS (
     FROM {{ source('strava_data', 'raw_activity_streams') }}
 )
 
-SELECT *
+select
+    activity_id,
+    stream_type,
+    sequence_index,
+    value_float,
+    value_int,
+    value_bool,
+    value_lat,
+    value_lng,
+    ingested_at,
+    stream_pk
 FROM ranked
 WHERE rn = 1

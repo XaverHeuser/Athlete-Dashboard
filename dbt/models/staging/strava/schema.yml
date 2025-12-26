@@ -4,25 +4,42 @@ models:
   # Activities
   - name: stg_activities
     description: "Staging model for Strava activities. One row = one Strava activity. Casts types, normalizes units, and adds basic derived metrics and time breakdowns."
+    
+    config:
+      contract:
+        enforced: false
+    
     columns:
-
       # Core identifiers
       - name: activity_id
         description: "Unique identifier for each activity in Strava."
+        data_type: INT64
         tests:
           - not_null
           - unique
 
       - name: athlete_id
-        description: "Unique identifier of the athlete who performed the activity."
+        description: "Unique identifier of the athlete who performed the activity." 
+        data_type: INT64
         tests:
           - not_null
+          - relationships:
+              to: ref('stg_athlete_info')
+              field: athlete_id
+              severity: warn
 
       - name: map_id
         description: "Identifier of the map object associated with this activity in Strava. Used to look up polylines and map metadata."
+        data_type: STRING
 
       - name: gear_id
         description: "Identifier of the gear (bike, shoes) used for this activity."
+        data_type: STRING
+        tests:
+          - relationships:
+              to: ref('stg_gear_details')
+              field: gear_id
+              severity: warn
 
       # Basic info
       - name: activity_name
@@ -31,26 +48,12 @@ models:
           - not_null
 
       - name: sport_type
-        description: "Canonical Strava sport type (Run, Ride, Swim, VirtualRide, etc.)."
+        description: "Canonical Strava sport type (Run, Ride, Swim, etc.)."
         tests:
           - not_null
-          # - accepted_values:
-          #     values: ['Ride', 'Run', 'Swim', 'Hike', 'Walk', 'VirtualRide', 'WeightTraining', 'InlineSkate']
-
-      - name: workout_type
-        description: "Workout sub-type / interval type (Strava field, sometimes null)."
-
-      - name: distance_m
-        description: "Distance covered in meters."
-
-      - name: moving_time_s
-        description: "Active moving time in seconds (excludes pauses)."
-
-      - name: elapsed_time_s
-        description: "Total elapsed time in seconds (includes pauses)."
-
-      - name: elevation_gain_m
-        description: "Total elevation gain in meters."
+          - accepted_values:
+              values: ['Ride','Run','Swim','Hike','Walk','VirtualRide', 'WeightTraining', 'InlineSkate']
+              severity: warn
 
       # Timestamps
       - name: start_date_utc
@@ -63,136 +66,89 @@ models:
         tests:
           - not_null
 
-      - name: timezone
-        description: "IANA timezone label for the activity (e.g. 'Europe/Vienna')."
-
-      - name: utc_offset_s
-        description: "UTC offset of the activity's local time, in seconds."
-
-      # Time breakdowns (derived)
-      - name: activity_date_local
-        description: "Local calendar date (YYYY-MM-DD) of the activity start."
-
-      - name: activity_year
-        description: "Local activity start year (e.g. 2025)."
-
-      - name: activity_month
-        description: "Local activity start month number (1-12)."
-
-      - name: activity_weekday
-        description: "Day of week of the start time (1=Sunday in BigQuery, 2=Monday, ... 7=Saturday)."
-
-      - name: activity_hour_local
-        description: "Hour of day (0-23) when the activity started, in local time."
-
-      # Location
-      - name: location_city
-        description: "City of the activity, if provided by Strava."
-      - name: location_state
-        description: "Region / state of the activity, if provided."
-      - name: location_country
-        description: "Country of the activity."
-
-      # Engagement / social
-      - name: achievement_count
-        description: "Number of segment achievements earned in this activity."
-      - name: kudos_count
-        description: "Number of kudos received from other athletes."
-      - name: comment_count
-        description: "Number of comments left on this activity."
-      - name: athlete_count
-        description: "Number of athletes in the activity (e.g. group ride)."
-      - name: photo_count
-        description: "Number of photos associated with this activity."
-
-      # Boolean flags
-      - name: is_trainer
-        description: "TRUE if the activity was performed on a trainer (indoor ride / treadmill)."
-      - name: is_commute
-        description: "TRUE if the activity is marked as a commute."
-      - name: is_manual
-        description: "TRUE if this activity was manually entered (not recorded via device)."
-      - name: is_flagged
-        description: "TRUE if the activity is flagged in Strava."
-      - name: has_heartrate
-        description: "TRUE if heart rate data is present for this activity."
-      - name: visibility
-        description: "Visibility setting for this activity (e.g. 'everyone', 'followers_only', etc.)."
-
-      # Performance (core telemetry)
-      - name: avg_speed_mps
-        description: "Average moving speed in meters per second (distance/moving_time as understood by Strava)."
-
-      - name: max_speed_mps
-        description: "Maximum speed in meters per second."
-
-      - name: avg_heartrate
-        description: "Average heart rate in beats per minute."
-      - name: max_heartrate
-        description: "Maximum heart rate in beats per minute."
-
-      - name: avg_cadence
-        description: "Average cadence (typically RPM for cycling, or steps/min for running depending on sport)."
-
-      - name: avg_temp_c
-        description: "Average temperature in Celsius for the activity."
-      - name: energy_kj
-        description: "Total reported work in kilojoules."
-      - name: avg_watts
-        description: "Average power in watts."
-      - name: max_watts
-        description: "Maximum instantaneous power in watts."
-      - name: weighted_watts
-        description: "Weighted average power (Strava's 'weighted_average_watts')."
-
-      - name: elev_high_m
-        description: "Highest elevation reached during the activity, in meters."
-      - name: elev_low_m
-        description: "Lowest elevation reached during the activity, in meters."
-
-      # Derived performance metrics
-      - name: avg_pace_min_per_km
-        description: "Average pace in minutes per kilometer, computed as (moving_time / distance). Lower is faster."
-
-      - name: avg_speed_kph
-        description: "Average moving speed in kilometers per hour (converted from avg_speed_mps)."
-
-      - name: max_speed_kph
-        description: "Maximum speed in kilometers per hour (converted from max_speed_mps)."
-
-      - name: avg_speed_overall_kph
-        description: "Overall door-to-door speed in km/h, computed as distance / elapsed_time (includes pauses)."
-
-      - name: idle_time_s
-        description: "Seconds not moving = elapsed_time_s - moving_time_s. Higher often means lots of stopping (traffic lights, coffee, photos)."
-
-      # Map info
-      - name: map_polyline
-        description: "Encoded polyline of the route for mapping / visualization."
-
       # Upload / lineage
       - name: upload_id
         description: "Upload identifier from Strava for this activity."
+        data_type: INT64
+
       - name: upload_id_str
         description: "Upload identifier as string (Strava sometimes provides both int and string forms)."
+        data_type: STRING
+        
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
+        data_type: STRING
 
   # Activity Streams
   - name: stg_activity_streams
     description: >
-      Staging model for Strava activity streams. Each row represents a single data point in an activity's telemetry stream.
-    
+      Staging model for Strava activity streams. One row per (activity_id, stream_type, sequence_index),
+      representing the latest ingested telemetry point for that position in the stream.
+
+    config:
+      contract:
+        enforced: true
+
     columns:
+      - name: stream_pk
+        description: >
+          Surrogate primary key for a telemetry point, derived from (activity_id, stream_type, sequence_index).
+        data_type: STRING
+        tests:
+          - not_null
+          - unique
+
       - name: activity_id
-        description: 'Identifier of the activity this stream data point belongs to.'
+        description: "Identifier of the activity this stream data point belongs to."
+        data_type: INT64
+        tests:
+          - not_null
+          # Strongly recommended if your stg_activities has activity_id unique
+          - relationships:
+              to: ref('stg_activities')
+              field: activity_id
+              severity: warn
+
+      - name: stream_type
+        description: >
+          Type of stream data (e.g. time, distance, altitude, heartrate, cadence, watts, latlng, etc.).
+        data_type: STRING
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['time','distance','latlng','altitude','velocity_smooth','heartrate','cadence','watts','temp','moving','grade_smooth']
+              severity: warn
+
+      - name: sequence_index
+        description: "Zero-based or ordinal index of this sample within the stream."
+        data_type: INT64
         tests:
           - not_null
 
-      - name: stream_type
-        description: 'Type of the stream data (e.g., time, distance, altitude, heartrate, cadence, watts, etc.).'
-        tests:
-          - not_null
+      - name: value_float
+        description: "Numeric stream value when the payload is floating point (e.g., altitude)."
+        data_type: FLOAT64
+
+      - name: value_int
+        description: "Numeric stream value when the payload is integer (e.g., heartrate, cadence)."
+        data_type: INT64
+
+      - name: value_bool
+        description: "Boolean stream value when the payload is boolean."
+        data_type: BOOL
+
+      - name: value_lat
+        description: "Latitude component for coordinate streams (if applicable)."
+        data_type: FLOAT64
+
+      - name: value_lng
+        description: "Longitude component for coordinate streams (if applicable)."
+        data_type: FLOAT64
+
+      - name: ingested_at
+        description: >
+          UTC timestamp when this telemetry point was ingested. Used to deduplicate and keep the latest record.
+        data_type: TIMESTAMP
   
   # Athlete Profile
   - name: stg_athlete_info
@@ -346,6 +302,3 @@ models:
           UTC timestamp when this record was ingested.
           Used for deduplication to select the latest record per gear_id.
         data_type: TIMESTAMP
-        tests:
-          - not_null:
-              severity: warn

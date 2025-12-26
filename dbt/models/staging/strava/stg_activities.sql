@@ -1,6 +1,7 @@
 {{ config(
     materialized='incremental',
-    unique_key='activity_id'
+    unique_key='activity_id',
+    on_schema_change='fail'
 ) }}
 
 WITH ranked AS (
@@ -74,7 +75,53 @@ final AS (
 )
 
 SELECT
-    *,
+    activity_id,
+    athlete_id,
+    map_id,
+    gear_id,
+    activity_name,
+    sport_type,
+    workout_type,
+    distance_m,
+    moving_time_s,
+    elapsed_time_s,
+    elevation_gain_m,
+    start_date_utc,
+    start_date_local,
+    timezone,
+    utc_offset_s,
+    location_city,
+    location_state,
+    location_country,
+    achievement_count,
+    kudos_count,
+    comment_count,
+    athlete_count,
+    photo_count,
+    is_trainer,
+    is_commute,
+    is_manual,
+    is_flagged,
+    has_heartrate,
+    visibility,
+    avg_speed_mps,
+    max_speed_mps,
+    avg_heartrate,
+    max_heartrate,
+    avg_cadence,
+    avg_temp_c,
+    energy_kj,
+    avg_watts,
+    max_watts,
+    weighted_watts,
+    elev_high_m,
+    elev_low_m,
+    map_polyline,
+    upload_id,
+    upload_id_str,
+    external_id,
+    ingested_at,
+
     EXTRACT(DATE FROM start_date_local) AS activity_date_local,
     EXTRACT(YEAR FROM start_date_local) AS activity_year,
     EXTRACT(MONTH FROM start_date_local) AS activity_month,
@@ -87,5 +134,4 @@ SELECT
     SAFE_DIVIDE(distance_m, elapsed_time_s) * 3.6 AS avg_speed_overall_kph,
     (elapsed_time_s - moving_time_s) AS idle_time_s
 
-    
 FROM final
