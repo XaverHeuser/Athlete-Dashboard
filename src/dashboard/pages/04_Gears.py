@@ -6,7 +6,7 @@ Structured by gear type, KPI-driven, minimal charts.
 from queries import load_gear_details
 import streamlit as st
 
-from dashboard.ui.constants import GEAR_TYPE_ORDER
+from ui.constants import GEAR_TYPE_ORDER
 
 
 # -------------------------------------------------

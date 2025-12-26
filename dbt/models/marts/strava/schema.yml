@@ -1,60 +1,419 @@
 version: 2
 
 models:
-  - name: dim_athlete_info
+  - name: dim_athlete
     description: >
-      Dimension table containing business-ready athlete information from Strava.
+      Athlete dimension (grain: 1 row per athlete_id), enriched with activity summary stats.
+      Intended for downstream facts (activities, segments, events) to join on athlete_id.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Athlete dimension table with summary stats."
+      contract:
+        enforced: false
+
+    tests:
+      # Grain check (redundant with unique+not_null, but useful when you move to surrogate keys)
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id]
 
     columns:
       - name: athlete_id
-        description: "Unique identifier for the athlete (primary key)."
+        description: Primary key for the athlete.
+        data_type: INT64
         tests:
           - not_null
           - unique
-      - name: firstname
-        description: "Athlete's first name, formatted in title case."
-      - name: lastname
-        description: "Athlete's last name, formatted in title case."
-      - name: username
-        description: "Athlete's username on Strava."
-      - name: bio
-        description: "Short biography text from the athlete's profile."
-      - name: city
-        description: "City associated with the athlete's location (default 'Unknown')."
-      - name: state
-        description: "State or region of the athlete (default 'Unknown')."
-      - name: country
-        description: "Country of the athlete (default 'Unknown')."
+
       - name: sex
-        description: "Gender of the athlete (as reported by Strava: 'M', 'F', or NULL)."
+        description: Sex as provided by source system.
+        data_type: STRING
         tests:
-          - accepted_values:
-              values: ['M', 'F']
+          # Adjust accepted values to your real domain (e.g. 'M','F' or 'male','female')
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["M", "F"]
+              quote_values: true
+              # If sex can be null, add:
+              # row_condition: "sex is not null"
 
       - name: is_premium_user
-        description: "Boolean flag indicating if the athlete has Premium or Summit membership."
-      - name: weight_kg
-        description: "Athlete's weight in kilograms (rounded to 1 decimal)."
-      - name: profile_medium_img_url
-        description: "URL for the athlete's medium-sized profile image."
-      - name: profile_img_url
-        description: "URL for the athlete's full-sized profile image."
+        description: True when athlete has premium/summit.
+        data_type: BOOLEAN
+        tests:
+          - not_null
 
-      - name: created_at
-        description: "Timestamp when the athlete account was created on Strava."
+      - name: weight_kg
+        description: Weight in kg, rounded to 1 decimal.
+        data_type: FLOAT
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 20
+              max_value: 250
+              # If weight is optional, enforce range only when present:
+              row_condition: "weight_kg is not null"
+
+      - name: total_activities
+        description: Total number of activities for the athlete.
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+      - name: first_activity_date
+        description: Earliest activity date.
+        data_type: DATETIME
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "first_activity_date <= last_activity_date"
+
+      - name: profile_img_url
+        description: URL to profile image.
+        data_type: STRING
+        tests:
+          - dbt_expectations.expect_column_values_to_match_regex:
+              # Very lightweight URL sanity check; adjust as needed
+              regex: "^https?://"
+              row_condition: "profile_img_url is not null"
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: DATETIME
+        tests:
+          - not_null
+
+  - name: dim_date
+    description: >
+      Date dimension generated from a configurable date range. Grain: 1 row per date_day.
+      Includes calendar, ISO calendar, period boundaries, and convenience flags.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Date dimension for reporting and joins; generated via GENERATE_DATE_ARRAY."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_day]
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_key]
+      - dbt_utils.expression_is_true:
+          expression: "week_start_date <= date_day and date_day <= week_end_date"
+      - dbt_utils.expression_is_true:
+          expression: "month_start_date <= date_day and date_day <= month_end_date"
+      - dbt_utils.expression_is_true:
+          expression: "year_start_date <= date_day and date_day <= year_end_date"
+
+
+    columns:
+      - name: date_key
+        description: Surrogate key in YYYYMMDD format.
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+
+      - name: date_day
+        description: The calendar date (grain of the table).
+        data_type: DATE
+        tests:
+          - not_null
+          - unique
+
+      - name: year
+        description: Calendar year.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: quarter
+        description: Calendar quarter (1-4).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 4
+
+      - name: month
+        description: Calendar month (1-12).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 12
+
+      - name: day_of_month
+        description: Day of month (1-31).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 31
+
+      - name: day_of_year
+        description: Day of year (1-366).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 366
+
+      - name: iso_year
+        description: ISO week-numbering year.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: iso_week
+        description: ISO week of year (1-53).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 53
+
+      - name: iso_day_of_week
+        description: ISO day of week (1=Mon..7=Sun).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 7
+
+      - name: day_name
+        description: Day name in English (BigQuery FORMAT_DATE).
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: month_name
+        description: Month name in English (BigQuery FORMAT_DATE).
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: week_start_date
+        description: Week start date (Monday-based).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: week_end_date
+        description: Week end date (Sunday-based for Monday-start weeks).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: month_start_date
+        description: First day of the month.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: month_end_date
+        description: Last day of the month.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: year_start_date
+        description: First day of the year.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: year_end_date
+        description: Last day of the year.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: is_weekend
+        description: True for Saturday/Sunday.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_month_start
+        description: True for first day of month.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_month_end
+        description: True for last day of month.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_year_start
+        description: True for first day of year.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_year_end
+        description: True for last day of year.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_future
+        description: True when date_day is after CURRENT_DATE().
+        data_type: BOOL
         tests:
           - not_null
 
       - name: mart_loaded_at
-        description: "Timestamp when this record was last loaded into the mart layer."
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  - name: dim_gear
+    description: >
+      Gear dimension (grain: 1 row per gear_id). Normalizes Strava gear metadata and derives
+      typed attributes (gear_type, frame_type) plus distance rollups including optional
+      additional distance parsed from description.
 
-  - name: fct_athlete_stats_snapshot
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Gear dimension with type mapping and distance derivations."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "additional_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "notification_distance_km is null or notification_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "weight_kg is null or (weight_kg >= 0 and weight_kg <= 50)"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= distance_km"
+      - dbt_utils.expression_is_true:
+          expression: "frame_type is null or gear_type = 'Bike'"
+
     columns:
-      - name: athlete_id
+      - name: gear_id
+        description: Primary key of the gear item.
+        data_type: STRING
+        tests:
+          - not_null
+          - unique
+
+      - name: gear_type
+        description: Derived gear category based on gear_id prefix.
+        data_type: STRING
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["Bike", "Shoes", "Other"]
+              quote_values: true
+
+      - name: frame_type
+        description: Bike frame type (only for gear_type = Bike).
+        data_type: STRING
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["Mountain Bike", "Cyclocross Bike", "Road Bike", "Time Trial Bike", "Gravel Bike", "Other"]
+              quote_values: true
+              row_condition: "frame_type is not null"
+
+      - name: name
+        description: Gear name.
+        data_type: STRING
+
+      - name: nickname
+        description: Optional nickname.
+        data_type: STRING
+
+      - name: is_primary
+        description: True if this gear is marked as primary.
+        data_type: BOOL
         tests:
           - not_null
 
-  - name: fct_athlete_stats_latest
-    tests:
-      - unique:
-          column_name: athlete_id
+      - name: is_retired
+        description: True if this gear is retired.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: brand_name
+        description: Brand name.
+        data_type: STRING
+
+      - name: model_name
+        description: Model name.
+        data_type: STRING
+
+      - name: description
+        description: Free-text description, may contain additional distance notation.
+        data_type: STRING
+
+      - name: weight_kg
+        description: Gear weight in kg.
+        data_type: FLOAT64
+
+      - name: distance_m
+        description: Total distance in meters (source).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: distance_km
+        description: Total distance in kilometers derived from distance_m.
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: additional_distance_km
+        description: Additional distance parsed from description (e.g., '+ 12km').
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: distance_km + additional_distance_km.
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: notification_distance_km
+        description: Notification threshold distance in km.
+        data_type: FLOAT64
+
+      - name: has_additional_distance_in_description
+        description: True if additional_distance_km > 0.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+
+
