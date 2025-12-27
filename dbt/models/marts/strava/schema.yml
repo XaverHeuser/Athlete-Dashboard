@@ -721,8 +721,304 @@ models:
         tests:
           - not_null
 
+  - name: fct_activities
+    description: >
+      Fact table at grain 1 row per activity_id. Contains keys to athlete/gear and activity metrics.
+      Sourced from stg_activities with light mart-level conventions.
 
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Core Strava activities fact (one row per activity)."
+      contract:
+        enforced: true
 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [activity_id]
+
+      # Basic sanity (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "distance_m is null or distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "moving_time_s is null or moving_time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "elapsed_time_s is null or elapsed_time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "elevation_gain_m is null or elevation_gain_m >= 0"
+
+    columns:
+      - name: activity_id
+        description: Primary key of activity.
+        data_type: INT64
+        tests: [not_null, unique]
+
+      - name: athlete_id
+        description: Athlete foreign key.
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: gear_id
+        description: Gear foreign key (nullable).
+        data_type: STRING
+        tests:
+          - relationships:
+              to: ref('dim_gear')
+              field: gear_id
+              config:
+                where: "gear_id is not null"
+
+      - name: activity_name
+        description: Activity title/name.
+        data_type: STRING
+
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests: [not_null]
+
+      - name: start_date_local
+        description: Local start timestamp.
+        data_type: TIMESTAMP
+        tests: [not_null]
+
+      - name: activity_date_local
+        description: Local activity calendar date.
+        data_type: DATE
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      - name: activity_year
+        description: Calendar year extracted from start_date_local.
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_month
+        description: Calendar month number (1-12) extracted from start_date_local.
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_weekday
+        description: Day-of-week number (BigQuery DAYOFWEEK 1=Sun..7=Sat).
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_hour_local
+        description: Hour of day (0-23).
+        data_type: INT64
+        tests: [not_null]
+
+      - name: distance_m
+        description: Distance meters.
+        data_type: FLOAT64
+
+      - name: distance_km
+        description: Distance kilometers.
+        data_type: FLOAT64
+
+      - name: moving_time_s
+        description: Moving time seconds.
+        data_type: INT64
+
+      - name: elapsed_time_s
+        description: Elapsed time seconds.
+        data_type: INT64
+
+      - name: avg_pace_min_per_km
+        description: Average pace (min/km).
+        data_type: FLOAT64
+
+      - name: avg_speed_kph
+        description: Average speed (km/h).
+        data_type: FLOAT64
+
+      - name: max_speed_kph
+        description: Max speed (km/h).
+        data_type: FLOAT64
+
+      - name: avg_speed_overall_kph
+        description: Overall speed using elapsed time (km/h).
+        data_type: FLOAT64
+
+      - name: elevation_gain_m
+        description: Total elevation gain (m).
+        data_type: FLOAT64
+
+      - name: avg_heartrate
+        description: Average heart rate.
+        data_type: FLOAT64
+
+      - name: max_heartrate
+        description: Maximum heart rate.
+        data_type: FLOAT64
+
+      - name: avg_cadence
+        description: Average cadence.
+        data_type: FLOAT64
+
+      - name: energy_kj
+        description: Energy in kilojoules.
+        data_type: FLOAT64
+
+      - name: avg_watts
+        description: Average power (watts).
+        data_type: FLOAT64
+
+      - name: max_watts
+        description: Max power (watts).
+        data_type: FLOAT64
+
+      - name: weighted_watts
+        description: Weighted average power (watts).
+        data_type: FLOAT64
+
+      - name: kudos_count
+        description: Kudos count.
+        data_type: INT64
+
+      - name: comment_count
+        description: Comment count.
+        data_type: INT64
+
+      - name: achievement_count
+        description: Achievement count.
+        data_type: INT64
+
+      - name: is_commute
+        description: Commute flag.
+        data_type: BOOL
+
+      - name: is_trainer
+        description: Trainer flag.
+        data_type: BOOL
+
+      - name: has_heartrate
+        description: Heart rate data present flag.
+        data_type: BOOL
+
+      - name: map_id
+        description: Map identifier.
+        data_type: STRING
+
+      - name: map_polyline
+        description: Encoded polyline (nullable).
+        data_type: STRING
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests: [not_null]
+
+  - name: fct_activity_stream_points
+    description: >
+      Wide activity stream points at grain 1 row per (activity_id, sequence_index).
+      Pivots stg_activity_streams stream_type rows into typed columns.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Wide pivot of activity streams by sequence index."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [activity_id, sequence_index]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "sequence_index >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "distance_m is null or distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "time_s is null or time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "heartrate_bpm is null or heartrate_bpm >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "cadence_rpm is null or cadence_rpm >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "power_w is null or power_w >= 0"
+
+    columns:
+      - name: activity_id
+        description: Activity identifier (foreign key to fct_activities).
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_activities')
+              field: activity_id
+
+      - name: sequence_index
+        description: Index of the stream point within the activity stream sequence (0..N).
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: time_s
+        description: Time since activity start in seconds.
+        data_type: INT64
+
+      - name: distance_m
+        description: Distance since activity start in meters.
+        data_type: FLOAT64
+
+      - name: heartrate_bpm
+        description: Heart rate in beats per minute.
+        data_type: INT64
+
+      - name: velocity_smooth_mps
+        description: Smoothed velocity in meters per second.
+        data_type: FLOAT64
+
+      - name: altitude_m
+        description: Altitude in meters.
+        data_type: FLOAT64
+
+      - name: cadence_rpm
+        description: Cadence in revolutions per minute.
+        data_type: INT64
+
+      - name: moving
+        description: True if the athlete is moving at this stream point.
+        data_type: BOOL
+
+      - name: power_w
+        description: Power in watts.
+        data_type: INT64
+
+      - name: temp_c
+        description: Temperature in Celsius.
+        data_type: INT64
+
+      - name: grade_smooth_pct
+        description: Smoothed grade in percent.
+        data_type: FLOAT64
+
+      - name: lat
+        description: Latitude (if present in the stream).
+        data_type: FLOAT64
+
+      - name: lng
+        description: Longitude (if present in the stream).
+        data_type: FLOAT64
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
 
 
 

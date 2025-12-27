@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{config(materialized='table')}}
 
 SELECT
     activity_id,
@@ -15,7 +15,9 @@ SELECT
     MAX(CASE WHEN stream_type = 'temp' THEN value_int END) AS temp_c,
     MAX(CASE WHEN stream_type = 'grade_smooth' THEN value_float END) AS grade_smooth_pct,
     MAX(value_lat) as lat,
-    MAX(value_lng) as lng
+    MAX(value_lng) as lng,
+
+    CURRENT_TIMESTAMP() AS _mart_loaded_at
 
 FROM {{ ref('stg_activity_streams') }}
 GROUP BY activity_id, sequence_index
