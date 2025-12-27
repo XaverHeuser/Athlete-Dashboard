@@ -5,7 +5,6 @@ Structured by gear type, KPI-driven, minimal charts.
 
 from queries import load_gear_details
 import streamlit as st
-
 from ui.constants import GEAR_TYPE_ORDER
 
 
@@ -116,8 +115,7 @@ for gear_type in GEAR_TYPE_ORDER:
         )
 
         chart = (
-            alt
-            .Chart(chart_df)
+            alt.Chart(chart_df)
             .mark_bar()
             .encode(
                 x=alt.X('name:N', sort='-y', title='Gear', axis=alt.Axis(labelAngle=0)),
