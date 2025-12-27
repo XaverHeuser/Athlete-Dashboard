@@ -415,5 +415,314 @@ models:
         tests:
           - not_null
 
+  - name: fct_activities_daily
+    description: >
+      Daily aggregated activity facts (grain: 1 row per athlete_id per activity_date).
+      Aggregates key metrics from activities to daily level for easier reporting and analysis.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Daily sport aggregates (distance, time, elevation, counts), optionally dense series."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_date]
+
+      # Basic sanity checks (model-level to avoid the column-test compilation issue you saw earlier)
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category of activity.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_date
+        description: Calendar date of the activity (local start date).
+        data_type: DATE
+        tests:
+          - not_null
+          # Ensure date is present in dim_date
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      - name: total_distance_km
+        description: Total distance for the day and sport type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time for the day and sport type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain for the day and sport type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Count of activities for the day and sport type.
+        data_type: INT64
+        tests:
+          - not_null
+      
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+  - name: fct_activities_weekly
+    description: >
+      Weekly activity aggregates by sport_type and activity_week.
+      activity_week is the Monday week start (DATE_TRUNC with WEEK(MONDAY)).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Weekly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_week]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_week is always a Monday week bucket
+      - dbt_utils.expression_is_true:
+          expression: "activity_week = DATE_TRUNC(activity_week, WEEK(MONDAY))"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_week
+        description: Week bucket (Monday start).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the week for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the week for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the week for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the week for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+  - name: fct_activities_monthly
+    description: >
+      Monthly activity aggregates by sport_type and activity_month (month bucket is first day of month).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Monthly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_month]
+
+      # Basic sanity checks (model-level to avoid column-test compilation issues)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_month is always first day of month (optional but very useful)
+      - dbt_utils.expression_is_true:
+          expression: "activity_month = DATE_TRUNC(activity_month, MONTH)"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_month
+        description: Month bucket (first day of the month).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the month for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the month for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the month for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the month for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+  - name: fct_activities_yearly
+    description: >
+      Yearly activity aggregates by sport_type and activity_year.
+      activity_year is the year start (DATE_TRUNC with YEAR).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Yearly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_year]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_year is always a year bucket
+      - dbt_utils.expression_is_true:
+          expression: "activity_year = DATE_TRUNC(activity_year, YEAR)"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_year
+        description: Year bucket (first day of the year).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the year for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the year for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the year for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the year for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+
+
+
 
 

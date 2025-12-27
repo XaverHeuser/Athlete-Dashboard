@@ -1,4 +1,9 @@
-{{ config(materialized='table') }}
+{{
+  config(
+    materialized='table',
+    cluster_by=['sport_type', 'activity_date']
+  )
+}}
 
 WITH stg AS (
     SELECT
@@ -9,6 +14,7 @@ WITH stg AS (
         moving_time_s,
         elevation_gain_m
     FROM {{ ref('stg_activities') }}
+    WHERE sport_type IS NOT NULL
 ),
 
 date_bounds AS (
@@ -29,7 +35,9 @@ SELECT
     COALESCE(SUM(a.distance_m) / 1000, 0) AS total_distance_km,
     COALESCE(SUM(a.moving_time_s) / 3600.0, 0) AS total_moving_time_h,
     COALESCE(SUM(a.elevation_gain_m), 0) AS total_elevation_gain_m,
-    COALESCE(COUNT(a.activity_id), 0) AS total_activities
+    COALESCE(COUNT(a.activity_id), 0) AS total_activities,
+
+    CURRENT_TIMESTAMP() AS _mart_loaded_at
 
 FROM {{ ref('dim_date') }} d
 CROSS JOIN sport_types s
