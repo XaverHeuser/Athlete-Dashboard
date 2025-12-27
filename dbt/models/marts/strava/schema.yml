@@ -1,6 +1,9 @@
 version: 2
 
 models:
+  # Dimensional marts for Strava data
+
+  # Athlete dimension
   - name: dim_athlete
     description: >
       Athlete dimension (grain: 1 row per athlete_id), enriched with activity summary stats.
@@ -85,7 +88,8 @@ models:
         data_type: DATETIME
         tests:
           - not_null
-
+  
+  # Date dimension
   - name: dim_date
     description: >
       Date dimension generated from a configurable date range. Grain: 1 row per date_day.
@@ -284,6 +288,7 @@ models:
         tests:
           - not_null
   
+  # Gear dimension
   - name: dim_gear
     description: >
       Gear dimension (grain: 1 row per gear_id). Normalizes Strava gear metadata and derives
@@ -414,7 +419,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Daily activity fact
   - name: fct_activities_daily
     description: >
       Daily aggregated activity facts (grain: 1 row per athlete_id per activity_date).
@@ -490,7 +496,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Weekly activity fact
   - name: fct_activities_weekly
     description: >
       Weekly activity aggregates by sport_type and activity_week.
@@ -567,7 +574,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Monthly activity fact
   - name: fct_activities_monthly
     description: >
       Monthly activity aggregates by sport_type and activity_month (month bucket is first day of month).
@@ -643,7 +651,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Yearly activity fact
   - name: fct_activities_yearly
     description: >
       Yearly activity aggregates by sport_type and activity_year.
@@ -720,7 +729,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Activity fact
   - name: fct_activities
     description: >
       Fact table at grain 1 row per activity_id. Contains keys to athlete/gear and activity metrics.
@@ -917,7 +927,8 @@ models:
         description: Timestamp when this mart was built.
         data_type: TIMESTAMP
         tests: [not_null]
-
+  
+  # Activity stream fact
   - name: fct_activity_stream_points
     description: >
       Wide activity stream points at grain 1 row per (activity_id, sequence_index).
@@ -1019,7 +1030,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Athlete stats snapshot daily fact
   - name: fct_athlete_stats_snapshot_daily
     description: >
       Daily snapshot of athlete aggregate statistics at grain (athlete_id, snapshot_date).
@@ -1120,7 +1132,8 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
-
+  
+  # Latest athlete stats snapshot per athlete view
   - name: fct_athlete_stats_latest
     description: >
       Convenience view returning the latest available daily snapshot per athlete_id from
