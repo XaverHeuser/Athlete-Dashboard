@@ -1,9 +1,16 @@
 -- models/marts/strava/fct_athlete_stats_latest.sql
 {{ config(materialized='view') }}
 
-with ranked as (
-  select f.*,
-         row_number() over (partition by athlete_id order by snapshot_ts desc) as rn
-  from {{ ref('fct_athlete_stats_snapshot') }} f
+WITH ranked AS (
+  SELECT
+    f.*,
+    ROW_NUMBER() OVER (
+      PARTITION BY athlete_id
+      ORDER BY snapshot_ts DESC, snapshot_date DESC, _mart_loaded_at DESC
+    ) AS rn
+  FROM {{ ref('fct_athlete_stats_snapshot_daily') }} f
 )
-select * from ranked where rn = 1
+
+SELECT * EXCEPT(rn)
+FROM ranked
+WHERE rn = 1

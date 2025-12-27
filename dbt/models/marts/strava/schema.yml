@@ -1020,5 +1020,151 @@ models:
         tests:
           - not_null
 
+  - name: fct_athlete_stats_snapshot_daily
+    description: >
+      Daily snapshot of athlete aggregate statistics at grain (athlete_id, snapshot_date).
+      Uses fetched_at as snapshot_ts and aligns snapshot_date to Europe/Berlin.
+      Deduped to the latest fetch per athlete per day.
 
+    config:
+      materialized: incremental
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Daily athlete stats snapshot fact (latest per athlete per day)."
+      contract:
+        enforced: false  # Flip to true once the set of metrics stabilizes
 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id, snapshot_date]
+
+      - dbt_utils.expression_is_true:
+          expression: "snapshot_ts is not null"
+
+      # Core sanity (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "biggest_ride_distance_m is null or biggest_ride_distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "biggest_climb_elevation_gain_m is null or biggest_climb_elevation_gain_m >= 0"
+
+      # Example count/time/distance checks (extend to other metrics similarly)
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_count is null or recent_ride_count >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_distance_m is null or recent_ride_distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_moving_time_s is null or recent_ride_moving_time_s >= 0"
+
+    columns:
+      - name: athlete_id
+        description: Athlete identifier.
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: snapshot_ts
+        description: Timestamp when the stats were fetched (source fetched_at).
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+      - name: snapshot_date
+        description: Snapshot day derived from snapshot_ts in Europe/Berlin.
+        data_type: DATE
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      # Top-level metrics
+      - name: biggest_ride_distance_m
+        description: Biggest ride distance (meters).
+        data_type: FLOAT64
+
+      - name: biggest_climb_elevation_gain_m
+        description: Biggest climb elevation gain (meters).
+        data_type: FLOAT64
+
+      # Recent ride metrics (repeat pattern for run/swim + all/ytd)
+      - name: recent_ride_count
+        description: Recent period ride count.
+        data_type: INT64
+
+      - name: recent_ride_distance_m
+        description: Recent period ride distance (meters).
+        data_type: FLOAT64
+
+      - name: recent_ride_moving_time_s
+        description: Recent period ride moving time (seconds).
+        data_type: INT64
+
+      - name: recent_ride_elapsed_time_s
+        description: Recent period ride elapsed time (seconds).
+        data_type: INT64
+
+      - name: recent_ride_elevation_gain_m
+        description: Recent period ride elevation gain (meters).
+        data_type: FLOAT64
+
+      - name: recent_ride_achievement_count
+        description: Recent period ride achievement count.
+        data_type: INT64
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built (if you add it; recommended).
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+  - name: fct_athlete_stats_latest
+    description: >
+      Convenience view returning the latest available daily snapshot per athlete_id from
+      fct_athlete_stats_snapshot_daily. One row per athlete.
+
+    config:
+      materialized: view
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Latest athlete stats snapshot per athlete (windowed over snapshot_ts)."
+      contract:
+        enforced: false
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id]
+
+    columns:
+      - name: athlete_id
+        description: Athlete identifier.
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: snapshot_ts
+        description: Timestamp of the latest snapshot chosen for the athlete.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+      - name: snapshot_date
+        description: Snapshot date aligned to Europe/Berlin.
+        data_type: DATE
+        tests:
+          - not_null
+      
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+          
