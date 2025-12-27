@@ -10,9 +10,7 @@ with base as (
         SAFE_CAST(biggest_ride_distance AS FLOAT64) AS biggest_ride_distance_m,
         SAFE_CAST(biggest_climb_elevation_gain AS FLOAT64) AS biggest_climb_elevation_gain_m,
 
-        -- ----------------------------
         -- Recent totals (ride / run / swim)
-        -- ----------------------------
         SAFE_CAST(recent_ride_totals.count AS INT64) AS recent_ride_count,
         SAFE_CAST(recent_ride_totals.distance AS FLOAT64) AS recent_ride_distance_m,
         SAFE_CAST(recent_ride_totals.moving_time AS INT64) AS recent_ride_moving_time_s,
@@ -34,9 +32,7 @@ with base as (
         SAFE_CAST(recent_swim_totals.elevation_gain AS FLOAT64) AS recent_swim_elevation_gain_m,
         SAFE_CAST(recent_swim_totals.achievement_count AS INT64) AS recent_swim_achievement_count,
 
-        -- ----------------------------
         -- All-time totals (ride / run / swim)
-        -- ----------------------------
         SAFE_CAST(all_ride_totals.count AS INT64) AS all_ride_count,
         SAFE_CAST(all_ride_totals.distance AS FLOAT64) AS all_ride_distance_m,
         SAFE_CAST(all_ride_totals.moving_time AS INT64) AS all_ride_moving_time_s,
@@ -55,9 +51,7 @@ with base as (
         SAFE_CAST(all_swim_totals.elapsed_time AS INT64) AS all_swim_elapsed_time_s,
         SAFE_CAST(all_swim_totals.elevation_gain AS FLOAT64) AS all_swim_elevation_gain_m,
 
-        -- ----------------------------
         -- Year-to-date totals (ride / run / swim)
-        -- ----------------------------
         SAFE_CAST(ytd_ride_totals.count AS INT64) AS ytd_ride_count,
         SAFE_CAST(ytd_ride_totals.distance AS FLOAT64) AS ytd_ride_distance_m,
         SAFE_CAST(ytd_ride_totals.moving_time AS FLOAT64) AS ytd_ride_moving_time_s,

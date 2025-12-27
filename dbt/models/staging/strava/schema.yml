@@ -1,331 +1,292 @@
 version: 2
 
+
 models:
+  # Activities
   - name: stg_activities
     description: "Staging model for Strava activities. One row = one Strava activity. Casts types, normalizes units, and adds basic derived metrics and time breakdowns."
+    
+    config:
+      meta:
+        domain: strava
+        grain: "One row per Strava activity."
+        source_systems:
+          - source: strava_data
+            table: raw_activities
+      contract:
+        enforced: false
+    
     columns:
-
       # Core identifiers
       - name: activity_id
         description: "Unique identifier for each activity in Strava."
+        data_type: INT64
         tests:
           - not_null
           - unique
 
       - name: athlete_id
-        description: "Unique identifier of the athlete who performed the activity."
+        description: "Unique identifier of the athlete who performed the activity." 
+        data_type: INT64
         tests:
           - not_null
+          - relationships:
+              to: ref('stg_athlete_info')
+              field: athlete_id
+              severity: warn
 
       - name: map_id
         description: "Identifier of the map object associated with this activity in Strava. Used to look up polylines and map metadata."
+        data_type: STRING
 
       - name: gear_id
         description: "Identifier of the gear (bike, shoes) used for this activity."
+        data_type: STRING
+        tests:
+          - relationships:
+              to: ref('stg_gear_details')
+              field: gear_id
+              severity: warn
 
       # Basic info
       - name: activity_name
         description: "Activity title as recorded in Strava (e.g. 'Morning Ride')."
+        data_type: STRING
         tests:
           - not_null
 
       - name: sport_type
-        description: "Canonical Strava sport type (Run, Ride, Swim, VirtualRide, etc.)."
+        description: "Canonical Strava sport type (Run, Ride, Swim, etc.)."
+        data_type: STRING
         tests:
           - not_null
-          # - accepted_values:
-          #     values: ['Ride', 'Run', 'Swim', 'Hike', 'Walk', 'VirtualRide', 'WeightTraining', 'InlineSkate']
-
-      - name: workout_type
-        description: "Workout sub-type / interval type (Strava field, sometimes null)."
-
-      - name: distance_m
-        description: "Distance covered in meters."
-
-      - name: moving_time_s
-        description: "Active moving time in seconds (excludes pauses)."
-
-      - name: elapsed_time_s
-        description: "Total elapsed time in seconds (includes pauses)."
-
-      - name: elevation_gain_m
-        description: "Total elevation gain in meters."
+          - accepted_values:
+              values: ['Ride','Run','Swim','Hike','Walk','VirtualRide', 'WeightTraining', 'InlineSkate']
+              severity: warn
 
       # Timestamps
       - name: start_date_utc
         description: "Activity start time in UTC, as reported by Strava."
+        data_type: TIMESTAMP
         tests:
           - not_null
 
       - name: start_date_local
         description: "Activity start time localized to the athlete's timezone."
+        data_type: TIMESTAMP
         tests:
           - not_null
-
-      - name: timezone
-        description: "IANA timezone label for the activity (e.g. 'Europe/Vienna')."
-
-      - name: utc_offset_s
-        description: "UTC offset of the activity's local time, in seconds."
-
-      # Time breakdowns (derived)
-      - name: activity_date_local
-        description: "Local calendar date (YYYY-MM-DD) of the activity start."
-
-      - name: activity_year
-        description: "Local activity start year (e.g. 2025)."
-
-      - name: activity_month
-        description: "Local activity start month number (1-12)."
-
-      - name: activity_weekday
-        description: "Day of week of the start time (1=Sunday in BigQuery, 2=Monday, ... 7=Saturday)."
-
-      - name: activity_hour_local
-        description: "Hour of day (0-23) when the activity started, in local time."
-
-      # Location
-      - name: location_city
-        description: "City of the activity, if provided by Strava."
-      - name: location_state
-        description: "Region / state of the activity, if provided."
-      - name: location_country
-        description: "Country of the activity."
-
-      # Engagement / social
-      - name: achievement_count
-        description: "Number of segment achievements earned in this activity."
-      - name: kudos_count
-        description: "Number of kudos received from other athletes."
-      - name: comment_count
-        description: "Number of comments left on this activity."
-      - name: athlete_count
-        description: "Number of athletes in the activity (e.g. group ride)."
-      - name: photo_count
-        description: "Number of photos associated with this activity."
-
-      # Boolean flags
-      - name: is_trainer
-        description: "TRUE if the activity was performed on a trainer (indoor ride / treadmill)."
-      - name: is_commute
-        description: "TRUE if the activity is marked as a commute."
-      - name: is_manual
-        description: "TRUE if this activity was manually entered (not recorded via device)."
-      - name: is_flagged
-        description: "TRUE if the activity is flagged in Strava."
-      - name: has_heartrate
-        description: "TRUE if heart rate data is present for this activity."
-      - name: visibility
-        description: "Visibility setting for this activity (e.g. 'everyone', 'followers_only', etc.)."
-
-      # Performance (core telemetry)
-      - name: avg_speed_mps
-        description: "Average moving speed in meters per second (distance/moving_time as understood by Strava)."
-
-      - name: max_speed_mps
-        description: "Maximum speed in meters per second."
-
-      - name: avg_heartrate
-        description: "Average heart rate in beats per minute."
-      - name: max_heartrate
-        description: "Maximum heart rate in beats per minute."
-
-      - name: avg_cadence
-        description: "Average cadence (typically RPM for cycling, or steps/min for running depending on sport)."
-
-      - name: avg_temp_c
-        description: "Average temperature in Celsius for the activity."
-      - name: energy_kj
-        description: "Total reported work in kilojoules."
-      - name: avg_watts
-        description: "Average power in watts."
-      - name: max_watts
-        description: "Maximum instantaneous power in watts."
-      - name: weighted_watts
-        description: "Weighted average power (Strava's 'weighted_average_watts')."
-
-      - name: elev_high_m
-        description: "Highest elevation reached during the activity, in meters."
-      - name: elev_low_m
-        description: "Lowest elevation reached during the activity, in meters."
-
-      # Derived performance metrics
-      - name: avg_pace_min_per_km
-        description: "Average pace in minutes per kilometer, computed as (moving_time / distance). Lower is faster."
-
-      - name: avg_speed_kph
-        description: "Average moving speed in kilometers per hour (converted from avg_speed_mps)."
-
-      - name: max_speed_kph
-        description: "Maximum speed in kilometers per hour (converted from max_speed_mps)."
-
-      - name: avg_speed_overall_kph
-        description: "Overall door-to-door speed in km/h, computed as distance / elapsed_time (includes pauses)."
-
-      - name: idle_time_s
-        description: "Seconds not moving = elapsed_time_s - moving_time_s. Higher often means lots of stopping (traffic lights, coffee, photos)."
-
-      # Map info
-      - name: map_polyline
-        description: "Encoded polyline of the route for mapping / visualization."
 
       # Upload / lineage
       - name: upload_id
         description: "Upload identifier from Strava for this activity."
+        data_type: INT64
+
       - name: upload_id_str
         description: "Upload identifier as string (Strava sometimes provides both int and string forms)."
+        data_type: STRING
+        
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
+        data_type: STRING
 
-  - name: stg_athlete_info
+  # Activity Streams
+  - name: stg_activity_streams
     description: >
-      Cleaned and typed staging model for Strava athlete information.
+      Staging model for Strava activity streams. One row per (activity_id, stream_type, sequence_index),
+      representing the latest ingested telemetry point for that position in the stream.  
+
+    config:
+      meta:
+        domain: strava
+        grain: "One row per (activity_id, stream_type, sequence_index)."
+        source_systems:
+          - source: strava_data
+            table: raw_activity_streams
+      contract:
+        enforced: true
 
     columns:
-      - name: athlete_id
-        description: 'Unique identifier for the athlete.'
+      - name: stream_pk
+        description: >
+          Surrogate primary key for a telemetry point, derived from (activity_id, stream_type, sequence_index).
+        data_type: STRING
         tests:
           - not_null
           - unique
 
-      - name: username
-        description: 'The athletes Strava username (may be null if user hides it).'
-      - name: first_name
-        description: 'The athletes first name.'
-      - name: last_name
-        description: 'The athletes last name.'
-      - name: bio
-        description: 'Short biography or about section from the athletes Strava profile.'
-      - name: city
-        description: 'City the athlete is located in.'
-      - name: state
-        description: 'State or region of the athlete.'
-      - name: country
-        description: 'Country of the athlete.'
-      - name: sex
-        description: 'The athletes gender as provided by Strava (e.g., M, F or null).'
+      - name: activity_id
+        description: "Identifier of the activity this stream data point belongs to."
+        data_type: INT64
         tests:
+          - not_null
+          # Strongly recommended if your stg_activities has activity_id unique
+          - relationships:
+              to: ref('stg_activities')
+              field: activity_id
+              severity: warn
+
+      - name: stream_type
+        description: >
+          Type of stream data (e.g. time, distance, altitude, heartrate, cadence, watts, latlng, etc.).
+        data_type: STRING
+        tests:
+          - not_null
           - accepted_values:
-              values: ['M', 'F']
+              values: ['time','distance','latlng','altitude','velocity_smooth','heartrate','cadence','watts','temp','moving','grade_smooth']
+              severity: warn
 
-      - name: has_premium
-        description: 'Boolean flag indicating if the athlete has a Strava Premium account.'
-      - name: has_summit
-        description: 'Boolean flag indicating if the athlete has a Summit membership.'
-
-      - name: badge_type_id
-        description: 'Strava badge type identifier for visual rank or level (nullable).'
-      - name: weight_kg
-        description: 'Weight of the athlete in kilograms.'
-      - name: profile_medium
-        description: 'URL to the athletes medium-sized profile image.'
-      - name: profile
-        description: 'URL to the athletes full-size profile image.'
-      - name: friend
-        description: 'Friend relationship status relative to the authenticated user.'
-      - name: follower
-        description: 'Follower relationship status relative to the authenticated user.'
-
-      - name: created_at
-        description: 'Timestamp when the athlete account was created on Strava.'
-        tests:
-          - not_null
-      - name: updated_at
-        description: 'Timestamp when the athlete record was last updated.'
+      - name: sequence_index
+        description: "Zero-based or ordinal index of this sample within the stream."
+        data_type: INT64
         tests:
           - not_null
 
-      - name: resource_state
-        description: 'Resource state returned by Strava indicating object completeness (1=meta, 2=summary, 3=detailed).'
+      - name: value_float
+        description: "Numeric stream value when the payload is floating point (e.g., altitude)."
+        data_type: FLOAT64
 
+      - name: value_int
+        description: "Numeric stream value when the payload is integer (e.g., heartrate, cadence)."
+        data_type: INT64
+
+      - name: value_bool
+        description: "Boolean stream value when the payload is boolean."
+        data_type: BOOL
+
+      - name: value_lat
+        description: "Latitude component for coordinate streams (if applicable)."
+        data_type: FLOAT64
+
+      - name: value_lng
+        description: "Longitude component for coordinate streams (if applicable)."
+        data_type: FLOAT64
+
+      - name: ingested_at
+        description: >
+          UTC timestamp when this telemetry point was ingested. Used to deduplicate and keep the latest record.
+        data_type: TIMESTAMP
+  
+  # Athlete Profile
+  - name: stg_athlete_info
+    description: >
+      Cleaned and typed staging model for Strava athlete profile information.
+      Contains personal, geographic, and account-related attributes for a single athlete,
+      as returned by the Strava API.
+
+    config:
+      meta:
+        domain: strava
+        grain: "One row per athlete."
+        source_systems:
+          - source: strava_data
+            table: raw_athlete_info
+      contract:
+        enforced: false
+
+    columns:
+      # Identifiers
+      - name: athlete_id
+        description: "Unique identifier for the athlete."
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+
+      - name: firstname
+        description: "Athlete's first name."
+        data_type: STRING
+
+      - name: lastname
+        description: "Athlete's last name."
+        data_type: STRING
+
+  # Athlete Statistics
   - name: stg_athlete_stats
     description: >
       Cleaned and typed staging model for Strava athlete statistics.
+      Contains lifetime, recent, and year-to-date aggregated metrics
+      for a single athlete, as returned by the Strava API.
     
+    config:
+      meta: 
+        domain: strava
+        grain: "One row per athlete."
+        source_systems:
+          - source: strava_data
+            table: raw_athlete_stats
+      contract:
+        enforced: false
+
     columns:
+      # Identifiers & metadata
       - name: athlete_id
-        description: 'Unique identifier for the athlete.'
+        description: "Unique identifier for the athlete."
+        data_type: INT64
         tests:
           - not_null
           - unique
 
-      - name: biggest_ride_distance_m
-        description: 'Longest single ride distance in meters.'
+      - name: fetched_at
+        description: "Timestamp when the statistics snapshot was fetched from the Strava API."
+        data_type: TIMESTAMP
 
-      - name: biggest_climb_elevation_m
-        description: 'Greatest single climb elevation gain in meters.'
+      - name: _staged_at
+        description: "Timestamp when this record was staged in dbt."
+        data_type: TIMESTAMP
 
-      - name: recent_ride_totals_distance_m
-        description: 'Total distance of rides in the recent period (meters).'
-
-      - name: recent_ride_totals_moving_time_s
-        description: 'Total moving time of rides in the recent period (seconds).'
-
-      - name: recent_ride_totals_elevation_gain_m
-        description: 'Total elevation gain of rides in the recent period (meters).'
-
-      - name: recent_run_totals_distance_m
-        description: 'Total distance of runs in the recent period (meters).'
-
-      - name: recent_run_totals_moving_time_s
-        description: 'Total moving time of runs in the recent period (seconds).'
-
-      - name: recent_run_totals_elevation_gain_m
-        description: 'Total elevation gain of runs in the recent period (meters).'
-
-      - name: recent_swim_totals_distance_m
-        description: 'Total distance of swims in the recent period (meters).'
-
-      - name: recent_swim_totals_moving_time_s
-        description: 'Total moving time of swims in the recent period (seconds).'
-
-      - name: recent_swim_totals_elevation_gain_m
-        description: 'Total elevation gain of swims in the recent period (meters).'
-
-      - name: all_ride_totals_distance_m
-        description: 'All-time total distance of rides (meters).'
-
-      - name: all_ride_totals_moving_time_s
-        description: 'All-time total moving time of rides (seconds).'
-
-      - name: all_ride_totals_elevation_gain_m
-        description: 'All-time total elevation gain of rides (meters).'
-
-      - name: all_run_totals_distance_m
-        description: 'All-time total distance of runs (meters).'
-
-      - name: all_run_totals_moving_time_s
-        description: 'All-time total moving time of runs (seconds).'
-
-      - name: all_run_totals_elevation_gain_m
-        description: 'All-time total elevation gain of runs (meters).'
-
-  - name: stg_gear_info
+  # Gear Details
+  - name: stg_gear_details
     description: >
-      Cleaned and typed staging model for Strava gear information.
-    
+      Staging model for Strava gear details.
+      One row per gear_id, representing the most recent known state of each gear item.
+      Raw append-only records are deduplicated by selecting the latest ingested record.
+
+    config:
+      meta:
+        domain: strava
+        grain: "One row per gear item."
+        source_systems:
+          - source: strava_data
+            table: raw_gear_details
+      contract:
+        enforced: false
+        
     columns:
+      # Identifiers
       - name: gear_id
-        description: 'Unique identifier for the gear.'
+        description: "Unique identifier for the gear item in Strava."
+        data_type: STRING
         tests:
           - not_null
           - unique
 
-      - name: name
-        description: 'Name of the gear as given by the athlete.'
-
-  - name: stg_activity_streams
-    description: >
-      Staging model for Strava activity streams. Each row represents a single data point in an activity's telemetry stream.
-    
-    columns:
-      - name: activity_id
-        description: 'Identifier of the activity this stream data point belongs to.'
+      # Status flags
+      - name: is_primary
+        description: "TRUE if this gear is marked as the athlete's primary gear."
+        data_type: BOOL
         tests:
           - not_null
 
-      - name: stream_type
-        description: 'Type of the stream data (e.g., time, distance, altitude, heartrate, cadence, watts, etc.).'
+      - name: is_retired
+        description: "TRUE if the gear has been retired by the athlete."
+        data_type: BOOL
         tests:
           - not_null
-            
+
+      # Usage & distance
+      - name: distance_m
+        description: "Total accumulated distance for this gear in meters."
+        data_type: INT64
+        tests:
+          - dbt_utils.expression_is_true:
+              column_name: distance_m
+              expression: ">= 0"
+
+      - name: distance_km
+        description: "Total accumulated distance for this gear in kilometers."
+        data_type: FLOAT64
+        tests:
+          - dbt_utils.expression_is_true:
+              column_name: distance_km
+              expression: ">= 0"

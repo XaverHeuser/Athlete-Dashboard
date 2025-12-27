@@ -1,60 +1,1183 @@
 version: 2
 
 models:
-  - name: dim_athlete_info
+  # Dimensional marts for Strava data
+
+  # Athlete dimension
+  - name: dim_athlete
     description: >
-      Dimension table containing business-ready athlete information from Strava.
+      Athlete dimension (grain: 1 row per athlete_id), enriched with activity summary stats.
+      Intended for downstream facts (activities, segments, events) to join on athlete_id.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Athlete dimension table with summary stats."
+      contract:
+        enforced: false
+
+    tests:
+      # Grain check (redundant with unique+not_null, but useful when you move to surrogate keys)
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id]
 
     columns:
       - name: athlete_id
-        description: "Unique identifier for the athlete (primary key)."
+        description: Primary key for the athlete.
+        data_type: INT64
         tests:
           - not_null
           - unique
-      - name: firstname
-        description: "Athlete's first name, formatted in title case."
-      - name: lastname
-        description: "Athlete's last name, formatted in title case."
-      - name: username
-        description: "Athlete's username on Strava."
-      - name: bio
-        description: "Short biography text from the athlete's profile."
-      - name: city
-        description: "City associated with the athlete's location (default 'Unknown')."
-      - name: state
-        description: "State or region of the athlete (default 'Unknown')."
-      - name: country
-        description: "Country of the athlete (default 'Unknown')."
+
       - name: sex
-        description: "Gender of the athlete (as reported by Strava: 'M', 'F', or NULL)."
+        description: Sex as provided by source system.
+        data_type: STRING
         tests:
-          - accepted_values:
-              values: ['M', 'F']
+          # Adjust accepted values to your real domain (e.g. 'M','F' or 'male','female')
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["M", "F"]
+              quote_values: true
+              # If sex can be null, add:
+              # row_condition: "sex is not null"
 
       - name: is_premium_user
-        description: "Boolean flag indicating if the athlete has Premium or Summit membership."
-      - name: weight_kg
-        description: "Athlete's weight in kilograms (rounded to 1 decimal)."
-      - name: profile_medium_img_url
-        description: "URL for the athlete's medium-sized profile image."
-      - name: profile_img_url
-        description: "URL for the athlete's full-sized profile image."
+        description: True when athlete has premium/summit.
+        data_type: BOOLEAN
+        tests:
+          - not_null
 
-      - name: created_at
-        description: "Timestamp when the athlete account was created on Strava."
+      - name: weight_kg
+        description: Weight in kg, rounded to 1 decimal.
+        data_type: FLOAT
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 20
+              max_value: 250
+              # If weight is optional, enforce range only when present:
+              row_condition: "weight_kg is not null"
+
+      - name: total_activities
+        description: Total number of activities for the athlete.
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+      - name: first_activity_date
+        description: Earliest activity date.
+        data_type: DATETIME
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "first_activity_date <= last_activity_date"
+
+      - name: profile_img_url
+        description: URL to profile image.
+        data_type: STRING
+        tests:
+          - dbt_expectations.expect_column_values_to_match_regex:
+              # Very lightweight URL sanity check; adjust as needed
+              regex: "^https?://"
+              row_condition: "profile_img_url is not null"
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: DATETIME
+        tests:
+          - not_null
+  
+  # Date dimension
+  - name: dim_date
+    description: >
+      Date dimension generated from a configurable date range. Grain: 1 row per date_day.
+      Includes calendar, ISO calendar, period boundaries, and convenience flags.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Date dimension for reporting and joins; generated via GENERATE_DATE_ARRAY."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_day]
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_key]
+      - dbt_utils.expression_is_true:
+          expression: "week_start_date <= date_day and date_day <= week_end_date"
+      - dbt_utils.expression_is_true:
+          expression: "month_start_date <= date_day and date_day <= month_end_date"
+      - dbt_utils.expression_is_true:
+          expression: "year_start_date <= date_day and date_day <= year_end_date"
+
+
+    columns:
+      - name: date_key
+        description: Surrogate key in YYYYMMDD format.
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+
+      - name: date_day
+        description: The calendar date (grain of the table).
+        data_type: DATE
+        tests:
+          - not_null
+          - unique
+
+      - name: year
+        description: Calendar year.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: quarter
+        description: Calendar quarter (1-4).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 4
+
+      - name: month
+        description: Calendar month (1-12).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 12
+
+      - name: day_of_month
+        description: Day of month (1-31).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 31
+
+      - name: day_of_year
+        description: Day of year (1-366).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 366
+
+      - name: iso_year
+        description: ISO week-numbering year.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: iso_week
+        description: ISO week of year (1-53).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 53
+
+      - name: iso_day_of_week
+        description: ISO day of week (1=Mon..7=Sun).
+        data_type: INT64
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 7
+
+      - name: day_name
+        description: Day name in English (BigQuery FORMAT_DATE).
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: month_name
+        description: Month name in English (BigQuery FORMAT_DATE).
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: week_start_date
+        description: Week start date (Monday-based).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: week_end_date
+        description: Week end date (Sunday-based for Monday-start weeks).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: month_start_date
+        description: First day of the month.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: month_end_date
+        description: Last day of the month.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: year_start_date
+        description: First day of the year.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: year_end_date
+        description: Last day of the year.
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: is_weekend
+        description: True for Saturday/Sunday.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_month_start
+        description: True for first day of month.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_month_end
+        description: True for last day of month.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_year_start
+        description: True for first day of year.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_year_end
+        description: True for last day of year.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: is_future
+        description: True when date_day is after CURRENT_DATE().
+        data_type: BOOL
         tests:
           - not_null
 
       - name: mart_loaded_at
-        description: "Timestamp when this record was last loaded into the mart layer."
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Gear dimension
+  - name: dim_gear
+    description: >
+      Gear dimension (grain: 1 row per gear_id). Normalizes Strava gear metadata and derives
+      typed attributes (gear_type, frame_type) plus distance rollups including optional
+      additional distance parsed from description.
 
-  - name: fct_athlete_stats_snapshot
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Gear dimension with type mapping and distance derivations."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "additional_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "notification_distance_km is null or notification_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "weight_kg is null or (weight_kg >= 0 and weight_kg <= 50)"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= distance_km"
+      - dbt_utils.expression_is_true:
+          expression: "frame_type is null or gear_type = 'Bike'"
+
     columns:
-      - name: athlete_id
+      - name: gear_id
+        description: Primary key of the gear item.
+        data_type: STRING
+        tests:
+          - not_null
+          - unique
+
+      - name: gear_type
+        description: Derived gear category based on gear_id prefix.
+        data_type: STRING
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["Bike", "Shoes", "Other"]
+              quote_values: true
+
+      - name: frame_type
+        description: Bike frame type (only for gear_type = Bike).
+        data_type: STRING
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ["Mountain Bike", "Cyclocross Bike", "Road Bike", "Time Trial Bike", "Gravel Bike", "Other"]
+              quote_values: true
+              row_condition: "frame_type is not null"
+
+      - name: name
+        description: Gear name.
+        data_type: STRING
+
+      - name: nickname
+        description: Optional nickname.
+        data_type: STRING
+
+      - name: is_primary
+        description: True if this gear is marked as primary.
+        data_type: BOOL
         tests:
           - not_null
 
-  - name: fct_athlete_stats_latest
+      - name: is_retired
+        description: True if this gear is retired.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: brand_name
+        description: Brand name.
+        data_type: STRING
+
+      - name: model_name
+        description: Model name.
+        data_type: STRING
+
+      - name: description
+        description: Free-text description, may contain additional distance notation.
+        data_type: STRING
+
+      - name: weight_kg
+        description: Gear weight in kg.
+        data_type: FLOAT64
+
+      - name: distance_m
+        description: Total distance in meters (source).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: distance_km
+        description: Total distance in kilometers derived from distance_m.
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: additional_distance_km
+        description: Additional distance parsed from description (e.g., '+ 12km').
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: distance_km + additional_distance_km.
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: notification_distance_km
+        description: Notification threshold distance in km.
+        data_type: FLOAT64
+
+      - name: has_additional_distance_in_description
+        description: True if additional_distance_km > 0.
+        data_type: BOOL
+        tests:
+          - not_null
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Daily activity fact
+  - name: fct_activities_daily
+    description: >
+      Daily aggregated activity facts (grain: 1 row per athlete_id per activity_date).
+      Aggregates key metrics from activities to daily level for easier reporting and analysis.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Daily sport aggregates (distance, time, elevation, counts), optionally dense series."
+      contract:
+        enforced: true
+
     tests:
-      - unique:
-          column_name: athlete_id
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_date]
+
+      # Basic sanity checks (model-level to avoid the column-test compilation issue you saw earlier)
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category of activity.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_date
+        description: Calendar date of the activity (local start date).
+        data_type: DATE
+        tests:
+          - not_null
+          # Ensure date is present in dim_date
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      - name: total_distance_km
+        description: Total distance for the day and sport type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time for the day and sport type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain for the day and sport type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Count of activities for the day and sport type.
+        data_type: INT64
+        tests:
+          - not_null
+      
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Weekly activity fact
+  - name: fct_activities_weekly
+    description: >
+      Weekly activity aggregates by sport_type and activity_week.
+      activity_week is the Monday week start (DATE_TRUNC with WEEK(MONDAY)).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Weekly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_week]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_week is always a Monday week bucket
+      - dbt_utils.expression_is_true:
+          expression: "activity_week = DATE_TRUNC(activity_week, WEEK(MONDAY))"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_week
+        description: Week bucket (Monday start).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the week for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the week for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the week for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the week for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Monthly activity fact
+  - name: fct_activities_monthly
+    description: >
+      Monthly activity aggregates by sport_type and activity_month (month bucket is first day of month).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Monthly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_month]
+
+      # Basic sanity checks (model-level to avoid column-test compilation issues)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_month is always first day of month (optional but very useful)
+      - dbt_utils.expression_is_true:
+          expression: "activity_month = DATE_TRUNC(activity_month, MONTH)"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_month
+        description: Month bucket (first day of the month).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the month for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the month for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the month for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the month for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Yearly activity fact
+  - name: fct_activities_yearly
+    description: >
+      Yearly activity aggregates by sport_type and activity_year.
+      activity_year is the year start (DATE_TRUNC with YEAR).
+      Built from the daily activity fact.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Yearly sport aggregates (distance, time, elevation, counts) from daily fact."
+      contract:
+        enforced: true
+
+    tests:
+      # Grain
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sport_type, activity_year]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "total_activities >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_distance_km >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_moving_time_h >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_elevation_gain_m >= 0"
+
+      # Ensure activity_year is always a year bucket
+      - dbt_utils.expression_is_true:
+          expression: "activity_year = DATE_TRUNC(activity_year, YEAR)"
+
+    columns:
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: activity_year
+        description: Year bucket (first day of the year).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: total_activities
+        description: Total activities in the year for the sport_type.
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: total_distance_km
+        description: Total distance in the year for the sport_type (km).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_moving_time_h
+        description: Total moving time in the year for the sport_type (hours).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: total_elevation_gain_m
+        description: Total elevation gain in the year for the sport_type (meters).
+        data_type: FLOAT64
+        tests:
+          - not_null
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Activity fact
+  - name: fct_activities
+    description: >
+      Fact table at grain 1 row per activity_id. Contains keys to athlete/gear and activity metrics.
+      Sourced from stg_activities with light mart-level conventions.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Core Strava activities fact (one row per activity)."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [activity_id]
+
+      # Basic sanity (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "distance_m is null or distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "moving_time_s is null or moving_time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "elapsed_time_s is null or elapsed_time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "elevation_gain_m is null or elevation_gain_m >= 0"
+
+    columns:
+      - name: activity_id
+        description: Primary key of activity.
+        data_type: INT64
+        tests: [not_null, unique]
+
+      - name: athlete_id
+        description: Athlete foreign key.
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: gear_id
+        description: Gear foreign key (nullable).
+        data_type: STRING
+        tests:
+          - relationships:
+              to: ref('dim_gear')
+              field: gear_id
+              config:
+                where: "gear_id is not null"
+
+      - name: activity_name
+        description: Activity title/name.
+        data_type: STRING
+
+      - name: sport_type
+        description: Sport type/category.
+        data_type: STRING
+        tests: [not_null]
+
+      - name: start_date_local
+        description: Local start timestamp.
+        data_type: TIMESTAMP
+        tests: [not_null]
+
+      - name: activity_date_local
+        description: Local activity calendar date.
+        data_type: DATE
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      - name: activity_year
+        description: Calendar year extracted from start_date_local.
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_month
+        description: Calendar month number (1-12) extracted from start_date_local.
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_weekday
+        description: Day-of-week number (BigQuery DAYOFWEEK 1=Sun..7=Sat).
+        data_type: INT64
+        tests: [not_null]
+
+      - name: activity_hour_local
+        description: Hour of day (0-23).
+        data_type: INT64
+        tests: [not_null]
+
+      - name: distance_m
+        description: Distance meters.
+        data_type: FLOAT64
+
+      - name: distance_km
+        description: Distance kilometers.
+        data_type: FLOAT64
+
+      - name: moving_time_s
+        description: Moving time seconds.
+        data_type: INT64
+
+      - name: elapsed_time_s
+        description: Elapsed time seconds.
+        data_type: INT64
+
+      - name: avg_pace_min_per_km
+        description: Average pace (min/km).
+        data_type: FLOAT64
+
+      - name: avg_speed_kph
+        description: Average speed (km/h).
+        data_type: FLOAT64
+
+      - name: max_speed_kph
+        description: Max speed (km/h).
+        data_type: FLOAT64
+
+      - name: avg_speed_overall_kph
+        description: Overall speed using elapsed time (km/h).
+        data_type: FLOAT64
+
+      - name: elevation_gain_m
+        description: Total elevation gain (m).
+        data_type: FLOAT64
+
+      - name: avg_heartrate
+        description: Average heart rate.
+        data_type: FLOAT64
+
+      - name: max_heartrate
+        description: Maximum heart rate.
+        data_type: FLOAT64
+
+      - name: avg_cadence
+        description: Average cadence.
+        data_type: FLOAT64
+
+      - name: energy_kj
+        description: Energy in kilojoules.
+        data_type: FLOAT64
+
+      - name: avg_watts
+        description: Average power (watts).
+        data_type: FLOAT64
+
+      - name: max_watts
+        description: Max power (watts).
+        data_type: FLOAT64
+
+      - name: weighted_watts
+        description: Weighted average power (watts).
+        data_type: FLOAT64
+
+      - name: kudos_count
+        description: Kudos count.
+        data_type: INT64
+
+      - name: comment_count
+        description: Comment count.
+        data_type: INT64
+
+      - name: achievement_count
+        description: Achievement count.
+        data_type: INT64
+
+      - name: is_commute
+        description: Commute flag.
+        data_type: BOOL
+
+      - name: is_trainer
+        description: Trainer flag.
+        data_type: BOOL
+
+      - name: has_heartrate
+        description: Heart rate data present flag.
+        data_type: BOOL
+
+      - name: map_id
+        description: Map identifier.
+        data_type: STRING
+
+      - name: map_polyline
+        description: Encoded polyline (nullable).
+        data_type: STRING
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests: [not_null]
+  
+  # Activity stream fact
+  - name: fct_activity_stream_points
+    description: >
+      Wide activity stream points at grain 1 row per (activity_id, sequence_index).
+      Pivots stg_activity_streams stream_type rows into typed columns.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Wide pivot of activity streams by sequence index."
+      contract:
+        enforced: true
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [activity_id, sequence_index]
+
+      # Sanity checks (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "sequence_index >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "distance_m is null or distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "time_s is null or time_s >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "heartrate_bpm is null or heartrate_bpm >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "cadence_rpm is null or cadence_rpm >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "power_w is null or power_w >= 0"
+
+    columns:
+      - name: activity_id
+        description: Activity identifier (foreign key to fct_activities).
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_activities')
+              field: activity_id
+
+      - name: sequence_index
+        description: Index of the stream point within the activity stream sequence (0..N).
+        data_type: INT64
+        tests:
+          - not_null
+
+      - name: time_s
+        description: Time since activity start in seconds.
+        data_type: INT64
+
+      - name: distance_m
+        description: Distance since activity start in meters.
+        data_type: FLOAT64
+
+      - name: heartrate_bpm
+        description: Heart rate in beats per minute.
+        data_type: INT64
+
+      - name: velocity_smooth_mps
+        description: Smoothed velocity in meters per second.
+        data_type: FLOAT64
+
+      - name: altitude_m
+        description: Altitude in meters.
+        data_type: FLOAT64
+
+      - name: cadence_rpm
+        description: Cadence in revolutions per minute.
+        data_type: INT64
+
+      - name: moving
+        description: True if the athlete is moving at this stream point.
+        data_type: BOOL
+
+      - name: power_w
+        description: Power in watts.
+        data_type: INT64
+
+      - name: temp_c
+        description: Temperature in Celsius.
+        data_type: INT64
+
+      - name: grade_smooth_pct
+        description: Smoothed grade in percent.
+        data_type: FLOAT64
+
+      - name: lat
+        description: Latitude (if present in the stream).
+        data_type: FLOAT64
+
+      - name: lng
+        description: Longitude (if present in the stream).
+        data_type: FLOAT64
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Athlete stats snapshot daily fact
+  - name: fct_athlete_stats_snapshot_daily
+    description: >
+      Daily snapshot of athlete aggregate statistics at grain (athlete_id, snapshot_date).
+      Uses fetched_at as snapshot_ts and aligns snapshot_date to Europe/Berlin.
+      Deduped to the latest fetch per athlete per day.
+
+    config:
+      materialized: incremental
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Daily athlete stats snapshot fact (latest per athlete per day)."
+      contract:
+        enforced: false  # Flip to true once the set of metrics stabilizes
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id, snapshot_date]
+
+      - dbt_utils.expression_is_true:
+          expression: "snapshot_ts is not null"
+
+      # Core sanity (model-level)
+      - dbt_utils.expression_is_true:
+          expression: "biggest_ride_distance_m is null or biggest_ride_distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "biggest_climb_elevation_gain_m is null or biggest_climb_elevation_gain_m >= 0"
+
+      # Example count/time/distance checks (extend to other metrics similarly)
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_count is null or recent_ride_count >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_distance_m is null or recent_ride_distance_m >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "recent_ride_moving_time_s is null or recent_ride_moving_time_s >= 0"
+
+    columns:
+      - name: athlete_id
+        description: Athlete identifier.
+        data_type: INT64
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: snapshot_ts
+        description: Timestamp when the stats were fetched (source fetched_at).
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+      - name: snapshot_date
+        description: Snapshot day derived from snapshot_ts in Europe/Berlin.
+        data_type: DATE
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+
+      # Top-level metrics
+      - name: biggest_ride_distance_m
+        description: Biggest ride distance (meters).
+        data_type: FLOAT64
+
+      - name: biggest_climb_elevation_gain_m
+        description: Biggest climb elevation gain (meters).
+        data_type: FLOAT64
+
+      # Recent ride metrics (repeat pattern for run/swim + all/ytd)
+      - name: recent_ride_count
+        description: Recent period ride count.
+        data_type: INT64
+
+      - name: recent_ride_distance_m
+        description: Recent period ride distance (meters).
+        data_type: FLOAT64
+
+      - name: recent_ride_moving_time_s
+        description: Recent period ride moving time (seconds).
+        data_type: INT64
+
+      - name: recent_ride_elapsed_time_s
+        description: Recent period ride elapsed time (seconds).
+        data_type: INT64
+
+      - name: recent_ride_elevation_gain_m
+        description: Recent period ride elevation gain (meters).
+        data_type: FLOAT64
+
+      - name: recent_ride_achievement_count
+        description: Recent period ride achievement count.
+        data_type: INT64
+
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built (if you add it; recommended).
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+  
+  # Latest athlete stats snapshot per athlete view
+  - name: fct_athlete_stats_latest
+    description: >
+      Convenience view returning the latest available daily snapshot per athlete_id from
+      fct_athlete_stats_snapshot_daily. One row per athlete.
+
+    config:
+      materialized: view
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Latest athlete stats snapshot per athlete (windowed over snapshot_ts)."
+      contract:
+        enforced: false
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [athlete_id]
+
+    columns:
+      - name: athlete_id
+        description: Athlete identifier.
+        data_type: INT64
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_athlete')
+              field: athlete_id
+
+      - name: snapshot_ts
+        description: Timestamp of the latest snapshot chosen for the athlete.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+      - name: snapshot_date
+        description: Snapshot date aligned to Europe/Berlin.
+        data_type: DATE
+        tests:
+          - not_null
+      
+      - name: _mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+          

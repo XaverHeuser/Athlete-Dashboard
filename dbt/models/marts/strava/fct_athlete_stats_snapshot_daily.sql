@@ -1,24 +1,23 @@
-{{ config(
-  materialized='incremental',
-  incremental_strategy='merge',
-  unique_key='athlete_id_snapshot_date',
-  partition_by={'field': 'snapshot_date', 'data_type': 'date'},
-  cluster_by=['athlete_id']
-) }}
+{{
+  config(
+    materialized='incremental',
+    incremental_strategy='merge',
+    unique_key=['athlete_id', 'snapshot_date'],
+    partition_by={'field': 'snapshot_date', 'data_type': 'date'},
+    cluster_by=['athlete_id'],
+    on_schema_change='fail'
+  )
+}}
 
-with src as (
-  select
+WITH src AS (
+  SELECT
     s.athlete_id,
-    -- Use the persisted fetch time from staging
-    s.fetched_at as snapshot_ts,
-    -- Choose your reporting day; here we align to your local tz (Europe/Berlin)
-    date(s.fetched_at, 'Europe/Berlin') as snapshot_date,
+    s.fetched_at AS snapshot_ts,
+    DATE(s.fetched_at, 'Europe/Berlin') AS snapshot_date,
 
-    -- Top-level
     s.biggest_ride_distance_m,
     s.biggest_climb_elevation_gain_m,
 
-    -- recent_*
     s.recent_ride_count, s.recent_ride_distance_m, s.recent_ride_moving_time_s,
     s.recent_ride_elapsed_time_s, s.recent_ride_elevation_gain_m, s.recent_ride_achievement_count,
     s.recent_run_count,  s.recent_run_distance_m,  s.recent_run_moving_time_s,
@@ -26,29 +25,34 @@ with src as (
     s.recent_swim_count, s.recent_swim_distance_m, s.recent_swim_moving_time_s,
     s.recent_swim_elapsed_time_s, s.recent_swim_elevation_gain_m, s.recent_swim_achievement_count,
 
-    -- all_*
     s.all_ride_count, s.all_ride_distance_m, s.all_ride_moving_time_s, s.all_ride_elapsed_time_s, s.all_ride_elevation_gain_m,
     s.all_run_count,  s.all_run_distance_m,  s.all_run_moving_time_s,  s.all_run_elapsed_time_s,  s.all_run_elevation_gain_m,
     s.all_swim_count, s.all_swim_distance_m, s.all_swim_moving_time_s, s.all_swim_elapsed_time_s, s.all_swim_elevation_gain_m,
 
-    -- ytd_*
     s.ytd_ride_count, s.ytd_ride_distance_m, s.ytd_ride_moving_time_s, s.ytd_ride_elapsed_time_s, s.ytd_ride_elevation_gain_m,
     s.ytd_run_count,  s.ytd_run_distance_m,  s.ytd_run_moving_time_s,  s.ytd_run_elapsed_time_s,  s.ytd_run_elevation_gain_m,
-    s.ytd_swim_count, s.ytd_swim_distance_m, s.ytd_swim_moving_time_s, s.ytd_swim_elapsed_time_s, s.ytd_swim_elevation_gain_m
-  from {{ ref('stg_athlete_stats') }} s
+    s.ytd_swim_count, s.ytd_swim_distance_m, s.ytd_swim_moving_time_s, s.ytd_swim_elapsed_time_s, s.ytd_swim_elevation_gain_m,
+
+    CURRENT_TIMESTAMP() AS _mart_loaded_at
+  FROM {{ ref('stg_athlete_stats') }} s
+
+  {% if is_incremental() %}
+  WHERE DATE(s.fetched_at, 'Europe/Berlin') >= DATE_SUB(
+    (SELECT COALESCE(MAX(snapshot_date), DATE '1970-01-01') FROM {{ this }}),
+    INTERVAL 3 DAY
+  )
+  {% endif %}
 ),
 
--- optional: keep only the latest fetch per athlete per day
-dedup_daily as (
-  select * except(rn),
-         concat(cast(athlete_id as string), '_', cast(snapshot_date as string)) as athlete_id_snapshot_date
-  from (
-    select src.*,
-           row_number() over (partition by athlete_id, snapshot_date order by snapshot_ts desc) as rn
-    from src
+dedup_daily AS (
+  SELECT * EXCEPT(rn)
+  FROM (
+    SELECT
+      src.*,
+      ROW_NUMBER() OVER (PARTITION BY athlete_id, snapshot_date ORDER BY snapshot_ts DESC) AS rn
+    FROM src
   )
-  where rn = 1
+  WHERE rn = 1
 )
 
--- 👇 FINAL SELECT (required)
-select * from dedup_daily
+SELECT * FROM dedup_daily

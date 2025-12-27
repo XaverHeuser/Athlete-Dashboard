@@ -40,4 +40,8 @@ models:
 snapshots:
   athlete_dashboard:
     +target_schema: strava_snapshots   # creates a dataset for snapshots
-    
+
+# Project-level variables
+vars:
+  dim_date_start: '2024-10-12'
+  dim_date_end: '2030-12-31'

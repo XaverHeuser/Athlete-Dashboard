@@ -3,20 +3,29 @@
 WITH base AS (
     SELECT
         athlete_id,
-        INITCAP(firstname) AS firstname,
-        INITCAP(lastname) AS lastname,
-        COALESCE(username, '') AS username,
-        COALESCE(bio, '') AS bio,
+        firstname,
+        lastname,
+
+        NULLIF(username, '') AS username,
+        NULLIF(bio, '') AS bio,
+
         COALESCE(city, 'Unknown') AS city,
         COALESCE(state, 'Unknown') AS state,
         COALESCE(country, 'Unknown') AS country,
+
         sex,
-        CASE WHEN has_premium OR has_summit THEN TRUE ELSE FALSE END AS is_premium_user,
+        
+        (COALESCE(has_premium, FALSE) OR COALESCE(has_summit, FALSE)) AS is_premium_user,
+
         ROUND(weight_kg, 1) AS weight_kg,
+
         profile_medium AS profile_medium_img_url,
         profile AS profile_img_url,
-        created_at
+
+        CAST(created_at AS TIMESTAMP) AS created_at
+
     FROM {{ ref('stg_athlete_info') }}
+    WHERE athlete_id IS NOT NULL
 ),
 
 activity_summary AS (
@@ -26,6 +35,7 @@ activity_summary AS (
         MAX(start_date_local) AS last_activity_date,
         COUNT(*) AS total_activities
     FROM {{ ref('stg_activities') }}
+    
     GROUP BY 1
 )
 
