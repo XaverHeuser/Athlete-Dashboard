@@ -34,14 +34,11 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Ruff Lint
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: check . --output-format=github
+        run: ruff check . --output-format=github
 
       - name: Ruff Format (check only)
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: format . --check --diff
+        run: ruff format . --check --diff
+
 
   ########################
   # Security Scans
