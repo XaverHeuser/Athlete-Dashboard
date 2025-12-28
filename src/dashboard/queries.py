@@ -1,26 +1,27 @@
 """Central module for loading data from BigQuery for the Streamlit dashboard."""
 
 import os
+import re
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import pandas as pd
 import streamlit as st
-import re
+
 
 load_dotenv()
 
 # CONSTANTS
 _ALLOWED_TABLES = {
-    "dim_athlete_info",
-    "fct_athlete_stats_latest",
-    "fct_activities_daily",
-    "fct_activities_weekly",
-    "fct_activities_monthly",
-    "fct_activities_yearly",
+    'dim_athlete_info',
+    'fct_athlete_stats_latest',
+    'fct_activities_daily',
+    'fct_activities_weekly',
+    'fct_activities_monthly',
+    'fct_activities_yearly',
 }
-_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
+_ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
 
 _GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID')
 _BQ_DATASET_MARTS = os.getenv('BIGQUERY_DATASET_MARTS')
@@ -30,11 +31,12 @@ _BQ_DATASET_MARTS = os.getenv('BIGQUERY_DATASET_MARTS')
 def _safe_table_name(name: str) -> str:
     """Validate and return safe table name."""
     if name not in _ALLOWED_TABLES:
-        raise ValueError(f"Table not allowlisted: {name}")
+        raise ValueError(f'Table not allowlisted: {name}')
     # optional zusätzliche harte Validierung
     if not _ID_RE.fullmatch(name):
-        raise ValueError(f"Invalid table identifier: {name}")
+        raise ValueError(f'Invalid table identifier: {name}')
     return name
+
 
 def _table(name: str) -> str:
     """Helper to format full table names."""
@@ -60,7 +62,7 @@ except Exception:
 def load_athlete_data() -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
     table_fqn = _table('dim_athlete_info')
-    query = f'SELECT * FROM {table_fqn}' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -68,7 +70,7 @@ def load_athlete_data() -> pd.DataFrame:
 def load_latest_stats() -> pd.DataFrame:
     """Load the latest athlete statistics snapshot."""
     table_fqn = _table('fct_athlete_stats_latest')
-    query = f'SELECT * FROM {table_fqn}' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -76,7 +78,7 @@ def load_latest_stats() -> pd.DataFrame:
 def load_stats_history() -> pd.DataFrame:
     """Load all historical athlete statistics snapshots."""
     table_fqn = _table('fct_athlete_stats_snapshot')
-    query = f'SELECT * FROM {table_fqn} ORDER BY snapshot_date' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query = f'SELECT * FROM {table_fqn} ORDER BY snapshot_date'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -84,7 +86,7 @@ def load_stats_history() -> pd.DataFrame:
 def load_activities() -> pd.DataFrame:
     """Load all activities from fact table."""
     table_fqn = _table('fct_activities')
-    query = f'SELECT * FROM {table_fqn} ORDER BY start_date_local DESC' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query = f'SELECT * FROM {table_fqn} ORDER BY start_date_local DESC'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -92,7 +94,7 @@ def load_activities() -> pd.DataFrame:
 def load_gear_details() -> pd.DataFrame:
     """Load gear details from dimension table."""
     table_fqn = _table('dim_gear')
-    query = f'SELECT * FROM {table_fqn}' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -174,7 +176,7 @@ def load_weekly_summary(
             total_moving_time_h,
         FROM {table_fqn}
         WHERE 1 = 1
-    """ # nosec B608: table_fqn is built from allowlisted identifiers only
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
     params = {}
 
     if start_week:
@@ -185,7 +187,7 @@ def load_weekly_summary(
         query += ' AND activity_week <= %(end_week)s'
         params['end_week'] = end_week
 
-    query += ' ORDER BY activity_week' # nosec B608: table_fqn is built from allowlisted identifiers only
+    query += ' ORDER BY activity_week'  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
@@ -202,7 +204,7 @@ def load_sport_types() -> list[str]:
         FROM {table_fqn}
         WHERE sport_type IS NOT NULL
         ORDER BY sport_type
-    """ # nosec B608: table_fqn is built from allowlisted identifiers only
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     df: pd.DataFrame = client.query(query).to_dataframe()
 
@@ -233,7 +235,7 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
         FROM {table_fqn}
         WHERE activity_id = @activity_id
         ORDER BY sequence_index
-    """ # nosec B608: table_fqn is built from allowlisted identifiers only
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
