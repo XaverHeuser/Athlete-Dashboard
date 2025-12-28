@@ -16,11 +16,11 @@ from ingestion.transformers.strava_streams import explode_streams
 
 
 def trigger_dbt_job() -> None:
-    project = 'athlete-dashboard-467718'
-    region = 'europe-west1'
-    job_name = 'dbt-job'
+    project = os.environ.get('GCP_PROJECT_ID')
+    region = os.environ.get('GCP_REGION')
+    dbt_job_name = os.environ.get('CLOUD_RUN_DBT_JOB_NAME')
 
-    url = f'https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{job_name}:run'
+    url = f'https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{dbt_job_name}:run'
 
     creds, _ = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
     authed_session = AuthorizedSession(creds)
@@ -73,8 +73,8 @@ def run() -> None:
             df = pd.DataFrame(buffer)
             loader.load_data(
                 data=df,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
+                dataset=os.environ.get('BIGQUERY_DATASET'),
+                table_name=os.environ.get('BIGQUERY_RAW_ACTIVITY_STREAMS'),
                 write_disposition='WRITE_APPEND',
                 schema=ACTIVITY_STREAMS_SCHEMA,
             )

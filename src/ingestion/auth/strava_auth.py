@@ -11,11 +11,9 @@ AUTH_URL = 'https://www.strava.com/oauth/token'
 def _load_strava_credentials() -> tuple[str, str, str]:
     """Helper to securely load credentials from environment."""
 
-    client_id = os.environ['CLIENT_ID']
-    client_secret = os.environ['CLIENT_SECRET']
-    refresh_token = os.environ['REFRESH_TOKEN']
-
-    print(client_id, client_secret, refresh_token)
+    client_id = os.environ['STRAVA_CLIENT_ID']
+    client_secret = os.environ['STRAVA_CLIENT_SECRET']
+    refresh_token = os.environ['STRAVA_REFRESH_TOKEN']
 
     if not all([client_id, client_secret, refresh_token]):
         raise OSError('Missing Strava authentication environment variables.')

@@ -1,14 +1,50 @@
 """Central module for loading data from BigQuery for the Streamlit dashboard."""
 
+import os
+import re
+
+from dotenv import load_dotenv
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import pandas as pd
 import streamlit as st
 
 
-# ------------------
+load_dotenv()
+
+# CONSTANTS
+_ALLOWED_TABLES = {
+    'dim_athlete_info',
+    'fct_athlete_stats_latest',
+    'fct_activities_daily',
+    'fct_activities_weekly',
+    'fct_activities_monthly',
+    'fct_activities_yearly',
+}
+_ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
+
+_GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID')
+_BQ_DATASET_MARTS = os.getenv('BIGQUERY_DATASET_MARTS')
+
+
+# Helper to format table names
+def _safe_table_name(name: str) -> str:
+    """Validate and return safe table name."""
+    if name not in _ALLOWED_TABLES:
+        raise ValueError(f'Table not allowlisted: {name}')
+    # optional zusätzliche harte Validierung
+    if not _ID_RE.fullmatch(name):
+        raise ValueError(f'Invalid table identifier: {name}')
+    return name
+
+
+def _table(name: str) -> str:
+    """Helper to format full table names."""
+    name = _safe_table_name(name)
+    return f'`{_GCP_PROJECT_ID}.{_BQ_DATASET_MARTS}.{name}`'
+
+
 # BIGQUERY CLIENT
-# ------------------
 try:
     creds = service_account.Credentials.from_service_account_info(
         st.secrets['gcp_service_account']
@@ -19,58 +55,46 @@ except Exception:
     client = bigquery.Client()
 
 
-# ---------- Queries ----------
-
-
+# ------------------------------
+# DATA LOADING QUERIES
+# ------------------------------
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_athlete_data() -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
-    query = """
-        SELECT *
-        FROM `athlete-dashboard-467718.strava_marts.dim_athlete_info`
-    """
+    table_fqn = _table('dim_athlete_info')
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_latest_stats() -> pd.DataFrame:
     """Load the latest athlete statistics snapshot."""
-    query = """
-        SELECT *
-        FROM `athlete-dashboard-467718.strava_marts.fct_athlete_stats_latest`
-    """
+    table_fqn = _table('fct_athlete_stats_latest')
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_stats_history() -> pd.DataFrame:
     """Load all historical athlete statistics snapshots."""
-    query = """
-        SELECT *
-        FROM `athlete-dashboard-467718.strava_marts.fct_athlete_stats_snapshot`
-        ORDER BY snapshot_date
-    """
+    table_fqn = _table('fct_athlete_stats_snapshot')
+    query = f'SELECT * FROM {table_fqn} ORDER BY snapshot_date'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_activities() -> pd.DataFrame:
     """Load all activities from fact table."""
-    query = """
-        SELECT *
-        FROM `athlete-dashboard-467718.strava_marts.fct_activities`
-        ORDER BY start_date_local DESC
-    """
+    table_fqn = _table('fct_activities')
+    query = f'SELECT * FROM {table_fqn} ORDER BY start_date_local DESC'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_gear_details() -> pd.DataFrame:
     """Load gear details from dimension table."""
-    query = """
-        SELECT *
-        FROM `athlete-dashboard-467718.strava_marts.dim_gear`
-    """
+    table_fqn = _table('dim_gear')
+    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
@@ -83,10 +107,10 @@ def load_time_series(
     end_date: str | None = None,
 ) -> pd.DataFrame:
     table_map = {
-        'daily': 'athlete-dashboard-467718.strava_marts.fct_activities_daily',
-        'weekly': 'athlete-dashboard-467718.strava_marts.fct_activities_weekly',
-        'monthly': 'athlete-dashboard-467718.strava_marts.fct_activities_monthly',
-        'yearly': 'athlete-dashboard-467718.strava_marts.fct_activities_yearly',
+        'daily': 'fct_activities_daily',
+        'weekly': 'fct_activities_weekly',
+        'monthly': 'fct_activities_monthly',
+        'yearly': 'fct_activities_yearly',
     }
 
     time_col_map = {
@@ -96,17 +120,18 @@ def load_time_series(
         'yearly': 'activity_year',
     }
 
+    allowed_metrics = {'total_distance_km', 'total_moving_time_h', 'total_activities'}
+
     if granularity not in table_map:
         raise ValueError('Invalid granularity')
-
-    if metric not in {'total_distance_km', 'total_moving_time_h', 'total_activities'}:
+    if metric not in allowed_metrics:
         raise ValueError('Invalid metric')
 
-    table = table_map[granularity]
+    table_fqn = _table(table_map[granularity])
     time_col = time_col_map[granularity]
 
-    conditions = []
-    params = []
+    conditions: list[str] = []
+    params: list[bigquery.ScalarQueryParameter] = []
 
     if sport_type:
         conditions.append('sport_type = @sport_type')
@@ -119,19 +144,17 @@ def load_time_series(
             bigquery.ScalarQueryParameter('end_date', 'DATE', end_date),
         ])
 
-    where_clause = ''
-    if conditions:
-        where_clause = 'WHERE ' + ' AND '.join(conditions)
+    where_clause = f'WHERE {" AND ".join(conditions)}' if conditions else ''
 
     query = f"""
         SELECT
             {time_col} AS period,
             SUM({metric}) AS value
-        FROM `{table}`
+        FROM {table_fqn}
         {where_clause}
         GROUP BY period
         ORDER BY period
-    """  # nosec B608: metric, table and columns are allowlisted; values are parameterized
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
@@ -144,15 +167,16 @@ def load_weekly_summary(
     """
     Load weekly summary statistics for the athlete.
     """
-    query = """
+    table_fqn = _table('fct_activities_weekly')
+    query = f"""
         SELECT
             sport_type,
             activity_week,
             total_distance_km,
             total_moving_time_h,
-        FROM `athlete-dashboard-467718.strava_marts.fct_activities_weekly`
+        FROM {table_fqn}
         WHERE 1 = 1
-    """
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
     params = {}
 
     if start_week:
@@ -163,7 +187,7 @@ def load_weekly_summary(
         query += ' AND activity_week <= %(end_week)s'
         params['end_week'] = end_week
 
-    query += ' ORDER BY activity_week'
+    query += ' ORDER BY activity_week'  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     return client.query(query, job_config=job_config).to_dataframe()
@@ -174,12 +198,13 @@ def load_sport_types() -> list[str]:
     """
     Load distinct sport types from activity facts.
     """
-    query = """
+    table_fqn = _table('fct_activities_daily')
+    query = f"""
         SELECT DISTINCT sport_type
-        FROM `athlete-dashboard-467718.strava_marts.fct_activities_daily`
+        FROM {table_fqn}
         WHERE sport_type IS NOT NULL
         ORDER BY sport_type
-    """
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     df: pd.DataFrame = client.query(query).to_dataframe()
 
@@ -193,8 +218,8 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
     """
     Load time-series streams for a single activity.
     """
-
-    query = """
+    table_fqn = _table('fct_activity_streams')
+    query = f"""
         SELECT
             sequence_index,
             time_s,
@@ -207,10 +232,10 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
             grade_smooth_pct,
             lat,
             lng
-        FROM `athlete-dashboard-467718.strava_marts.fct_activity_streams`
+        FROM {table_fqn}
         WHERE activity_id = @activity_id
         ORDER BY sequence_index
-    """
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
 
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
