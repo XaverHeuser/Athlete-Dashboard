@@ -38,6 +38,11 @@ class StravaEndpoints:
         """URL to fetch gear details."""
         return f'{StravaEndpoints.BASE_URL}/gear/{gear_id}'
 
+    @staticmethod
+    def get_activity_streams(activity_id: str) -> str:
+        """URL to fetch activity streams."""
+        return f'{StravaEndpoints.BASE_URL}/activities/{activity_id}/streams'
+
 
 class StravaExtractor(BaseExtractor):
     """Extracts and validates data from Strava API"""
@@ -131,7 +136,8 @@ class StravaExtractor(BaseExtractor):
 
     def fetch_activity_streams(self, activity_id: str) -> dict[str, Any]:
         """Fetches activity streams by activity ID and stream types."""
-        stream_url = f'https://www.strava.com/api/v3/activities/{activity_id}/streams'
+        print(f'Start fetching activity streams for activity ID: {activity_id}')  
+        stream_url = StravaEndpoints.get_activity_streams(activity_id)
         params = {
             'keys': 'time,distance,latlng,altitude,velocity_smooth,heartrate,cadence,watts,temp,moving,grade_smooth',
             'key_by_type': 'true',
