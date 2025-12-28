@@ -136,7 +136,7 @@ class StravaExtractor(BaseExtractor):
 
     def fetch_activity_streams(self, activity_id: str) -> dict[str, Any]:
         """Fetches activity streams by activity ID and stream types."""
-        print(f'Start fetching activity streams for activity ID: {activity_id}')  
+        print(f'Start fetching activity streams for activity ID: {activity_id}')
         stream_url = StravaEndpoints.get_activity_streams(activity_id)
         params = {
             'keys': 'time,distance,latlng,altitude,velocity_smooth,heartrate,cadence,watts,temp,moving,grade_smooth',
