@@ -1,0 +1,11 @@
+serviceAccount: projects/athlete-dashboard-467718/serviceAccounts/cloudbuild-runner-sa@athlete-dashboard-467718.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: ["build","-t","europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/extract-load-image:latest","-f","Dockerfile","."]
+
+images:
+- "europe-west1-docker.pkg.dev/athlete-dashboard-467718/athlete-dashboard/extract-load-image:latest"

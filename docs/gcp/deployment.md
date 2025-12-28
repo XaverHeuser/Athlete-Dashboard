@@ -281,3 +281,11 @@ gcloud scheduler jobs create http JOB-NAME-schedule \
 - Keep dependencies pinned in requirements.txt.
 - Store secrets in Secret Manager, not environment variables.
 - Use Cloud Build triggers to automate image deployment from Git commits.
+
+## Important addition
+
+Due to changes in GCP's IAM, the right management is different. Therefore, the deployment is different.
+The following commands are now used to build docker images with gcloud
+
+- gcloud builds submit --project athlete-dashboard-467718  --gcs-source-staging-dir=gs://athlete-dashboard-467718-cloudbuild-eu/source  --config cloudbuild.dbt.yaml .
+- gcloud builds submit --project athlete-dashboard-467718   --gcs-source-staging-dir=gs://athlete-dashboard-467718-cloudbuild-eu/source   --config cloudbuild.el.yaml .
