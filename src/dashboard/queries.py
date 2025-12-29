@@ -15,11 +15,15 @@ load_dotenv()
 # CONSTANTS
 _ALLOWED_TABLES = {
     'dim_athlete_info',
-    'fct_athlete_stats_latest',
+    'dim_gear',
+    'fct_activities',
+    'fct_activity_streams',
     'fct_activities_daily',
     'fct_activities_weekly',
     'fct_activities_monthly',
     'fct_activities_yearly',
+    'fct_athlete_stats_latest',
+    'fct_athlete_stats_snapshot'
 }
 _ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
 
