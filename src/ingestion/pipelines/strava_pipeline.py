@@ -102,7 +102,7 @@ def run() -> None:
                 data=df_athlete_stats,
                 dataset=os.environ.get('BIGQUERY_DATASET'),
                 table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_STATS'),
-                write_disposition='WRITE_TRUNCATE',
+                write_disposition='WRITE_APPEND',
             )
 
         if not df_activities.empty:
