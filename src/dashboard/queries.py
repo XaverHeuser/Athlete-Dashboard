@@ -24,7 +24,7 @@ _ALLOWED_TABLES = {
     'fct_activities_yearly',
     'fct_athlete_stats',
     'fct_athlete_stats_latest',
-    'fct_athlete_stats_snapshot'
+    'fct_athlete_stats_snapshot',
 }
 _ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
 
