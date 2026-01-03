@@ -48,10 +48,12 @@ def run() -> None:
     # Extract athlete info
     athlete_info = client.fetch_athlete_info()
     df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
+    df_athlete_info['ingested_at'] = ingested_at
 
     # Extract athlete stats
     athlete_stats = client.fetch_athlete_stats(athlete_id=str(athlete_info.id))
     df_athlete_stats = pd.DataFrame([athlete_stats.model_dump()])
+    df_athlete_stats['ingested_at'] = ingested_at
 
     # Extract activities
     activities_data = client.fetch_all_activities(days=3)
