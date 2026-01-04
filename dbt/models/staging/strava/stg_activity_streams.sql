@@ -19,6 +19,7 @@ WITH ranked AS (
         SAFE_CAST(value_lng AS FLOAT64) AS value_lng,
 
         SAFE_CAST(ingested_at AS TIMESTAMP) AS ingested_at,
+        CURRENT_TIMESTAMP() AS processed_at,
 
         CONCAT(
             CAST(activity_id AS STRING), '_',
@@ -45,7 +46,8 @@ select
     value_bool,
     value_lat,
     value_lng,
+    stream_pk,
     ingested_at,
-    stream_pk
+    processed_at
 FROM ranked
 WHERE rn = 1

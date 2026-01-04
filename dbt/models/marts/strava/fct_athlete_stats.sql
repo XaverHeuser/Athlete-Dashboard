@@ -25,7 +25,7 @@ unpivoted as (
     select
         athlete_id,
         snapshot_date,
-        fetched_at as snapshot_ts,
+        ingested_at as snapshot_ts,
         'ride' as sport,
         'recent' as period,
         recent_ride_count as activity_count,
@@ -42,7 +42,7 @@ unpivoted as (
     select
         athlete_id,
         snapshot_date,
-        fetched_at,
+        ingested_at,
         'run',
         'recent',
         recent_run_count,
@@ -59,7 +59,7 @@ unpivoted as (
     select
         athlete_id,
         snapshot_date,
-        fetched_at,
+        ingested_at,
         'swim',
         'recent',
         recent_swim_count,
@@ -75,5 +75,5 @@ select
     *,
     SAFE_DIVIDE(distance_m, moving_time_s) AS avg_speed_m_per_s,
     SAFE_DIVIDE(elevation_gain_m, distance_m / 1000) AS elevation_gain_per_km,
-    CURRENT_TIMESTAMP() AS _mart_loaded_at
+    CURRENT_TIMESTAMP() AS mart_loaded_at
 from unpivoted

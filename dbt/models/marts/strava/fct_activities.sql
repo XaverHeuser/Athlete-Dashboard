@@ -49,7 +49,7 @@ SELECT
   map_id,
   map_polyline,
 
-  CURRENT_TIMESTAMP() AS _mart_loaded_at
+  CURRENT_TIMESTAMP() AS mart_loaded_at
 
 FROM {{ ref('stg_activities') }}
 WHERE activity_id IS NOT NULL

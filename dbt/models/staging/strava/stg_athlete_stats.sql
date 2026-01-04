@@ -4,8 +4,9 @@ with deduplicated as (
 
     select
         SAFE_CAST(athlete_id AS INT64) AS athlete_id,
-        TIMESTAMP(fetched_at) AS fetched_at,
-        DATE(fetched_at) AS snapshot_date,
+        DATE(ingested_at) AS snapshot_date,
+        SAFE_CAST(ingested_at AS TIMESTAMP) AS ingested_at,
+        CURRENT_TIMESTAMP() AS processed_at,
 
         SAFE_CAST(biggest_ride_distance AS FLOAT64) AS biggest_ride_distance_m,
         SAFE_CAST(biggest_climb_elevation_gain AS FLOAT64) AS biggest_climb_elevation_gain_m,
@@ -79,8 +80,8 @@ with deduplicated as (
         SAFE_CAST(all_swim_totals.elevation_gain AS FLOAT64) AS all_swim_elevation_gain_m,
 
         ROW_NUMBER() OVER (
-            PARTITION BY athlete_id, DATE(fetched_at)
-            ORDER BY fetched_at DESC
+            PARTITION BY athlete_id, DATE(ingested_at)
+            ORDER BY ingested_at DESC
         ) AS rn
 
     from {{ source('strava_data', 'raw_athlete_stats') }}
@@ -88,8 +89,9 @@ with deduplicated as (
 
 select
     athlete_id,
-    fetched_at,
     snapshot_date,
+    ingested_at,
+    processed_at,
 
     biggest_ride_distance_m,
     biggest_climb_elevation_gain_m,

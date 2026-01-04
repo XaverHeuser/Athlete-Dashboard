@@ -37,7 +37,7 @@ SELECT
     COALESCE(SUM(a.elevation_gain_m), 0) AS total_elevation_gain_m,
     COALESCE(COUNT(a.activity_id), 0) AS total_activities,
 
-    CURRENT_TIMESTAMP() AS _mart_loaded_at
+    CURRENT_TIMESTAMP() AS mart_loaded_at
 
 FROM {{ ref('dim_date') }} d
 CROSS JOIN sport_types s

@@ -20,6 +20,7 @@ WITH ranked AS (
         SAFE_CAST(weight AS FLOAT64) AS weight_kg,
         SAFE_CAST(notification_distance AS FLOAT64) AS notification_distance_km,
         SAFE_CAST(ingested_at AS TIMESTAMP) AS ingested_at,
+        CURRENT_TIMESTAMP() AS processed_at,
 
         ROW_NUMBER() OVER (
             PARTITION BY id
@@ -42,6 +43,7 @@ SELECT
     description,
     weight_kg,
     notification_distance_km,
-    ingested_at
+    ingested_at,
+    processed_at
 FROM ranked
 WHERE rn = 1
