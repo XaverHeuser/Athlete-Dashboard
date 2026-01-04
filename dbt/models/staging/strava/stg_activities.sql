@@ -60,6 +60,7 @@ WITH ranked AS (
         SAFE_CAST(external_id AS STRING) AS external_id,
 
         SAFE_CAST(ingested_at AS TIMESTAMP) AS ingested_at,
+        CURRENT_TIMESTAMP() AS processed_at,
 
         ROW_NUMBER() OVER (
             PARTITION BY id
@@ -121,6 +122,7 @@ SELECT
     upload_id_str,
     external_id,
     ingested_at,
+    processed_at,
 
     EXTRACT(DATE FROM start_date_local) AS activity_date_local,
     EXTRACT(YEAR FROM start_date_local) AS activity_year,

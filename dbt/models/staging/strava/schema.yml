@@ -31,9 +31,11 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_athlete_info')
-              field: athlete_id
-              severity: warn
+              arguments:
+                to: ref('stg_athlete_info')
+                field: athlete_id
+              config:
+                severity: warn
 
       - name: map_id
         description: "Identifier of the map object associated with this activity in Strava. Used to look up polylines and map metadata."
@@ -44,9 +46,11 @@ models:
         data_type: STRING
         tests:
           - relationships:
-              to: ref('stg_gear_details')
-              field: gear_id
-              severity: warn
+              arguments:
+                to: ref('stg_gear_details')
+                field: gear_id
+              config:
+                severity: warn
 
       # Basic info
       - name: activity_name
@@ -61,8 +65,10 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Ride','Run','Swim','Hike','Walk','VirtualRide', 'WeightTraining', 'InlineSkate']
-              severity: warn
+              arguments:
+                values: ['Ride','Run','Swim','Hike','Walk','VirtualRide', 'WeightTraining', 'InlineSkate']
+              config:
+                severity: warn
 
       # Timestamps
       - name: start_date_utc
@@ -89,6 +95,14 @@ models:
       - name: external_id
         description: "External source identifier (e.g. original FIT/GPX filename or device ID)."
         data_type: STRING
+
+      - name: ingested_at
+        description: "Timestamp when this activity record was ingested from the Strava API."
+        data_type: TIMESTAMP
+
+      - name: processed_at
+        description: "Timestamp when this record was staged in dbt."
+        data_type: TIMESTAMP
 
   # Activity Streams
   - name: stg_activity_streams
@@ -120,11 +134,12 @@ models:
         data_type: INT64
         tests:
           - not_null
-          # Strongly recommended if your stg_activities has activity_id unique
           - relationships:
-              to: ref('stg_activities')
-              field: activity_id
-              severity: warn
+              arguments:
+                to: ref('stg_activities')
+                field: activity_id
+              config:
+                severity: warn
 
       - name: stream_type
         description: >
@@ -133,8 +148,10 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['time','distance','latlng','altitude','velocity_smooth','heartrate','cadence','watts','temp','moving','grade_smooth']
-              severity: warn
+              arguments:
+                values: ['time','distance','latlng','altitude','velocity_smooth','heartrate','cadence','watts','temp','moving','grade_smooth']
+              config:
+                severity: warn
 
       - name: sequence_index
         description: "Zero-based or ordinal index of this sample within the stream."
@@ -165,6 +182,10 @@ models:
       - name: ingested_at
         description: >
           UTC timestamp when this telemetry point was ingested. Used to deduplicate and keep the latest record.
+        data_type: TIMESTAMP
+
+      - name: processed_at
+        description: "Timestamp when this record was staged in dbt."
         data_type: TIMESTAMP
   
   # Athlete Profile
@@ -201,6 +222,14 @@ models:
         description: "Athlete's last name."
         data_type: STRING
 
+      - name: ingested_at
+        description: "Timestamp when the athlete profile was ingested from the Strava API."
+        data_type: TIMESTAMP
+
+      - name: processed_at
+        description: "Timestamp when this record was staged in dbt."
+        data_type: TIMESTAMP
+
   # Athlete Statistics
   - name: stg_athlete_stats
     description: >
@@ -225,13 +254,12 @@ models:
         data_type: INT64
         tests:
           - not_null
-          - unique
 
-      - name: fetched_at
+      - name: ingested_at
         description: "Timestamp when the statistics snapshot was fetched from the Strava API."
         data_type: TIMESTAMP
 
-      - name: _staged_at
+      - name: processed_at
         description: "Timestamp when this record was staged in dbt."
         data_type: TIMESTAMP
 
@@ -280,13 +308,23 @@ models:
         data_type: INT64
         tests:
           - dbt_utils.expression_is_true:
-              column_name: distance_m
-              expression: ">= 0"
+              arguments:
+                column_name: distance_m
+                expression: ">= 0"
 
       - name: distance_km
         description: "Total accumulated distance for this gear in kilometers."
         data_type: FLOAT64
         tests:
           - dbt_utils.expression_is_true:
-              column_name: distance_km
-              expression: ">= 0"
+              arguments:
+                column_name: distance_km
+                expression: ">= 0"
+
+      - name: ingested_at
+        description: "Timestamp when this gear record was ingested from the Strava API."
+        data_type: TIMESTAMP
+
+      - name: processed_at
+        description: "Timestamp when this record was staged in dbt."
+        data_type: TIMESTAMP

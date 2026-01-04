@@ -13,7 +13,7 @@ SELECT
     SUM(total_moving_time_h) AS total_moving_time_h,
     SUM(total_elevation_gain_m) AS total_elevation_gain_m,
 
-    CURRENT_TIMESTAMP() AS _mart_loaded_at
+    CURRENT_TIMESTAMP() AS mart_loaded_at
     
 FROM {{ ref('fct_activities_daily') }}
 GROUP BY

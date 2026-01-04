@@ -17,7 +17,7 @@ SELECT
     MAX(value_lat) as lat,
     MAX(value_lng) as lng,
 
-    CURRENT_TIMESTAMP() AS _mart_loaded_at
+    CURRENT_TIMESTAMP() AS mart_loaded_at
 
 FROM {{ ref('stg_activity_streams') }}
 GROUP BY activity_id, sequence_index

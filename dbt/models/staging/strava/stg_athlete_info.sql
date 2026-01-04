@@ -23,13 +23,13 @@ with base AS (
         follower,
 
         -- Timestamps
-        TIMESTAMP(created_at) AS created_at,
-        TIMESTAMP(updated_at) AS updated_at,
+        SAFE_CAST(created_at AS TIMESTAMP) AS created_at,
+        SAFE_CAST(updated_at AS TIMESTAMP) AS updated_at,
 
         -- Metadata
         SAFE_CAST(resource_state AS INT64) AS resource_state,
-        CURRENT_TIMESTAMP() AS _staged_at
-
+        SAFE_CAST(ingested_at AS TIMESTAMP) AS ingested_at,
+        CURRENT_TIMESTAMP() AS processed_at
 
     FROM {{ source('strava_data', 'raw_athlete_info') }}
 )

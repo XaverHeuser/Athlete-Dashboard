@@ -1,6 +1,5 @@
 """Pydantic models for Strava activity streams."""
 
-from datetime import datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel, RootModel
@@ -25,4 +24,3 @@ class StravaActivityStreamRow(BaseModel):
     value_bool: Optional[bool] = None
     value_lat: Optional[float] = None
     value_lng: Optional[float] = None
-    loaded_at: datetime
