@@ -1,8 +1,9 @@
 """Home page for the Athlete Dashboard."""
 
 import pandas as pd
-from queries import load_athlete_data, load_weekly_summary
+from queries import load_activities_current_week, load_athlete_data, load_weekly_summary
 import streamlit as st
+from ui.activity_list import render_activity_list
 from ui.viz_helper_functions import (
     render_discipline_donut,
     render_weekly_hours_chart,
@@ -116,15 +117,15 @@ with st.container(border=True):
 
     with col_curr:
         st.markdown('**Discipline distribution – current week**')
-        st.altair_chart(donut_current, use_container_width=True)
+        st.altair_chart(donut_current)
 
     with col_prev:
         st.markdown('**Discipline distribution – previous week**')
-        st.altair_chart(donut_previous, use_container_width=True)
+        st.altair_chart(donut_previous)
 
     with col_4w:
         st.markdown('**Discipline distribution – last 4 weeks**')
-        st.altair_chart(donut_4w, use_container_width=True)
+        st.altair_chart(donut_4w)
 
     # --------------------------------------------------
     # Row 2: Weekly History + Weekly Hours per Sport
@@ -134,7 +135,21 @@ with st.container(border=True):
     hist_col, chart_col = st.columns([1, 3])
 
     with hist_col:
-        st.altair_chart(weekly_history_chart, use_container_width=True)
+        st.altair_chart(weekly_history_chart)
 
     with chart_col:
-        st.altair_chart(weekly_sport_chart, use_container_width=True)
+        st.altair_chart(weekly_sport_chart)
+
+# --------------------------------------------------
+# Weekly activities at the bottom (Master–Detail)
+# --------------------------------------------------
+st.divider()
+st.markdown('## This week`s activities')
+
+df_week_activities = load_activities_current_week()
+
+render_activity_list(
+    df_week_activities,
+    enable_pagination=False,  # weekly list is short
+    key_prefix='home_week',
+)
