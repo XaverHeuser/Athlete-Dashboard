@@ -18,7 +18,7 @@ MAIN_SPORT_COLORS = {
 
 MAIN_SPORTS = ['Run', 'Ride', 'Swim', 'WeightTraining']
 
-KPI_ICONS = {'distance': '📏', 'speed': '⚡', 'heartrate': '❤️', 'time': '⏱️'}
+KPI_ICONS = {'distance': '📏', 'speed': '⚡', 'heartrate': '❤️', 'time': '⏱️', 'elevation_gain': '⛰️'}
 
 GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']
 

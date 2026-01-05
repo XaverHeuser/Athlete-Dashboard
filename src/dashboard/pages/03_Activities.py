@@ -4,7 +4,7 @@ import pandas as pd
 from queries import load_activities
 import streamlit as st
 from ui.constants import KPI_ICONS, PAGE_SIZE
-from ui.viz_helper_functions import show_activity_map, sport_badge
+from ui.viz_helper_functions import show_activity_map, sport_badge, format_seconds_to_hhmmss, format_pace_min_per_km, format_speed_kph
 
 
 # =========================
@@ -155,21 +155,26 @@ for _, row in visible.iterrows():
 
         with cols[0]:
             st.subheader(row['activity_name'])
-            st.caption(row['activity_date_local'])
+            st.caption(row['start_date_local'].strftime('%Y-%m-%d %H:%M'))
 
             sport_badge(row['sport_type'])
+            
+            moving_time_str = format_seconds_to_hhmmss(int(row["moving_time_s"]))
+            pace_str = format_pace_min_per_km(row["avg_pace_min_per_km"])
+            speed_str = format_speed_kph(row["avg_speed_kph"])
 
-            st.markdown(
-                f"""
-                <div style="margin-top: 8px; line-height: 1.6;">
-                    <div>{KPI_ICONS['distance']} <strong>Distance:</strong> {row['distance_km']:.2f} km</div>
-                    <div>{KPI_ICONS['speed']} <strong>Avg speed:</strong> {row['avg_speed_kph']:.2f} km/h</div>
-                    <div>{KPI_ICONS['heartrate']} <strong>Avg HR:</strong> {row['avg_heartrate']:.0f} bpm</div>
-                    <div>{KPI_ICONS['time']} <strong>Moving time:</strong> {int(row['moving_time_s'] / 60)} min</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            colL, colR = st.columns(2, gap="large")
+
+            with colL:
+                st.markdown(f"{KPI_ICONS['time']} **Time:** {moving_time_str} h")
+                st.markdown(f"{KPI_ICONS['distance']} **Distance:** {row['distance_km']:.2f} km")
+                st.markdown(f"{KPI_ICONS['speed']} **Avg pace:** {pace_str} min/km")
+
+            with colR:
+                st.markdown(f"{KPI_ICONS['heartrate']} **Avg HR:** {row['avg_heartrate']:.0f} bpm")
+                st.markdown(f"{KPI_ICONS['elevation_gain']} **Elevation gain:** {row['elevation_gain_m']:.0f} m")
+                st.markdown(f"{KPI_ICONS['speed']} **Avg tempo:** {speed_str} km/h")
+
 
         with cols[1]:
             with st.expander('Show route'):
