@@ -5,10 +5,14 @@ from queries import load_athlete_data
 import streamlit as st
 
 
-# --- Page config ---
+# -------------------------
+# Page configuration
+# -------------------------
 st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='centered')
 
-# --- Load athlete data ---
+# -------------------------
+# Load athlete information
+# -------------------------
 try:
     df_athlete = load_athlete_data()
     if df_athlete.empty:
@@ -19,7 +23,9 @@ except Exception as e:
     st.error(f'❌ Failed to load athlete data: {e}')
     st.stop()
 
-# --- Profile content ---
+# --------------------
+# Profile content
+# --------------------
 st.title(f'{athlete["firstname"]} {athlete["lastname"]}')
 st.image(
     athlete['profile_img_url'],

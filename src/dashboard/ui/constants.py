@@ -1,5 +1,6 @@
 """UI Constants for the Dashboard"""
 
+# COLORS
 SPORT_COLORS = {
     'Run': '#DA5234',
     'Ride': '#A75ABA',
@@ -16,10 +17,20 @@ MAIN_SPORT_COLORS = {
     'WeightTraining': '#7C7C7C',
 }
 
+# List of main sports to highlight in visualizations
 MAIN_SPORTS = ['Run', 'Ride', 'Swim', 'WeightTraining']
 
-KPI_ICONS = {'distance': '📏', 'speed': '⚡', 'heartrate': '❤️', 'time': '⏱️', 'elevation_gain': '⛰️'}
-
+# Order for gear types
 GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']
 
-PAGE_SIZE = 20  # number of activities per page
+# Icons for KPIs
+KPI_ICONS = {
+    'distance': '📏',
+    'speed': '⚡',
+    'heartrate': '❤️',
+    'time': '⏱️',
+    'elevation_gain': '⛰️',
+}
+
+# Pagination for activities list
+PAGE_SIZE = 20

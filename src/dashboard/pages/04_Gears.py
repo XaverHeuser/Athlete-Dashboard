@@ -8,35 +8,35 @@ import streamlit as st
 from ui.constants import GEAR_TYPE_ORDER
 
 
-# -------------------------------------------------
+# -----------------
 # Page config
-# -------------------------------------------------
+# -----------------
 st.set_page_config(page_title='Gear Overview', page_icon='👟', layout='wide')
 
 st.title('Gear Overview')
 st.caption('Complete overview of all bikes, shoes and other gear')
 
-# -------------------------------------------------
+# -----------------
 # Load data
-# -------------------------------------------------
-df = load_gear_details()
+# -----------------
+df_gear_details = load_gear_details()
 
-if df.empty:
+if df_gear_details.empty:
     st.warning('No gear data available.')
     st.stop()
 
-# -------------------------------------------------
+# -----------------
 # Normalization
-# -------------------------------------------------
-df = df.copy()
+# -----------------
+df_copy = df_gear_details.copy()
 
-df['name'] = df['name'].fillna('(no name)')
-df['brand_name'] = df['brand_name'].fillna('')
-df['model_name'] = df['model_name'].fillna('')
-df['frame_type'] = df['frame_type'].fillna('')
-df['weight_kg'] = df['weight_kg'].round(2)
+df_copy['name'] = df_copy['name'].fillna('(no name)')
+df_copy['brand_name'] = df_copy['brand_name'].fillna('')
+df_copy['model_name'] = df_copy['model_name'].fillna('')
+df_copy['frame_type'] = df_copy['frame_type'].fillna('')
+df_copy['weight_kg'] = df_copy['weight_kg'].round(2)
 
-df['status'] = df['is_retired'].map({True: 'Retired', False: 'Active'})
+df_copy['status'] = df_copy['is_retired'].map({True: 'Retired', False: 'Active'})
 
 # -------------------------------------------------
 # Global KPIs
@@ -45,19 +45,18 @@ st.subheader('Overall')
 
 c1, c2, c3, c4 = st.columns(4)
 
-c1.metric('Total Gears', len(df))
-c2.metric('Total Distance (km)', f'{df["total_distance_km"].sum():,.1f}')
-c3.metric('Active Gears', int((~df['is_retired']).sum()))
-c4.metric('Retired Gears', int(df['is_retired'].sum()))
+c1.metric('Total Gears', len(df_copy))
+c2.metric('Total Distance (km)', f'{df_copy["total_distance_km"].sum():,.1f}')
+c3.metric('Active Gears', int((~df_copy['is_retired']).sum()))
+c4.metric('Retired Gears', int(df_copy['is_retired'].sum()))
 
 st.divider()
 
 # -------------------------------------------------
 # Section per Gear Type
 # -------------------------------------------------
-
 for gear_type in GEAR_TYPE_ORDER:
-    subset = df[df['gear_type'] == gear_type].copy()
+    subset = df_copy[df_copy['gear_type'] == gear_type].copy()
     if subset.empty:
         continue
 
@@ -103,37 +102,4 @@ for gear_type in GEAR_TYPE_ORDER:
     )
 
     st.dataframe(table_df, width='stretch', hide_index=True)
-
-    # -----------------------------
-    # Optional minimal chart
-    # -----------------------------
-    import altair as alt
-
-    with st.expander('Distance distribution'):
-        chart_df = subset[['name', 'total_distance_km']].sort_values(
-            'total_distance_km', ascending=False
-        )
-
-        chart = (
-            alt.Chart(chart_df)
-            .mark_bar()
-            .encode(
-                x=alt.X('name:N', sort='-y', title='Gear', axis=alt.Axis(labelAngle=0)),
-                y=alt.Y(
-                    'total_distance_km:Q',
-                    title='Distance (km)',
-                    axis=alt.Axis(format=',.0f'),
-                ),
-                tooltip=[
-                    alt.Tooltip('name:N', title='Gear'),
-                    alt.Tooltip(
-                        'total_distance_km:Q', title='Distance (km)', format=',.1f'
-                    ),
-                ],
-            )
-            .properties(height=350)
-        )
-
-        st.altair_chart(chart, use_container_width=True)
-
     st.divider()
