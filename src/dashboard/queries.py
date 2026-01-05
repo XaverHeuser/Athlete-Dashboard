@@ -180,7 +180,7 @@ def load_activities_current_week() -> pd.DataFrame:
         FROM {table_fqn}
         WHERE activity_date_local BETWEEN @week_start AND @week_end
         ORDER BY start_date_local DESC
-    """
+    """ # nosec B608: table_fqn is built from allowlisted identifiers only
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter('week_start', 'DATE', week_start),
