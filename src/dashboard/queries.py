@@ -159,3 +159,30 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
     )
 
     return client.query(query, job_config=job_config).to_dataframe()
+
+
+@st.cache_data(ttl=900, show_spinner=False)  # type: ignore[misc]
+def load_activities_current_week() -> pd.DataFrame:
+    """
+    Loads activities for the current week (Mon–Sun) based on activity_date_local.
+    This keeps logic consistent across pages and avoids loading everything.
+    """
+    # Use local date logic in Python; filter in SQL on DATE column activity_date_local
+    today = pd.Timestamp.now(tz="Europe/Berlin").date()
+    week_start = (pd.Timestamp(today) - pd.Timedelta(days=pd.Timestamp(today).weekday())).date()
+    week_end = (pd.Timestamp(week_start) + pd.Timedelta(days=6)).date()
+
+    table_fqn = _table("fct_activities")
+    query = f"""
+        SELECT *
+        FROM {table_fqn}
+        WHERE activity_date_local BETWEEN @week_start AND @week_end
+        ORDER BY start_date_local DESC
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("week_start", "DATE", week_start),
+            bigquery.ScalarQueryParameter("week_end", "DATE", week_end),
+        ]
+    )
+    return client.query(query, job_config=job_config).to_dataframe()
