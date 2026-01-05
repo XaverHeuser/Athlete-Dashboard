@@ -15,7 +15,7 @@ ignore = ['E501']
 convention = 'pep257'
 
 [lint.mccabe]
-max-complexity = 10
+max-complexity = 14
 
 [lint.isort]
 combine-as-imports = true

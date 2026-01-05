@@ -168,11 +168,13 @@ def load_activities_current_week() -> pd.DataFrame:
     This keeps logic consistent across pages and avoids loading everything.
     """
     # Use local date logic in Python; filter in SQL on DATE column activity_date_local
-    today = pd.Timestamp.now(tz="Europe/Berlin").date()
-    week_start = (pd.Timestamp(today) - pd.Timedelta(days=pd.Timestamp(today).weekday())).date()
+    today = pd.Timestamp.now(tz='Europe/Berlin').date()
+    week_start = (
+        pd.Timestamp(today) - pd.Timedelta(days=pd.Timestamp(today).weekday())
+    ).date()
     week_end = (pd.Timestamp(week_start) + pd.Timedelta(days=6)).date()
 
-    table_fqn = _table("fct_activities")
+    table_fqn = _table('fct_activities')
     query = f"""
         SELECT *
         FROM {table_fqn}
@@ -181,8 +183,8 @@ def load_activities_current_week() -> pd.DataFrame:
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("week_start", "DATE", week_start),
-            bigquery.ScalarQueryParameter("week_end", "DATE", week_end),
+            bigquery.ScalarQueryParameter('week_start', 'DATE', week_start),
+            bigquery.ScalarQueryParameter('week_end', 'DATE', week_end),
         ]
     )
     return client.query(query, job_config=job_config).to_dataframe()

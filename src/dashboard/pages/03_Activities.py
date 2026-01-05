@@ -2,32 +2,16 @@
 
 import math
 
-import pandas as pd
-from queries import load_activities, load_activity_streams
+from queries import load_activities
 import streamlit as st
-from ui.activity_details import render_activity_details
-from ui.constants import KPI_ICONS, PAGE_SIZE
-from ui.formatters import (
-    format_pace_min_per_km,
-    format_seconds_to_hhmmss,
-    format_speed_kph,
-)
-from ui.routing import (
-    clear_selected_activity_id,
-    get_selected_activity_id_int,
-    set_selected_activity_id,
-)
-from ui.viz_helper_functions import show_activity_map, sport_badge
+from ui.activity_list import render_activity_list
+from ui.routing import get_selected_activity_id_int
 
 
 # ------------------
 # Configuration
 # ------------------
 st.set_page_config(page_title='Activities', page_icon='📋', layout='wide')
-
-if 'activities_limit' not in st.session_state:
-    st.session_state.activities_limit = PAGE_SIZE
-
 
 # --------------
 # Load data
@@ -116,9 +100,9 @@ st.caption(
     f'{sport_filter} · {min_dist:.0f}-{max_dist:.0f} km · {min_time}-{max_time} min'
 )
 
-# =========================
+# ------------------
 # Apply filters
-# =========================
+# ------------------
 filtered = df_activities.copy()
 
 # Apply filters one by one
@@ -152,82 +136,13 @@ filtered = filtered.sort_values('activity_date_local', ascending=False).reset_in
 selected_activity_id_int = get_selected_activity_id_int()
 
 # ----------------------------
-# Activity cards + details
+# Activity list
 # ----------------------------
 st.divider()
-visible = filtered.head(st.session_state.activities_limit)
-
-for _, row in visible.iterrows():
-    activity_id = row['activity_id']
-
-    with st.container():
-        cols = st.columns([1.4, 2])
-
-        # Left column: summary + buttons
-        with cols[0]:
-            st.subheader(row['activity_name'])
-            st.caption(row['start_date_local'].strftime('%Y-%m-%d %H:%M'))
-
-            sport_badge(row['sport_type'])
-
-            moving_time_str = format_seconds_to_hhmmss(row['moving_time_s'])
-            pace_str = format_pace_min_per_km(row['avg_pace_min_per_km'])
-            speed_str = format_speed_kph(row['avg_speed_kph'])
-
-            colL, colR = st.columns(2)
-            with colL:
-                st.markdown(f'{KPI_ICONS["time"]} **Time:** {moving_time_str} h')
-                st.markdown(
-                    f'{KPI_ICONS["distance"]} **Distance:** {row["distance_km"]:.2f} km'
-                )
-                st.markdown(f'{KPI_ICONS["speed"]} **Avg pace:** {pace_str} min/km')
-            with colR:
-                st.markdown(
-                    f'{KPI_ICONS["heartrate"]} **Avg HR:** {row["avg_heartrate"]:.0f} bpm'
-                )
-                st.markdown(
-                    f'{KPI_ICONS["elevation_gain"]} **Elevation gain:** {row["elevation_gain_m"]:.0f} m'
-                )
-                st.markdown(f'{KPI_ICONS["speed"]} **Avg tempo:** {speed_str} km/h')
-
-            # Buttons: show either Open or Close for THIS row
-            btn1, btn2 = st.columns([1, 1])
-            with btn1:
-                if selected_activity_id_int != activity_id:
-                    if st.button('View details', key=f'open_{activity_id}'):
-                        set_selected_activity_id(str(activity_id))
-                        st.rerun()
-                else:
-                    if st.button('Close', key=f'close_{activity_id}'):
-                        clear_selected_activity_id()
-                        st.rerun()
-
-        # Right column: map
-        # TODO: Fix
-        with cols[1]:
-            with st.expander('Show route'):
-                if pd.notna(row['map_polyline']):
-                    show_activity_map(row['map_polyline'])
-                else:
-                    st.caption('No map available')
-
-        # ---- INLINE DETAILS: only for the selected row ----
-        if selected_activity_id_int == activity_id:
-            with st.container(border=True):
-                try:
-                    df_streams = load_activity_streams(activity_id)
-                except Exception as e:
-                    st.error(f'Failed to load activity streams: {e}')
-                    df_streams = pd.DataFrame()
-
-                render_activity_details(activity_row=row, df_streams=df_streams)
-
-        st.divider()
-
-# ----------------
-# Pagination
-# ----------------
-if st.session_state.activities_limit < len(filtered):
-    if st.button('Load more activities'):
-        st.session_state.activities_limit += PAGE_SIZE
-        st.rerun()
+render_activity_list(
+    filtered,
+    title='### 🏃 Activities',
+    enable_pagination=True,
+    session_limit_key='activities_limit',
+    key_prefix='activities',
+)
