@@ -92,7 +92,7 @@ def render_activity_details(
     df = df.dropna(subset=['time_s']).reset_index(drop=True)
     df = _downsample_streams(df, max_points=2500)
 
-    chart_tab, map_tab, data_tab = st.tabs(['Charts', 'Map', 'Data'])
+    chart_tab, map_tab = st.tabs(['Charts', 'Map'])
 
     with chart_tab:
         x_mode = st.radio(
@@ -125,7 +125,7 @@ def render_activity_details(
                 )
                 .properties(title=title, height=220)
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart)
 
         cL, cR = st.columns(2)
         with cL:
@@ -148,7 +148,4 @@ def render_activity_details(
             st.caption(
                 'Lat/Lng stream points available. Next: render pydeck track map here.'
             )
-            st.dataframe(df[['lat', 'lng']].dropna().head(50), use_container_width=True)
-
-    with data_tab:
-        st.dataframe(df.head(200), use_container_width=True)
+            st.dataframe(df[['lat', 'lng']].dropna().head(50), width='stretch')
