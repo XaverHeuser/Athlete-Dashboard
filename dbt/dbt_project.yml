@@ -31,15 +31,15 @@ models:
       +schema: 'strava_staging'
       +tags: ['staging', 'strava']
 
+    intermediate:
+      +materialized: view
+      +schema: 'strava_intermediate'
+      +tags: ['intermediate', 'strava']
+
     marts:
       +materialized: table
       +schema: 'strava_marts'
       +tags: ['mart', 'strava']
-
-
-snapshots:
-  athlete_dashboard:
-    +target_schema: strava_snapshots   # creates a dataset for snapshots
 
 # Project-level variables
 vars:

@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_activities_discipline
+    description: "Intermediate model that maps Strava sport types to standardized disciplines."
+    
+    config:
+      materialized: view
+      meta:
+        owner: Xaver H.
+        created_at: 2025-01-07
+        description: "Maps Strava sport types to standardized disciplines for further analysis."
+      contract:
+        enforced: false
+
+    columns:
+      - name: activity_id
+        description: "The unique identifier for the activity."
+        data_type: integer
+        tests:
+          - not_null
+          - unique
+
+      - name: discipline
+        description: "Standardized discipline derived from the sport type."
+        data_type: string
+        tests:
+          - not_null
+
+      - name: activity_date
+        description: "The date when the activity took place."
+        data_type: DATETIME
+        tests:
+          - not_null
+
+      - name: distance_m
+        description: "Distance of the activity in meters."
+        data_type: float
+
+      - name: moving_time_s
+        description: "Moving time of the activity in seconds."
+        data_type: float
+
+      - name: elevation_gain_m
+        description: "Elevation gain of the activity in meters."
+        data_type: float

@@ -5,15 +5,20 @@ import pandas as pd
 import polyline
 import pydeck as pdk
 import streamlit as st
-from ui.constants import DEFAULT_COLOR, MAIN_SPORT_COLORS, MAIN_SPORTS, SPORT_COLORS
+from ui.constants import (
+    DEFAULT_COLOR,
+    MAIN_DISCIPLINES,
+    MAIN_SPORT_COLORS,
+    SPORT_COLORS,
+)
 
 
 # ------------------------
 # Shared helopers
 # ------------------------
-def filter_main_sports(df: pd.DataFrame) -> pd.DataFrame:
-    """Return dataframe filtered to MAIN_SPORTS only."""
-    return df.loc[df['sport_type'].isin(MAIN_SPORTS)].copy()
+def filter_main_disciplines(df: pd.DataFrame) -> pd.DataFrame:
+    """Return dataframe filtered to DISCIPLINES only."""
+    return df.loc[df['discipline'].isin(MAIN_DISCIPLINES)].copy()
 
 
 def base_hours_distance_tooltip() -> list[alt.Tooltip]:
@@ -24,87 +29,14 @@ def base_hours_distance_tooltip() -> list[alt.Tooltip]:
     ]
 
 
-COLOR_SCALE_MAIN_SPORTS = alt.Scale(
+COLOR_SCALE_MAIN_DISCIPLINES = alt.Scale(
     domain=list(MAIN_SPORT_COLORS.keys()), range=list(MAIN_SPORT_COLORS.values())
 )
 
 
-# --------------------------
-# Discipline donut chart
-# --------------------------
-def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
-    """Render a discipline distribution donut chart based on moving time."""
-    # Prepare data
-    df = (
-        filter_main_sports(df)
-        .groupby('sport_type', as_index=False)[
-            ['total_moving_time_h', 'total_distance_km']
-        ]
-        .sum()
-    )
-
-    total_hours = df['total_moving_time_h'].sum()
-    df['share_pct'] = df['total_moving_time_h'] / df['total_moving_time_h'].sum() * 100
-
-    # Prepare chart
-    theta = alt.Theta('total_moving_time_h:Q', stack='zero')
-    order = alt.Order('sport_type:N', sort='descending')
-
-    arc_labels = (
-        alt.Chart(df)
-        .mark_text(radius=90, size=12, fontWeight='bold')
-        .encode(
-            theta=theta,
-            order=order,
-            text=alt.Text('total_moving_time_h:Q', format='.1f'),
-            color=alt.value('white'),
-        )
-    )
-
-    center_text = (
-        alt.Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
-        .mark_text(fontSize=20, fontWeight='bold', color='white')
-        .encode(text='label:N')
-    )
-
-    chart = alt.layer(
-        alt.Chart(df)
-        .mark_arc(innerRadius=60)
-        .encode(
-            theta=theta,
-            order=order,
-            color=alt.Color('sport_type:N', scale=COLOR_SCALE_MAIN_SPORTS, legend=None),
-            tooltip=[
-                alt.Tooltip('sport_type:N', title='Sport type'),
-                alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.1f'),
-                alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
-                alt.Tooltip('share_pct:Q', title='PCT', format='.0f'),
-            ],
-        ),
-        center_text,
-        arc_labels,
-    ).properties(height=260)
-
-    return chart
-
-
-# --------------------------
-# Weekly charts rendering
-# --------------------------
-def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate weekly hours and distance for MAIN_SPORTS."""
-    return (
-        filter_main_sports(df)
-        .groupby('activity_week', as_index=False)[
-            ['total_moving_time_h', 'total_distance_km']
-        ]
-        .sum()
-        .sort_values('activity_week')
-        .tail(4)
-        .copy()
-    )
-
-
+# -------------------------
+# Render weekly charts
+# -------------------------
 def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
     """Render a compact weekly hours bar chart (last 4 weeks)."""
     df = _prepare_weekly_aggregation(df)
@@ -135,24 +67,104 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
 
 def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Chart:
     """Render grouped weekly hours per sport for the last 4 weeks."""
-    df = filter_main_sports(df)
+    df = filter_main_disciplines(df)
     df['week_label'] = df['activity_week'].dt.strftime('KW %V')
 
     return (
         alt.Chart(df)
         .mark_bar()
         .encode(
-            x=alt.X('sport_type:N', title=None),
+            x=alt.X('discipline:N', title=None),
             xOffset=alt.XOffset('week_label:N', title='Week'),
             y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
-            color=alt.Color('sport_type:N', scale=COLOR_SCALE_MAIN_SPORTS, legend=None),
+            color=alt.Color(
+                'discipline:N', scale=COLOR_SCALE_MAIN_DISCIPLINES, legend=None
+            ),
             tooltip=[
-                alt.Tooltip('sport_type:N', title='Sport'),
+                alt.Tooltip('discipline:N', title='Discipline'),
                 alt.Tooltip('week_label:N', title='Week'),
                 *base_hours_distance_tooltip(),
             ],
         )
         .properties(height=320, title=title)
+    )
+
+
+# --------------------------
+# Discipline donut chart
+# --------------------------
+def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
+    """Render a discipline distribution donut chart based on moving time."""
+    # Prepare data
+    df = (
+        filter_main_disciplines(df)
+        .groupby('discipline', as_index=False)[
+            ['total_moving_time_h', 'total_distance_km']
+        ]
+        .sum()
+    )
+
+    total_hours = df['total_moving_time_h'].sum()
+    df['share_pct'] = df['total_moving_time_h'] / df['total_moving_time_h'].sum() * 100
+
+    # Prepare chart
+    theta = alt.Theta('total_moving_time_h:Q', stack='zero')
+    order = alt.Order('discipline:N', sort='descending')
+
+    arc_labels = (
+        alt.Chart(df)
+        .mark_text(radius=90, size=12, fontWeight='bold')
+        .encode(
+            theta=theta,
+            order=order,
+            text=alt.Text('total_moving_time_h:Q', format='.1f'),
+            color=alt.value('white'),
+        )
+    )
+
+    center_text = (
+        alt.Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
+        .mark_text(fontSize=20, fontWeight='bold', color='white')
+        .encode(text='label:N')
+    )
+
+    chart = alt.layer(
+        alt.Chart(df)
+        .mark_arc(innerRadius=60)
+        .encode(
+            theta=theta,
+            order=order,
+            color=alt.Color(
+                'discipline:N', scale=COLOR_SCALE_MAIN_DISCIPLINES, legend=None
+            ),
+            tooltip=[
+                alt.Tooltip('discipline:N', title='Discipline'),
+                alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.1f'),
+                alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
+                alt.Tooltip('share_pct:Q', title='PCT', format='.0f'),
+            ],
+        ),
+        center_text,
+        arc_labels,
+    ).properties(height=260)
+
+    return chart
+
+
+# --------------------------
+# Weekly charts rendering
+# --------------------------
+def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate weekly hours and distance for DISCIPLINES."""
+    return (
+        filter_main_disciplines(df)
+        .groupby('activity_week', as_index=False)[
+            ['total_moving_time_h', 'total_distance_km']
+        ]
+        .sum()
+        .sort_values('activity_week')
+        .tail(4)
+        .copy()
     )
 
 

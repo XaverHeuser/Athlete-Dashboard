@@ -14,11 +14,11 @@ MAIN_SPORT_COLORS = {
     'Run': '#DA5234',
     'Ride': '#A75ABA',
     'Swim': '#D6837A',
-    'WeightTraining': '#7C7C7C',
+    'Strength': '#7C7C7C',
 }
 
 # List of main sports to highlight in visualizations
-MAIN_SPORTS = ['Run', 'Ride', 'Swim', 'WeightTraining']
+MAIN_DISCIPLINES = ['Swim', 'Ride', 'Run', 'Strength']
 
 # Order for gear types
 GEAR_TYPE_ORDER = ['Shoes', 'Bike', 'Other']
@@ -33,4 +33,4 @@ KPI_ICONS = {
 }
 
 # Pagination for activities list
-PAGE_SIZE = 20
+PAGE_SIZE = 10

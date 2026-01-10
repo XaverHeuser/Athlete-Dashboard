@@ -12,19 +12,18 @@ import streamlit as st
 
 load_dotenv()
 
-# CONSTANTS
+# -------------------
+# Configuration
+# -------------------
 _ALLOWED_TABLES = {
     'dim_athlete_info',
     'dim_gear',
     'fct_activities',
     'fct_activity_streams',
-    'fct_activities_daily',
     'fct_activities_weekly',
-    'fct_activities_monthly',
-    'fct_activities_yearly',
     'fct_athlete_stats',
-    'fct_athlete_stats_latest',
-    'fct_athlete_stats_snapshot',
+    'fct_consistency_weekly',
+    'fct_consistency_multisport_weekly',
 }
 _ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
 
@@ -32,7 +31,9 @@ _GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID')
 _BQ_DATASET_MARTS = os.getenv('BIGQUERY_DATASET_MARTS')
 
 
-# Helper to format table names
+# -------------
+# Helper
+# -------------
 def _safe_table_name(name: str) -> str:
     """Validate and return safe table name."""
     if name not in _ALLOWED_TABLES:
@@ -49,7 +50,9 @@ def _table(name: str) -> str:
     return f'`{_GCP_PROJECT_ID}.{_BQ_DATASET_MARTS}.{name}`'
 
 
+# -------------------
 # BIGQUERY CLIENT
+# -------------------
 try:
     creds = service_account.Credentials.from_service_account_info(
         st.secrets['gcp_service_account']
@@ -96,16 +99,14 @@ def load_gear_details() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_weekly_summary(
+def load_activities_weekly(
     start_week: str | None = None, end_week: str | None = None
 ) -> pd.DataFrame:
-    """
-    Load weekly summary statistics for the athlete.
-    """
+    """Load weekly summary statistics for the athlete."""
     table_fqn = _table('fct_activities_weekly')
     query = f"""
         SELECT
-            sport_type,
+            discipline,
             activity_week,
             total_distance_km,
             total_moving_time_h,
@@ -142,11 +143,7 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
             heartrate_bpm,
             velocity_smooth_mps,
             altitude_m,
-            cadence_rpm,
-            power_w,
-            grade_smooth_pct,
-            lat,
-            lng
+            cadence_rpm
         FROM {table_fqn}
         WHERE activity_id = @activity_id
         ORDER BY sequence_index
@@ -163,10 +160,7 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
 
 @st.cache_data(ttl=900, show_spinner=False)  # type: ignore[misc]
 def load_activities_current_week() -> pd.DataFrame:
-    """
-    Loads activities for the current week (Mon–Sun) based on activity_date_local.
-    This keeps logic consistent across pages and avoids loading everything.
-    """
+    """Loads activities for the current week (Mon-Sun) based on activity_date_local."""
     # Use local date logic in Python; filter in SQL on DATE column activity_date_local
     today = pd.Timestamp.now(tz='Europe/Berlin').date()
     week_start = (
@@ -188,3 +182,31 @@ def load_activities_current_week() -> pd.DataFrame:
         ]
     )
     return client.query(query, job_config=job_config).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_consistency_weekly_data() -> pd.DataFrame:
+    """
+    Load weekly data for consistency chart.
+    """
+    table_fqn = _table('fct_consistency_weekly')
+    query = f"""
+        SELECT *
+        FROM {table_fqn}
+        ORDER BY activity_week
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
+    return client.query(query).to_dataframe()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
+def load_consistency_multisport_weekly_data() -> pd.DataFrame:
+    """
+    Load weekly data for consistency chart.
+    """
+    table_fqn = _table('fct_consistency_multisport_weekly')
+    query = f"""
+        SELECT *
+        FROM {table_fqn}
+        ORDER BY activity_week
+    """  # nosec B608: table_fqn is built from allowlisted identifiers only
+    return client.query(query).to_dataframe()
