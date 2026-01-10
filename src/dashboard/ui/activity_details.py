@@ -20,7 +20,7 @@ def render_activity_details(
     *, activity_row: pd.Series, df_streams: pd.DataFrame
 ) -> None:
     """Render detail panel for a selected activity."""
-    st.subheader(f'Details – {activity_row.get("activity_name", "Activity")}')
+    st.subheader(f'Details - {activity_row.get("activity_name", "Activity")}')
 
     # ---- High-level KPIs ----
     moving_time_str = format_seconds_to_hhmmss(
@@ -68,10 +68,7 @@ def render_activity_details(
         'heartrate_bpm',
         'altitude_m',
         'velocity_smooth_mps',
-        'cadence_rpm',
-        'grade_smooth_pct',
-        'lat',
-        'lng',
+        'cadence_rpm'
     ]
     for col in numeric_cols:
         if col in df.columns:
@@ -136,16 +133,4 @@ def render_activity_details(
             line_chart('cadence_rpm', 'Cadence', 'rpm')
 
     with map_tab:
-        has_latlng = (
-            ('lat' in df.columns)
-            and ('lng' in df.columns)
-            and df['lat'].notna().any()
-            and df['lng'].notna().any()
-        )
-        if not has_latlng:
-            st.info('No lat/lng stream points available.')
-        else:
-            st.caption(
-                'Lat/Lng stream points available. Next: render pydeck track map here.'
-            )
-            st.dataframe(df[['lat', 'lng']].dropna().head(50), width='stretch')
+        st.info('Implementation will follow soon.')
