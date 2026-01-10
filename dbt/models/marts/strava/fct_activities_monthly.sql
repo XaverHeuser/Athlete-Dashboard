@@ -1,12 +1,12 @@
 {{
   config(
     materialized='table',
-    cluster_by=['sport_type', 'activity_month']
+    cluster_by=['discipline', 'activity_month']
   )
 }}
 
 SELECT
-    sport_type,
+    discipline,
     DATE_TRUNC(activity_date, MONTH) AS activity_month,
     
     SUM(total_activities) AS total_activities,
@@ -17,6 +17,4 @@ SELECT
     CURRENT_TIMESTAMP() AS mart_loaded_at
     
 FROM {{ ref('fct_activities_daily') }}
-GROUP BY
-    sport_type,
-    activity_month
+GROUP BY 1, 2

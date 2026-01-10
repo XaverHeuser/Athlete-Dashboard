@@ -1,12 +1,12 @@
 {{
   config(
     materialized='table',
-    cluster_by=['sport_type', 'activity_year']
+    cluster_by=['discipline', 'activity_year']
   )
 }}
 
 SELECT
-    sport_type,
+    discipline,
     DATE_TRUNC(activity_date, YEAR) AS activity_year,
     SUM(total_activities) AS total_activities,
     SUM(total_distance_km) AS total_distance_km,
@@ -16,6 +16,4 @@ SELECT
     CURRENT_TIMESTAMP() AS mart_loaded_at
     
 FROM {{ ref('fct_activities_daily') }}
-GROUP BY
-    sport_type,
-    activity_year
+GROUP BY 1, 2

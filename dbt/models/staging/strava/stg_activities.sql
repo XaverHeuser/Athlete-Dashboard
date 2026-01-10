@@ -12,7 +12,7 @@ WITH ranked AS (
         SAFE_CAST(gear_id AS STRING) AS gear_id,
 
         SAFE_CAST(name AS STRING) AS activity_name,
-        SAFE_CAST(sport_type AS STRING) AS sport_type,
+        SAFE_CAST(sport_type AS STRING) AS discipline,
         SAFE_CAST(workout_type AS INT64) AS workout_type,
         SAFE_CAST(distance AS FLOAT64) AS distance_m,
         SAFE_CAST(moving_time AS INT64) AS moving_time_s,
@@ -81,7 +81,7 @@ SELECT
     map_id,
     gear_id,
     activity_name,
-    sport_type,
+    discipline,
     workout_type,
     distance_m,
     moving_time_s,

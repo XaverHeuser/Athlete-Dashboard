@@ -59,7 +59,7 @@ models:
         tests:
           - not_null
 
-      - name: sport_type
+      - name: discipline
         description: "Canonical Strava sport type (Run, Ride, Swim, etc.)."
         data_type: STRING
         tests:
