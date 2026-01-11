@@ -68,7 +68,7 @@ def render_activity_details(
         'heartrate_bpm',
         'altitude_m',
         'velocity_smooth_mps',
-        'cadence_rpm'
+        'cadence_rpm',
     ]
     for col in numeric_cols:
         if col in df.columns:

@@ -4,8 +4,8 @@ from queries import load_activities_current_week, load_athlete_data
 import streamlit as st
 from ui.activity_list import render_activity_list
 from ui.consistency import compute_weekly_multisport_stats, show_consistency_heatmap
-from ui.viz_helper_functions import (
-    render_discipline_donut,
+from ui.visualization_charts import (
+    render_distribution_donut,
     render_weekly_hours_chart,
     render_weekly_hours_per_sport_chart,
 )
@@ -48,13 +48,8 @@ current_hours, delta_hours, current_distance, delta_distance = compute_weekly_st
 # Weekly discipline distribution
 # ---------------------------------
 # Discipline distribution donuts
-donut_current = render_discipline_donut(
-    df_current, 'Discipline distribution - current week (Time)'
-)
-
-donut_4w = render_discipline_donut(
-    df_last_4_weeks, 'Discipline distribution - last 4 weeks (Time)'
-)
+donut_current = render_distribution_donut(df_current)
+donut_4w = render_distribution_donut(df_last_4_weeks)
 
 # Weekly history (hours only)
 weekly_history_chart = render_weekly_hours_chart(
@@ -77,12 +72,6 @@ all4_cov, all4_current, delta_weeks = compute_weekly_multisport_stats()
 # Dashboard Layout
 # ----------------------
 with st.container(border=True):
-    # -------------------------------
-    # Consistency Heatmap
-    # -------------------------------
-    show_consistency_heatmap()
-    st.divider()
-
     # --------------------------------------------------
     # Row 1: KPIs + Discipline Distribution Donuts
     # --------------------------------------------------
@@ -126,6 +115,11 @@ with st.container(border=True):
     with chart_col:
         st.altair_chart(weekly_sport_chart)
 
+    # -------------------------------
+    # Row 3: Consistency Heatmap
+    # -------------------------------
+    st.divider()
+    show_consistency_heatmap()
 
 # --------------------------------------------------
 # Weekly activities at the bottom (Master–Detail)

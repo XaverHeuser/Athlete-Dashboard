@@ -1,5 +1,6 @@
 """UI Constants for the Dashboard"""
 
+# TODO: Unify/Beautify this
 # COLORS
 SPORT_COLORS = {
     'Run': '#DA5234',

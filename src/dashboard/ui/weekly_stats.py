@@ -1,4 +1,4 @@
-""""""
+"""File for computing weekly activity stats."""
 
 import pandas as pd
 from queries import load_activities_weekly
