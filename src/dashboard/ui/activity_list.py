@@ -17,7 +17,7 @@ from ui.routing import (
     get_selected_activity_id_int,
     set_selected_activity_id,
 )
-from ui.viz_helper_functions import show_activity_map, sport_badge
+from ui.visualization_charts import show_activity_map, sport_badge
 
 
 def render_activity_list(
@@ -68,7 +68,7 @@ def render_activity_list(
                 st.subheader(row['activity_name'])
                 st.caption(row['start_date_local'].strftime('%Y-%m-%d %H:%M'))
 
-                sport_badge(row['sport_type'])
+                sport_badge(row['discipline'])
 
                 # KPIs
                 moving_time_str = format_seconds_to_hhmmss(int(row['moving_time_s']))

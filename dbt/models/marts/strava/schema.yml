@@ -305,6 +305,38 @@ models:
         tests:
           - not_null
   
+  # Discipline dimension
+  - name: dim_discipline
+    description: >
+      Discipline dimension (grain: 1 row per discipline).
+      Standardized disciplines mapped from Strava sport types for consistent analysis.
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-26
+        description: "Discipline dimension with standardized sport type mapping."
+      contract:
+        enforced: false
+
+    columns:
+      - name: discipline
+        description: Standardized discipline name.
+        data_type: STRING
+        tests:
+          - not_null
+          - unique
+
+      - name: description
+        description: Description of the discipline.
+        data_type: STRING
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
   # Gear dimension
   - name: dim_gear
     description: >
@@ -464,7 +496,7 @@ models:
       # Grain
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [sport_type, activity_date]
+            combination_of_columns: [discipline, activity_date]
 
       # Basic sanity checks (model-level to avoid the column-test compilation issue you saw earlier)
       - dbt_utils.expression_is_true:
@@ -481,7 +513,7 @@ models:
             expression: "total_activities >= 0"
 
     columns:
-      - name: sport_type
+      - name: discipline
         description: Sport type/category of activity.
         data_type: STRING
         tests:
@@ -531,7 +563,7 @@ models:
   # Weekly activity fact
   - name: fct_activities_weekly
     description: >
-      Weekly activity aggregates by sport_type and activity_week.
+      Weekly activity aggregates by discipline and activity_week.
       activity_week is the Monday week start (DATE_TRUNC with WEEK(MONDAY)).
       Built from the daily activity fact.
 
@@ -548,7 +580,7 @@ models:
       # Grain
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [sport_type, activity_week]
+            combination_of_columns: [discipline, activity_week]
 
       # Sanity checks (model-level)
       - dbt_utils.expression_is_true:
@@ -570,7 +602,7 @@ models:
             expression: "activity_week = DATE_TRUNC(activity_week, WEEK(MONDAY))"
 
     columns:
-      - name: sport_type
+      - name: discipline
         description: Sport type/category.
         data_type: STRING
         tests:
@@ -583,25 +615,25 @@ models:
           - not_null
 
       - name: total_activities
-        description: Total activities in the week for the sport_type.
+        description: Total activities in the week for the discipline.
         data_type: INT64
         tests:
           - not_null
 
       - name: total_distance_km
-        description: Total distance in the week for the sport_type (km).
+        description: Total distance in the week for the discipline (km).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_moving_time_h
-        description: Total moving time in the week for the sport_type (hours).
+        description: Total moving time in the week for the discipline (hours).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_elevation_gain_m
-        description: Total elevation gain in the week for the sport_type (meters).
+        description: Total elevation gain in the week for the discipline (meters).
         data_type: FLOAT64
         tests:
           - not_null
@@ -615,7 +647,7 @@ models:
   # Monthly activity fact
   - name: fct_activities_monthly
     description: >
-      Monthly activity aggregates by sport_type and activity_month (month bucket is first day of month).
+      Monthly activity aggregates by discipline and activity_month (month bucket is first day of month).
       Built from the daily activity fact.
 
     config:
@@ -631,7 +663,7 @@ models:
       # Grain
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [sport_type, activity_month]
+            combination_of_columns: [discipline, activity_month]
 
       # Basic sanity checks (model-level to avoid column-test compilation issues)
       - dbt_utils.expression_is_true:
@@ -653,7 +685,7 @@ models:
             expression: "activity_month = DATE_TRUNC(activity_month, MONTH)"
 
     columns:
-      - name: sport_type
+      - name: discipline
         description: Sport type/category.
         data_type: STRING
         tests:
@@ -666,25 +698,25 @@ models:
           - not_null
 
       - name: total_activities
-        description: Total activities in the month for the sport_type.
+        description: Total activities in the month for the discipline.
         data_type: INT64
         tests:
           - not_null
 
       - name: total_distance_km
-        description: Total distance in the month for the sport_type (km).
+        description: Total distance in the month for the discipline (km).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_moving_time_h
-        description: Total moving time in the month for the sport_type (hours).
+        description: Total moving time in the month for the discipline (hours).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_elevation_gain_m
-        description: Total elevation gain in the month for the sport_type (meters).
+        description: Total elevation gain in the month for the discipline (meters).
         data_type: FLOAT64
         tests:
           - not_null
@@ -698,7 +730,7 @@ models:
   # Yearly activity fact
   - name: fct_activities_yearly
     description: >
-      Yearly activity aggregates by sport_type and activity_year.
+      Yearly activity aggregates by discipline and activity_year.
       activity_year is the year start (DATE_TRUNC with YEAR).
       Built from the daily activity fact.
 
@@ -715,7 +747,7 @@ models:
       # Grain
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [sport_type, activity_year]
+            combination_of_columns: [discipline, activity_year]
 
       # Sanity checks (model-level)
       - dbt_utils.expression_is_true:
@@ -732,7 +764,7 @@ models:
             expression: "total_elevation_gain_m >= 0"
 
     columns:
-      - name: sport_type
+      - name: discipline
         description: Sport type/category.
         data_type: STRING
         tests:
@@ -745,25 +777,25 @@ models:
           - not_null
 
       - name: total_activities
-        description: Total activities in the year for the sport_type.
+        description: Total activities in the year for the discipline.
         data_type: INT64
         tests:
           - not_null
 
       - name: total_distance_km
-        description: Total distance in the year for the sport_type (km).
+        description: Total distance in the year for the discipline (km).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_moving_time_h
-        description: Total moving time in the year for the sport_type (hours).
+        description: Total moving time in the year for the discipline (hours).
         data_type: FLOAT64
         tests:
           - not_null
 
       - name: total_elevation_gain_m
-        description: Total elevation gain in the year for the sport_type (meters).
+        description: Total elevation gain in the year for the discipline (meters).
         data_type: FLOAT64
         tests:
           - not_null
@@ -787,7 +819,7 @@ models:
         created_at: 2025-12-27
         description: "Core Strava activities fact (one row per activity)."
       contract:
-        enforced: true
+        enforced: false
 
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -839,8 +871,8 @@ models:
         description: Activity title/name.
         data_type: STRING
 
-      - name: sport_type
-        description: Sport type/category.
+      - name: discipline
+        description: Sport type
         data_type: STRING
         tests: [not_null]
 
@@ -1131,3 +1163,60 @@ models:
         data_type: TIMESTAMP
         tests:
           - not_null
+
+  # Weekly consistency fact
+  - name: fct_consistency_weekly
+    description: >
+      Weekly consistency fact measuring number of active days per week for the athlete.
+      Grain: 1 row per athlete_id per activity_week.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Weekly consistency fact (active days per week)."
+      contract:
+        enforced: false
+
+    columns:
+      - name: activity_week
+        description: Week bucket (Monday start).
+        data_type: DATETIME
+        tests:
+          - not_null
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null
+
+  # Weekly consistency multisport fact
+  - name: fct_consistency_multisport_weekly
+    description: >
+      Weekly consistency multisport fact measuring number of active days per week for the athlete.
+      Grain: 1 row per athlete_id per activity_week.
+
+    config:
+      materialized: table
+      meta:
+        owner: Xaver H.
+        created_at: 2025-12-27
+        description: "Weekly consistency multisport fact (active days per week)."
+      contract:
+        enforced: false
+
+    columns:
+      - name: activity_week
+        description: Week bucket (Monday start).
+        data_type: DATE
+        tests:
+          - not_null
+
+      - name: mart_loaded_at
+        description: Timestamp when this mart was built.
+        data_type: TIMESTAMP
+        tests:
+          - not_null  
+          

@@ -1,7 +1,7 @@
 {{
   config(
     materialized='table',
-    cluster_by=['athlete_id', 'sport_type', 'activity_date_local']
+    cluster_by=['athlete_id', 'discipline', 'activity_date_local']
   )
 }}
 
@@ -11,7 +11,7 @@ SELECT
   gear_id,
 
   activity_name,
-  sport_type,
+  discipline,
 
   start_date_local,
   activity_date_local,

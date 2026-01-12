@@ -66,9 +66,9 @@ row2_col1, row2_col2, row2_col3 = st.columns([1, 2, 2])
 # Sport type dropdown
 with row2_col1:
     sport_filter = st.selectbox(
-        'Sport Type',
+        'Discipline',
         options=['All']
-        + sorted(df_activities['sport_type'].dropna().unique().tolist()),
+        + sorted(df_activities['discipline'].dropna().unique().tolist()),
     )
 
 # Distance slider
@@ -115,7 +115,7 @@ if year_filter != 'All':
 if month_filter != 'All':
     filtered = filtered[filtered['activity_month'] == month_filter]
 if sport_filter != 'All':
-    filtered = filtered[filtered['sport_type'] == sport_filter]
+    filtered = filtered[filtered['discipline'] == sport_filter]
 
 filtered = filtered[
     (filtered['distance_km'] >= min_dist) & (filtered['distance_km'] <= max_dist)

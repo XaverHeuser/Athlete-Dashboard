@@ -1,19 +1,34 @@
 """Helper functions for visualizing activities in the dashboard."""
 
+from typing import cast
+
 import altair as alt
 import pandas as pd
 import polyline
 import pydeck as pdk
 import streamlit as st
-from ui.constants import DEFAULT_COLOR, MAIN_SPORT_COLORS, MAIN_SPORTS, SPORT_COLORS
+from ui.constants import (
+    DEFAULT_COLOR,
+    MAIN_DISCIPLINES,
+    MAIN_SPORT_COLORS,
+    SPORT_COLORS,
+)
+
+
+# -------------------
+# Constants
+# -------------------
+COLOR_SCALE_MAIN_DISCIPLINES = alt.Scale(
+    domain=list(MAIN_SPORT_COLORS.keys()), range=list(MAIN_SPORT_COLORS.values())
+)
 
 
 # ------------------------
-# Shared helopers
+# Internal Helpers
 # ------------------------
-def filter_main_sports(df: pd.DataFrame) -> pd.DataFrame:
-    """Return dataframe filtered to MAIN_SPORTS only."""
-    return df.loc[df['sport_type'].isin(MAIN_SPORTS)].copy()
+def filter_main_disciplines(df: pd.DataFrame) -> pd.DataFrame:
+    """Return dataframe filtered to DISCIPLINES only."""
+    return df.loc[df['discipline'].isin(MAIN_DISCIPLINES)].copy()
 
 
 def base_hours_distance_tooltip() -> list[alt.Tooltip]:
@@ -24,20 +39,85 @@ def base_hours_distance_tooltip() -> list[alt.Tooltip]:
     ]
 
 
-COLOR_SCALE_MAIN_SPORTS = alt.Scale(
-    domain=list(MAIN_SPORT_COLORS.keys()), range=list(MAIN_SPORT_COLORS.values())
-)
+def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate weekly hours and distance for DISCIPLINES."""
+    return (
+        filter_main_disciplines(df)
+        .groupby('activity_week', as_index=False)[
+            ['total_moving_time_h', 'total_distance_km']
+        ]
+        .sum()
+        .sort_values('activity_week')
+        .tail(4)
+        .copy()
+    )
 
 
-# --------------------------
-# Discipline donut chart
-# --------------------------
-def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
+# -------------------------
+# Render weekly charts
+# -------------------------
+def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
+    """Render a compact weekly hours bar chart (last 4 weeks)."""
+    # Data prep
+    df = _prepare_weekly_aggregation(df)
+    df['week_label'] = df['activity_week'].dt.strftime('KW %V')
+
+    # Create chart
+    chart = (
+        alt.Chart(df)
+        .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
+        .encode(
+            x=alt.X('week_label:N', title=None, sort=None),
+            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
+            color=alt.value('#d3d3d3'),
+            tooltip=[
+                alt.Tooltip('week_label:N', title='Week'),
+                *base_hours_distance_tooltip(),
+            ],
+        )
+        .properties(height=200, title=f'{title}')
+    )
+
+    return cast(alt.Chart, chart)
+
+
+def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Chart:
+    """Render grouped weekly hours per sport for the last 4 weeks."""
+    # Data prep
+    df = filter_main_disciplines(df)
+    df['week_label'] = df['activity_week'].dt.strftime('KW %V')
+
+    # Create chart
+    chart = (
+        alt.Chart(df)
+        .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
+        .encode(
+            x=alt.X('discipline:N', title=None),
+            xOffset=alt.XOffset('week_label:N', title='Week'),
+            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
+            color=alt.Color(
+                'discipline:N', scale=COLOR_SCALE_MAIN_DISCIPLINES, legend=None
+            ),
+            tooltip=[
+                alt.Tooltip('discipline:N', title='Discipline'),
+                alt.Tooltip('week_label:N', title='Week'),
+                *base_hours_distance_tooltip(),
+            ],
+        )
+        .properties(height=220, title=title)
+    )
+    return cast(alt.Chart, chart)
+
+
+# ---------------------------------------
+# Discipline distribution donut chart
+# ---------------------------------------
+def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
     """Render a discipline distribution donut chart based on moving time."""
     # Prepare data
     df = (
-        filter_main_sports(df)
-        .groupby('sport_type', as_index=False)[
+        filter_main_disciplines(df)
+        .groupby('discipline', as_index=False)[
             ['total_moving_time_h', 'total_distance_km']
         ]
         .sum()
@@ -48,8 +128,9 @@ def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
 
     # Prepare chart
     theta = alt.Theta('total_moving_time_h:Q', stack='zero')
-    order = alt.Order('sport_type:N', sort='descending')
+    order = alt.Order('discipline:N', sort='descending')
 
+    # Create nice labels
     arc_labels = (
         alt.Chart(df)
         .mark_text(radius=90, size=12, fontWeight='bold')
@@ -61,21 +142,25 @@ def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
         )
     )
 
+    # Center labels for each discipline
     center_text = (
         alt.Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
         .mark_text(fontSize=20, fontWeight='bold', color='white')
         .encode(text='label:N')
     )
 
+    # Final chart
     chart = alt.layer(
         alt.Chart(df)
         .mark_arc(innerRadius=60)
         .encode(
             theta=theta,
             order=order,
-            color=alt.Color('sport_type:N', scale=COLOR_SCALE_MAIN_SPORTS, legend=None),
+            color=alt.Color(
+                'discipline:N', scale=COLOR_SCALE_MAIN_DISCIPLINES, legend=None
+            ),
             tooltip=[
-                alt.Tooltip('sport_type:N', title='Sport type'),
+                alt.Tooltip('discipline:N', title='Discipline'),
                 alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.1f'),
                 alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
                 alt.Tooltip('share_pct:Q', title='PCT', format='.0f'),
@@ -86,74 +171,6 @@ def render_discipline_donut(df: pd.DataFrame, title: str) -> alt.Chart:
     ).properties(height=260)
 
     return chart
-
-
-# --------------------------
-# Weekly charts rendering
-# --------------------------
-def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate weekly hours and distance for MAIN_SPORTS."""
-    return (
-        filter_main_sports(df)
-        .groupby('activity_week', as_index=False)[
-            ['total_moving_time_h', 'total_distance_km']
-        ]
-        .sum()
-        .sort_values('activity_week')
-        .tail(4)
-        .copy()
-    )
-
-
-def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
-    """Render a compact weekly hours bar chart (last 4 weeks)."""
-    df = _prepare_weekly_aggregation(df)
-    df['week_label'] = df['activity_week'].dt.strftime('KW %V')
-
-    latest_week = df['activity_week'].max()
-    df['is_latest'] = df['activity_week'].eq(latest_week)
-
-    chart = (
-        alt.Chart(df)
-        .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-        .encode(
-            x=alt.X('week_label:N', title=None, sort=None),
-            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
-            color=alt.condition(
-                alt.datum.is_latest, alt.value('#1f77b4'), alt.value('#d3d3d3')
-            ),
-            tooltip=[
-                alt.Tooltip('week_label:N', title='Week'),
-                *base_hours_distance_tooltip(),
-            ],
-        )
-        .properties(height=260, title=f'{title} - Last 4 weeks')
-    )
-
-    return chart
-
-
-def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Chart:
-    """Render grouped weekly hours per sport for the last 4 weeks."""
-    df = filter_main_sports(df)
-    df['week_label'] = df['activity_week'].dt.strftime('KW %V')
-
-    return (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            x=alt.X('sport_type:N', title=None),
-            xOffset=alt.XOffset('week_label:N', title='Week'),
-            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
-            color=alt.Color('sport_type:N', scale=COLOR_SCALE_MAIN_SPORTS, legend=None),
-            tooltip=[
-                alt.Tooltip('sport_type:N', title='Sport'),
-                alt.Tooltip('week_label:N', title='Week'),
-                *base_hours_distance_tooltip(),
-            ],
-        )
-        .properties(height=320, title=title)
-    )
 
 
 # --------------------------
@@ -193,7 +210,7 @@ def show_activity_map(map_polyline: str, height: int = 160, zoom: int = 12) -> N
 
 
 # ----------------------
-# UI helpers
+# UI Elements
 # ----------------------
 def sport_badge(sport: str) -> None:
     color = SPORT_COLORS.get(sport, DEFAULT_COLOR)
