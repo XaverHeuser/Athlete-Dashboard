@@ -75,7 +75,7 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
                 *base_hours_distance_tooltip(),
             ],
         )
-        .properties(height=260, title=f'{title}')
+        .properties(height=200, title=f'{title}')
     )
 
     return cast(alt.Chart, chart)
@@ -104,7 +104,7 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
                 *base_hours_distance_tooltip(),
             ],
         )
-        .properties(height=320, title=title)
+        .properties(height=220, title=title)
     )
     return cast(alt.Chart, chart)
 

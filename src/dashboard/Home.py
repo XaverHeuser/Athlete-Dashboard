@@ -105,8 +105,6 @@ with st.container(border=True):
     # --------------------------------------------------
     # Row 2: Weekly History + Weekly Hours per Sport
     # --------------------------------------------------
-    st.divider()
-
     hist_col, chart_col = st.columns([1, 3])
 
     with hist_col:
@@ -118,7 +116,6 @@ with st.container(border=True):
     # -------------------------------
     # Row 3: Consistency Heatmap
     # -------------------------------
-    st.divider()
     show_consistency_heatmap()
 
 # --------------------------------------------------
