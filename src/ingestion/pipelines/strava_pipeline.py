@@ -36,7 +36,8 @@ def run() -> None:
     """Executes the full Strava Extract and Load pipeline."""
     print('Starting Strava EL pipeline...')
 
-    ingested_at = datetime.now(timezone.utc)
+    ingested_at_dt = datetime.now(timezone.utc)  # for DataFrames / TIMESTAMP dtype
+    ingested_at_str = ingested_at_dt.isoformat()  # for JSON loading
 
     # Authenticate
     access_token = strava_auth.get_access_token()
@@ -48,78 +49,88 @@ def run() -> None:
     # Extract athlete info
     athlete_info = client.fetch_athlete_info()
     df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
-    df_athlete_info['ingested_at'] = ingested_at
+    df_athlete_info['ingested_at'] = ingested_at_dt
 
     # Extract athlete stats
     athlete_stats = client.fetch_athlete_stats(athlete_id=str(athlete_info.id))
     df_athlete_stats = pd.DataFrame([athlete_stats.model_dump()])
-    df_athlete_stats['ingested_at'] = ingested_at
+    df_athlete_stats['ingested_at'] = ingested_at_dt
 
     # Extract activities
     activities_data = client.fetch_all_activities(days=3)
     df_activities = pd.DataFrame([
-        {**a.model_dump(), 'ingested_at': ingested_at} for a in activities_data
+        {**a.model_dump(), 'ingested_at': ingested_at_dt} for a in activities_data
     ])
 
     # Extract streams
-    BATCH_SIZE = 5
+    BATCH_ROWS = 25_000
     buffer: list[dict[str, Any]] = []
 
     for activity in activities_data:
         streams = explode_streams(
             activity.id, client.fetch_activity_streams(activity_id=str(activity.id))
         )
-        buffer.extend({**r.model_dump(), 'ingested_at': ingested_at} for r in streams)
+        buffer.extend(
+            {**r.model_dump(), 'ingested_at': ingested_at_str} for r in streams
+        )
 
-        if len(buffer) >= BATCH_SIZE * 5000:
-            df = pd.DataFrame(buffer)
+        if len(buffer) >= BATCH_ROWS:
             loader.load_data(
-                data=df,
-                dataset=os.environ.get('BIGQUERY_DATASET'),
-                table_name=os.environ.get('BIGQUERY_RAW_ACTIVITY_STREAMS'),
+                data=buffer,
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
                 write_disposition='WRITE_APPEND',
                 schema=ACTIVITY_STREAMS_SCHEMA,
             )
             buffer.clear()
+    if buffer:
+        loader.load_data(
+            data=buffer,
+            dataset=os.environ['BIGQUERY_DATASET'],
+            table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
+            write_disposition='WRITE_APPEND',
+            schema=ACTIVITY_STREAMS_SCHEMA,
+        )
+        buffer.clear()
 
     # Extract gear details
     gear_details = []
     for gear_id in df_activities['gear_id'].unique():
         if gear_id and gear_id is not None:
             gear = client.fetch_gear_details(gear_id=gear_id)
-            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at})
+            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at_dt})
     df_gear_details = pd.DataFrame(gear_details)
 
     try:
         if not df_athlete_info.empty:
             loader.load_data(
                 data=df_athlete_info,
-                dataset=os.environ.get('BIGQUERY_DATASET'),
-                table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_INFO'),
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_ATHLETE_INFO'],
                 write_disposition='WRITE_TRUNCATE',
             )
 
         if not df_athlete_stats.empty:
             loader.load_data(
                 data=df_athlete_stats,
-                dataset=os.environ.get('BIGQUERY_DATASET'),
-                table_name=os.environ.get('BIGQUERY_RAW_ATHLETE_STATS'),
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_ATHLETE_STATS'],
                 write_disposition='WRITE_APPEND',
             )
 
         if not df_activities.empty:
             loader.load_data(
                 data=df_activities,
-                dataset=os.environ.get('BIGQUERY_DATASET'),
-                table_name=os.environ.get('BIGQUERY_RAW_ACTIVITIES'),
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_ACTIVITIES'],
                 write_disposition='WRITE_APPEND',
             )
 
         if not df_gear_details.empty:
             loader.load_data(
                 data=df_gear_details,
-                dataset=os.environ.get('BIGQUERY_DATASET'),
-                table_name=os.environ.get('BIGQUERY_RAW_GEAR_DETAILS'),
+                dataset=os.environ['BIGQUERY_DATASET'],
+                table_name=os.environ['BIGQUERY_RAW_GEAR_DETAILS'],
                 write_disposition='WRITE_APPEND',
             )
 

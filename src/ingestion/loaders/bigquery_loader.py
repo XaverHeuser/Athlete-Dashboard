@@ -1,12 +1,17 @@
 """This module contains the loader for interacting with Google's BigQuery."""
 
+from collections.abc import Mapping, Sequence
 import os
-from typing import Optional
+from typing import Any, Optional, Union
 
 from google.cloud import bigquery
 import pandas as pd
 
 from .base import BaseLoader
+
+
+JsonRows = Sequence[Mapping[str, Any]]
+Loadable = Union[pd.DataFrame, JsonRows]
 
 
 class BigQueryLoader(BaseLoader):
@@ -19,19 +24,27 @@ class BigQueryLoader(BaseLoader):
 
     def load_data(
         self,
-        data: pd.DataFrame,
+        data: Loadable,
         dataset: str,
         table_name: str,
         write_disposition: str = 'WRITE_APPEND',
         schema: Optional[list[bigquery.SchemaField]] = None,
     ) -> None:
         """Loads data into the specified BigQuery table."""
-        if data.empty:
-            print(f'No data provided for table {table_name}. Skipping.')
-            return
-
         table_id = f'{self.project_id}.{dataset}.{table_name}'
-        print(f'Loading {len(data)} records into {table_id}...')
+
+        if isinstance(data, pd.DataFrame):
+            if data.empty:
+                print(f'No data provided for table {table_name}. Skipping.')
+                return
+            record_count = len(data)
+        else:
+            if not data:
+                print(f'No data provided for table {table_name}. Skipping.')
+                return
+            record_count = len(data)
+
+        print(f'Loading {record_count} records into {table_id}...')
 
         job_config = bigquery.LoadJobConfig(
             write_disposition=write_disposition, create_disposition='CREATE_IF_NEEDED'
@@ -41,12 +54,18 @@ class BigQueryLoader(BaseLoader):
             job_config.schema = schema
             job_config.autodetect = False
         else:
-            job_config.autodetect = True
+            job_config.autodetect = isinstance(data, pd.DataFrame)
 
         try:
-            job = self.client.load_table_from_dataframe(
-                data, table_id, job_config=job_config
-            )
+            if isinstance(data, pd.DataFrame):
+                job = self.client.load_table_from_dataframe(
+                    data, table_id, job_config=job_config
+                )
+            else:
+                job = self.client.load_table_from_json(
+                    data, table_id, job_config=job_config
+                )
+
             job.result()
         except Exception as e:
             print(f'Failed to load data into {table_id}: {e}')
