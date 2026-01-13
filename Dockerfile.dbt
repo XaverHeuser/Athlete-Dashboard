@@ -5,19 +5,20 @@ WORKDIR /app
 # Install dependencies
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Install dbt
+# Install dbt dependencies
 COPY requirements-dbt.txt .
 RUN pip install --no-cache-dir -r requirements-dbt.txt
 
-# Copy dbt project
+# Copy dbt project + profiles
 COPY dbt/ ./dbt/
-
-# Copy profiles.yml directly into /app/
 COPY dbt/profiles.yml ./profiles.yml
 
-# Set environment vars (critical!)
+# Set dbt env vars
 ENV DBT_PROFILES_DIR=/app
 ENV DBT_PROJECT_DIR=/app/dbt
 
+# Bake dbt packages into the image (no runtime deps download) -> avoids network work at runtime.
+RUN dbt deps --project-dir /app/dbt --profiles-dir /app
+
 # Default command
-CMD ["bash", "-c", "dbt debug && dbt deps && dbt run && dbt test"]
+CMD ["dbt", "build", "--project-dir", "/app/dbt", "--profiles-dir", "/app"]
