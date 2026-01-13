@@ -2,6 +2,7 @@ folium==0.20.0
 dotenv==0.9.9
 google-auth==2.47.0
 google-cloud-bigquery==3.40.0
+google-cloud-bigquery-storage==2.36.0
 matplotlib==3.10.7 
 numpy==2.3.3
 pandas==2.3.3
