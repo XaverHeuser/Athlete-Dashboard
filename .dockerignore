@@ -1,0 +1,16 @@
+# Git / CI metadata
+.git
+.github
+
+# Python
+**/__pycache__
+**/*.pyc
+.venv
+
+# dbt artifacts (ephemeral)
+dbt/target
+dbt/logs
+
+# Environment / OS
+.env
+.DS_Store
