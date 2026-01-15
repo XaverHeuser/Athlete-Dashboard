@@ -13,6 +13,7 @@ from ui.constants import (
     MAIN_SPORT_COLORS,
     SPORT_COLORS,
 )
+from ui.formatters import fmt_hours_hhmm, hours_to_hhmm_series
 
 
 # -------------------
@@ -34,7 +35,7 @@ def filter_main_disciplines(df: pd.DataFrame) -> pd.DataFrame:
 def base_hours_distance_tooltip() -> list[alt.Tooltip]:
     """Standard tooltip showing hours and distance."""
     return [
-        alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.1f'),
+        alt.Tooltip('moving_time_hhmm', title='Hours'),
         alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
     ]
 
@@ -60,6 +61,7 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
     """Render a compact weekly hours bar chart (last 4 weeks)."""
     # Data prep
     df = _prepare_weekly_aggregation(df)
+    df['moving_time_hhmm'] = hours_to_hhmm_series(df['total_moving_time_h'])
     df['week_label'] = df['activity_week'].dt.strftime('KW %V')
 
     # Create chart
@@ -68,7 +70,7 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
         .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
         .encode(
             x=alt.X('week_label:N', title=None, sort=None),
-            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
+            y=alt.Y('total_moving_time_h:Q', title='Hours'),
             color=alt.value('#d3d3d3'),
             tooltip=[
                 alt.Tooltip('week_label:N', title='Week'),
@@ -85,6 +87,7 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
     """Render grouped weekly hours per sport for the last 4 weeks."""
     # Data prep
     df = filter_main_disciplines(df)
+    df['moving_time_hhmm'] = hours_to_hhmm_series(df['total_moving_time_h'])
     df['week_label'] = df['activity_week'].dt.strftime('KW %V')
 
     # Create chart
@@ -94,7 +97,7 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
         .encode(
             x=alt.X('discipline:N', title=None),
             xOffset=alt.XOffset('week_label:N', title='Week'),
-            y=alt.Y('total_moving_time_h:Q', title='Hours (h)'),
+            y=alt.Y('total_moving_time_h:Q', title='Hours'),
             color=alt.Color(
                 'discipline:N', scale=COLOR_SCALE_MAIN_DISCIPLINES, legend=None
             ),
@@ -112,10 +115,9 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
 # ---------------------------------------
 # Discipline distribution donut chart
 # ---------------------------------------
-def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
-    """Render a discipline distribution donut chart based on moving time."""
-    # Prepare data
-    df = (
+@st.cache_data(show_spinner=False, ttl=3600)  # type: ignore[misc]
+def prepare_donut_df(df: pd.DataFrame) -> pd.DataFrame:
+    d = (
         filter_main_disciplines(df)
         .groupby('discipline', as_index=False)[
             ['total_moving_time_h', 'total_distance_km']
@@ -123,35 +125,24 @@ def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
         .sum()
     )
 
-    total_hours = df['total_moving_time_h'].sum()
-    df['share_pct'] = df['total_moving_time_h'] / df['total_moving_time_h'].sum() * 100
+    total_hours = float(d['total_moving_time_h'].sum())
+    d['share_pct'] = (
+        (d['total_moving_time_h'] / total_hours * 100) if total_hours else 0.0
+    )
+    d['moving_time_hhmm'] = hours_to_hhmm_series(d['total_moving_time_h'])
+    d.attrs['total_hours'] = total_hours  # stash for center label
+    return d
 
-    # Prepare chart
+
+def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
+    d = prepare_donut_df(df)
+    total_hours = float(d.attrs.get('total_hours', 0.0))
+
     theta = alt.Theta('total_moving_time_h:Q', stack='zero')
     order = alt.Order('discipline:N', sort='descending')
 
-    # Create nice labels
-    arc_labels = (
-        alt.Chart(df)
-        .mark_text(radius=90, size=12, fontWeight='bold')
-        .encode(
-            theta=theta,
-            order=order,
-            text=alt.Text('total_moving_time_h:Q', format='.1f'),
-            color=alt.value('white'),
-        )
-    )
-
-    # Center labels for each discipline
-    center_text = (
-        alt.Chart(pd.DataFrame({'label': [f'{total_hours:.1f} h']}))
-        .mark_text(fontSize=20, fontWeight='bold', color='white')
-        .encode(text='label:N')
-    )
-
-    # Final chart
-    chart = alt.layer(
-        alt.Chart(df)
+    arcs = (
+        alt.Chart(d)
         .mark_arc(innerRadius=60)
         .encode(
             theta=theta,
@@ -161,15 +152,20 @@ def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
             ),
             tooltip=[
                 alt.Tooltip('discipline:N', title='Discipline'),
-                alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.1f'),
+                alt.Tooltip('moving_time_hhmm', title='Hours'),
                 alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
-                alt.Tooltip('share_pct:Q', title='PCT', format='.0f'),
+                alt.Tooltip('share_pct:Q', title='Share', format='.0f'),
             ],
-        ),
-        center_text,
-        arc_labels,
-    ).properties(height=260)
+        )
+    )
 
+    center_text = (
+        alt.Chart(pd.DataFrame({'label': [fmt_hours_hhmm(total_hours)]}))
+        .mark_text(fontSize=20, fontWeight='bold', color='white')
+        .encode(text='label:N')
+    )
+
+    chart = alt.layer(arcs, center_text).properties(height=260)
     return chart
 
 
