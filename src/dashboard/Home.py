@@ -83,7 +83,7 @@ with st.container(border=True):
         m1.metric(
             'Weekly hours',
             fmt_hours_hhmm(current_hours),
-            delta=fmt_hours_hhmm(delta_hours, signed=True)
+            delta=fmt_hours_hhmm(delta_hours, signed=True),
         )
         m2.metric(
             'Weekly distance',
