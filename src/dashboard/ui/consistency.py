@@ -10,6 +10,7 @@ from queries import (
 )
 import streamlit as st
 from ui.constants import MAIN_DISCIPLINES
+from ui.formatters import hours_to_hhmm_series
 
 
 # -----------------------------
@@ -66,7 +67,7 @@ def render_consistency_heatmap(
         return alt.Chart(pd.DataFrame({'x': [], 'y': []})).mark_text().encode()
 
     data = df_weekly_window.copy()
-
+    data['moving_time_hhmm'] = hours_to_hhmm_series(data['total_moving_time_h'])
     # Tile width: [week_start, week_end)
     data['activity_week_end'] = data['activity_week'] + pd.Timedelta(days=7)
 
@@ -110,7 +111,7 @@ def render_consistency_heatmap(
                 alt.Tooltip('activity_week:T', title='Week start'),
                 alt.Tooltip('discipline:N', title='Discipline'),
                 alt.Tooltip('total_activities:Q', title='Sessions'),
-                alt.Tooltip('total_moving_time_h:Q', title='Hours', format='.2f'),
+                alt.Tooltip('moving_time_hhmm', title='Hours'),
                 alt.Tooltip('total_distance_km:Q', title='Distance (km)', format='.1f'),
                 alt.Tooltip(
                     'total_elevation_gain_m:Q', title='Elevation gain (m)', format='.1f'

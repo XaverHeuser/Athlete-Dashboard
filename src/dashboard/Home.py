@@ -4,6 +4,7 @@ from queries import load_activities_current_week, load_athlete_data
 import streamlit as st
 from ui.activity_list import render_activity_list
 from ui.consistency import compute_weekly_multisport_stats, show_consistency_heatmap
+from ui.formatters import fmt_hours_hhmm
 from ui.visualization_charts import (
     render_distribution_donut,
     render_weekly_hours_chart,
@@ -80,7 +81,9 @@ with st.container(border=True):
     with kpi_col:
         m1, m2 = st.columns(2)
         m1.metric(
-            'Weekly hours', f'{current_hours:.2f} h', delta=f'{delta_hours:+.1f} h'
+            'Weekly hours',
+            fmt_hours_hhmm(current_hours),
+            delta=fmt_hours_hhmm(delta_hours),
         )
         m2.metric(
             'Weekly distance',

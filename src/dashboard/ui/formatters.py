@@ -1,6 +1,6 @@
 """Formatters for displaying data in the dashboard UI."""
 
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -31,6 +31,35 @@ def format_speed_kph(speed_kph: float) -> str:
     if pd.isna(speed_kph) or speed_kph <= 0:
         return '-.-'
     return f'{speed_kph:.2f}'
+
+
+def fmt_hours_hhmm(
+    hours: Optional[float], *, signed: bool = False, empty: str = '-'
+) -> str:
+    """Convert decimal hours (e.g. 2.5) to hh:mmh (e.g. 2:30h)."""
+    if hours is None or pd.isna(hours):
+        return empty
+
+    h_val = float(hours)
+    sign = ''
+    if signed:
+        sign = '+' if h_val > 0 else '-' if h_val < 0 else ''
+
+    minutes_total = int(round(abs(h_val) * 60))
+    hh, mm = divmod(minutes_total, 60)
+    return f'{sign}{hh}:{mm:02d}h'
+
+
+def hours_to_hhmm_series(hours: pd.Series, *, empty: str = '-') -> pd.Series:
+    s = pd.to_numeric(hours, errors='coerce')  # ensures NaN for invalid
+    mins = (s.abs() * 60).round().astype('Int64')  # nullable int
+    hh = (mins // 60).astype('Int64')
+    mm = (mins % 60).astype('Int64')
+
+    out = hh.astype(str) + ':' + mm.astype(str).str.zfill(2) + 'h'
+    out = out.where(s.notna(), empty)
+
+    return out
 
 
 # ------------------------
