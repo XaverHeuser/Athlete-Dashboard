@@ -2,10 +2,13 @@ bandit==1.8.6
 ipykernel ==7.1.0
 mypy==1.18.2
 pip-audit==2.9.0
+plotly==6.5.2
 pre-commit>=4.2.0
 pytest==8.4.2
 pytest-html==4.1.1
 pytest-cov==7.0.0
 pytest-xdist==3.8.0
 ruff==0.14.9
+scikit-learn==1.8.0
+seaborn==0.13.2
 types-requests==2.32.4.20260107
