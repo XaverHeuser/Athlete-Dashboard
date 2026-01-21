@@ -12,10 +12,10 @@ def load_creds(TOKEN_FILE: str, SCOPES: list[str]) -> Credentials | None:
     """This function loads credentials for Google Auth."""
     creds = None
     if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)  # type: ignore[no-untyped-call]
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
 
     if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())  # type: ignore[no-untyped-call]
+        creds.refresh(Request())
         os.makedirs(os.path.dirname(TOKEN_FILE), exist_ok=True)
         with open(TOKEN_FILE, 'w') as f:
             f.write(creds.to_json())
