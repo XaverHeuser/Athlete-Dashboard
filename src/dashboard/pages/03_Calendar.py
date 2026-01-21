@@ -13,9 +13,9 @@ from utilities.google_calendar import (
 )
 
 
-# ----------------------------
+# ----------------
 # Config
-# ----------------------------
+# ----------------
 load_dotenv()
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -56,7 +56,6 @@ if not creds or not creds.valid:
 # Get Google Service
 service = get_service(creds)
 
-
 # ----------------------------
 # Set calendar timespan
 # ----------------------------
@@ -80,7 +79,6 @@ time_max = datetime.combine(
     end_date, datetime.max.time(), tzinfo=timezone.utc
 ).isoformat()
 
-
 # ------------------------
 # Load calendar events
 # ------------------------
@@ -93,7 +91,6 @@ st.caption(f'Loaded {len(fc_events)} events.')
 # -------------------
 # Show calendar
 # -------------------
-# TODO: Show color of each event
 options = {
     'initialView': 'dayGridMonth',
     'headerToolbar': {
@@ -111,7 +108,6 @@ if state.get('eventClick'):
     ev = state['eventClick']['event']
     st.subheader('Selected event')
     st.json(ev)
-
 
 # ----------------------------
 # Create new event (clean form)
@@ -159,8 +155,6 @@ with st.expander('Create new event', expanded=False):
         # Display options
         # --------------------
         st.markdown('### Display options')
-
-        # TODO: Add color selection.
 
         visibility = st.selectbox(
             'Visibility', ['default', 'public', 'private', 'confidential'], index=0
@@ -245,7 +239,6 @@ with st.expander('Create new event', expanded=False):
                     end_date=end_date,
                     start_time=start_time,
                     end_time=end_time,
-                    color_id=None,
                     visibility=visibility,
                     transparency=transparency_val,
                     attendees_raw=attendees_raw,

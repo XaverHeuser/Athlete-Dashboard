@@ -1,4 +1,4 @@
-"""This file..."""
+"""This file contains google calendar communication functions."""
 
 from datetime import date, datetime, time as dtime, timedelta
 from typing import Any, Literal
@@ -9,13 +9,13 @@ from googleapiclient.discovery import Resource
 from ui.constants import GOOGLE_COLOR_ID_BY_SPORT, MAIN_SPORT_COLORS
 
 
-# -----------------
+# ----------------------
 # Event fetcher
-# -----------------
+# ----------------------
 def fetch_events(
     service: Resource, calendar_id: str, time_min: str, time_max: str
 ) -> list[dict[str, Any]]:
-    """TODO: Add"""
+    """Fetch google calendar events from given calendar in given time-range."""
     items = []
     page_token = None
     while True:
@@ -41,6 +41,9 @@ def fetch_events(
     return items
 
 
+# -----------------------
+# Event converter
+# -----------------------
 def to_fullcalendar_events(google_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Converts a Google Calendar event into FullCalendar event."""
     events: list[dict[str, Any]] = []
@@ -86,7 +89,6 @@ def build_event_body(
     end_date: date,
     start_time: dtime | None,
     end_time: dtime | None,
-    color_id: str | None,
     visibility: str,
     transparency: str,
     attendees_raw: str,
@@ -101,7 +103,6 @@ def build_event_body(
         'summary': title.strip(),
         'description': (description or '').strip(),
         'location': (location or '').strip(),
-        'colorId': color_id,  # Google expects string IDs
         'visibility': visibility,  # default/public/private/confidential
         'transparency': transparency,  # opaque/transparent
         'guestsCanInviteOthers': guests_can_invite_others,
@@ -136,9 +137,8 @@ def build_event_body(
 
     # Set color
     body['colorId'] = set_color_id_new_events(title)
-    print(body['colorId'])
 
-    # Insert extra
+    # Insert extra information
     insert_extra = {}
     if add_meet:
         body['conferenceData'] = {
@@ -173,10 +173,12 @@ def parse_attendees(raw: str) -> list[dict[str, str]]:
     return [{'email': e} for e in emails]
 
 
+# Helpers for colors in Calendar
 Sport = Literal['Run', 'Ride', 'Swim', 'Strength']
 
 
 def sport_from_title(title: str) -> Sport | None:
+    """Function to extract the sport based on the event title."""
     t = title.lower()
     if 'run' in t:
         return 'Run'
@@ -190,10 +192,12 @@ def sport_from_title(title: str) -> Sport | None:
 
 
 def fullcalendar_color_from_title(title: str) -> str | None:
+    """Function to get color based on event title."""
     sport = sport_from_title(title)
     return MAIN_SPORT_COLORS.get(sport) if sport else None
 
 
 def set_color_id_new_events(title: str) -> str | None:
+    """Function to get Google color id for new events."""
     sport = sport_from_title(title)
     return GOOGLE_COLOR_ID_BY_SPORT.get(sport) if sport else None

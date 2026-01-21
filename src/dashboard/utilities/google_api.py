@@ -1,4 +1,4 @@
-"""File for..."""
+"""This file contains general Google API connections."""
 
 import os
 
@@ -9,7 +9,7 @@ from googleapiclient.discovery import Resource, build
 
 
 def load_creds(TOKEN_FILE: str, SCOPES: list[str]) -> Credentials | None:
-    """TODO: Add."""
+    """This function loads credentials for Google Auth."""
     creds = None
     if os.path.exists(TOKEN_FILE):
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)  # type: ignore[no-untyped-call]
@@ -24,12 +24,12 @@ def load_creds(TOKEN_FILE: str, SCOPES: list[str]) -> Credentials | None:
 
 
 def make_flow(CLIENT_SECRET_FILE: str, SCOPES: list[str]) -> Flow:
-    """TODO: Add."""
+    """Create and configure an OAuth 2.0 Flow using client secrets and scopes."""
     flow = Flow.from_client_secrets_file(CLIENT_SECRET_FILE, scopes=SCOPES)
     flow.redirect_uri = 'http://localhost:8501/Calendar'
     return flow
 
 
 def get_service(creds: Credentials) -> Resource:
-    """TODO: Add"""
+    """Build and return an authenticated Google Calendar API service resource."""
     return build('calendar', 'v3', credentials=creds)
