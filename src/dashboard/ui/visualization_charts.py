@@ -66,7 +66,8 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
 
     # Create chart
     chart = (
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
         .encode(
             x=alt.X('week_label:N', title=None, sort=None),
@@ -92,7 +93,8 @@ def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Cha
 
     # Create chart
     chart = (
-        alt.Chart(df)
+        alt
+        .Chart(df)
         .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
         .encode(
             x=alt.X('discipline:N', title=None),
@@ -142,7 +144,8 @@ def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
     order = alt.Order('discipline:N', sort='descending')
 
     arcs = (
-        alt.Chart(d)
+        alt
+        .Chart(d)
         .mark_arc(innerRadius=60)
         .encode(
             theta=theta,
@@ -160,7 +163,8 @@ def render_distribution_donut(df: pd.DataFrame) -> alt.LayerChart:
     )
 
     center_text = (
-        alt.Chart(pd.DataFrame({'label': [fmt_hours_hhmm(total_hours)]}))
+        alt
+        .Chart(pd.DataFrame({'label': [fmt_hours_hhmm(total_hours)]}))
         .mark_text(fontSize=20, fontWeight='bold', color='white')
         .encode(text='label:N')
     )
