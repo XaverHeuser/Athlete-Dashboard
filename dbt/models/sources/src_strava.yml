@@ -80,25 +80,6 @@ sources:
           - name: ingested_at
             description: "UTC timestamp when this snapshot was ingested."
 
-      # Athlete Statistics
-      - name: raw_athlete_stats
-        description: >
-          Aggregated lifetime and recent statistics for the athlete.
-          This table is overwritten on each run.
-        config:
-          loaded_at_field: ingested_at
-          freshness:
-            warn_after:  { count: 36, period: hour }
-            error_after: { count: 72, period: hour }
-        columns:
-          - name: athlete_id
-            description: "Primary identifier for the athlete."
-            tests:
-              - not_null
-
-          - name: ingested_at
-            description: "UTC timestamp when this snapshot was ingested."
-
       # Gear Details
       - name: raw_gear_details
         description: >
