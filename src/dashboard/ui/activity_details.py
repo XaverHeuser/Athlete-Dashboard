@@ -110,7 +110,8 @@ def render_activity_details(
                 st.caption(f'{title}: not available')
                 return
             chart = (
-                alt.Chart(df)
+                alt
+                .Chart(df)
                 .mark_line()
                 .encode(
                     x=alt.X(x_col, title=x_mode),

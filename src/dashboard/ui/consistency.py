@@ -79,7 +79,8 @@ def render_consistency_heatmap(
     chart_height = _heatmap_height(n_rows=len(MAIN_DISCIPLINES))
 
     heatmap = (
-        alt.Chart(data)
+        alt
+        .Chart(data)
         .mark_rect(stroke='#e6e6e6', strokeWidth=0.6)
         .encode(
             x=alt.X(

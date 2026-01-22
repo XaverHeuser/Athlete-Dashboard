@@ -253,7 +253,8 @@ with st.expander('Create new event', expanded=False):
                 st.stop()
 
             created = (
-                service.events()
+                service
+                .events()
                 .insert(
                     calendarId=CALENDAR_ID,
                     body=body,

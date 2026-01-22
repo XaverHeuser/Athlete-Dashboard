@@ -20,7 +20,8 @@ def fetch_events(
     page_token = None
     while True:
         response = (
-            service.events()
+            service
+            .events()
             .list(
                 calendarId=calendar_id,
                 timeMin=time_min,
