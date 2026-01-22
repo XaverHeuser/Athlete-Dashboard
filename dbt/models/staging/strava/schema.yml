@@ -230,39 +230,6 @@ models:
         description: "Timestamp when this record was staged in dbt."
         data_type: TIMESTAMP
 
-  # Athlete Statistics
-  - name: stg_athlete_stats
-    description: >
-      Cleaned and typed staging model for Strava athlete statistics.
-      Contains lifetime, recent, and year-to-date aggregated metrics
-      for a single athlete, as returned by the Strava API.
-    
-    config:
-      meta: 
-        domain: strava
-        grain: "One row per athlete."
-        source_systems:
-          - source: strava_data
-            table: raw_athlete_stats
-      contract:
-        enforced: false
-
-    columns:
-      # Identifiers & metadata
-      - name: athlete_id
-        description: "Unique identifier for the athlete."
-        data_type: INT64
-        tests:
-          - not_null
-
-      - name: ingested_at
-        description: "Timestamp when the statistics snapshot was fetched from the Strava API."
-        data_type: TIMESTAMP
-
-      - name: processed_at
-        description: "Timestamp when this record was staged in dbt."
-        data_type: TIMESTAMP
-
   # Gear Details
   - name: stg_gear_details
     description: >

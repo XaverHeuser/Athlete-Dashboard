@@ -1124,46 +1124,6 @@ models:
         tests:
           - not_null
   
-  # Athlete statistics fact
-  - name: fct_athlete_stats
-    description: >
-      Athlete statistics fact at grain 1 row per athlete_id.
-      Aggregates key athlete stats from stg_athlete_stats for easy reporting.
-
-    config:
-      materialized: table
-      meta:
-        owner: Xaver H.
-        created_at: 2025-12-27
-        description: "Athlete statistics fact (one row per athlete)."
-      contract:
-        enforced: false
-
-    columns:
-      - name: athlete_id
-        description: Primary key of athlete.
-        data_type: INT64
-        tests:
-          - not_null
-
-      - name: snapshot_date
-        description: Date when the stats snapshot was taken.
-        data_type: DATE
-        tests:
-          - not_null
-
-      - name: sport
-        description: Sport type/category.
-        data_type: STRING
-        tests:
-          - not_null
-
-      - name: mart_loaded_at
-        description: Timestamp when this mart was built.
-        data_type: TIMESTAMP
-        tests:
-          - not_null
-
   # Weekly consistency fact
   - name: fct_consistency_weekly
     description: >
