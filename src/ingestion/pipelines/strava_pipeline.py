@@ -51,11 +51,6 @@ def run() -> None:
     df_athlete_info = pd.DataFrame([athlete_info.model_dump()])
     df_athlete_info['ingested_at'] = ingested_at_dt
 
-    # Extract athlete stats
-    athlete_stats = client.fetch_athlete_stats(athlete_id=str(athlete_info.id))
-    df_athlete_stats = pd.DataFrame([athlete_stats.model_dump()])
-    df_athlete_stats['ingested_at'] = ingested_at_dt
-
     # Extract activities
     activities_data = client.fetch_all_activities(days=3)
     df_activities = pd.DataFrame([
@@ -108,14 +103,6 @@ def run() -> None:
                 dataset=os.environ['BIGQUERY_DATASET'],
                 table_name=os.environ['BIGQUERY_RAW_ATHLETE_INFO'],
                 write_disposition='WRITE_TRUNCATE',
-            )
-
-        if not df_athlete_stats.empty:
-            loader.load_data(
-                data=df_athlete_stats,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_ATHLETE_STATS'],
-                write_disposition='WRITE_APPEND',
             )
 
         if not df_activities.empty:
