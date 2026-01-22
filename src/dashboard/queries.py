@@ -21,7 +21,6 @@ _ALLOWED_TABLES = {
     'fct_activities',
     'fct_activity_streams',
     'fct_activities_weekly',
-    'fct_athlete_stats',
     'fct_consistency_weekly',
     'fct_consistency_multisport_weekly',
 }
@@ -70,14 +69,6 @@ except Exception:
 def load_athlete_data() -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
     table_fqn = _table('dim_athlete_info')
-    query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
-    return client.query(query).to_dataframe()
-
-
-@st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_athlete_stats() -> pd.DataFrame:
-    """Load the latest athlete statistics snapshot."""
-    table_fqn = _table('fct_athlete_stats')
     query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
