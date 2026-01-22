@@ -19,8 +19,8 @@ from utilities.google_calendar import (
 load_dotenv()
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-CLIENT_SECRET_FILE = os.environ["GOOGLE_CLIENT_SECRET_FILE"]
-TOKEN_FILE = os.environ["GOOGLE_TOKEN_FILE"]
+CLIENT_SECRET_FILE = os.environ['GOOGLE_CLIENT_SECRET_FILE']
+TOKEN_FILE = os.environ['GOOGLE_TOKEN_FILE']
 CALENDAR_ID = os.environ['ATHLETE_CALENDER_ID']
 
 st.set_page_config(page_title='Calendar', page_icon='📅', layout='wide')
