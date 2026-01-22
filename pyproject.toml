@@ -9,3 +9,10 @@ requires-python = '>=3.9'
 
 [tool.setuptools.packages.find]
 include = ['src']
+
+[tool.mypy]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["dashboard.utilities.google_api"]
+disable_error_code = ["no-untyped-call"]
