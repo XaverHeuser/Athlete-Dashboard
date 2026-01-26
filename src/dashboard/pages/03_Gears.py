@@ -3,15 +3,18 @@ Overview of athlete's gears from Strava API
 Structured by gear type, KPI-driven, minimal charts.
 """
 
-from queries import load_gear_details
+from queries import load_gear_details, viewer_email
 import streamlit as st
 from ui.constants import GEAR_TYPE_ORDER
+from utilities.auth import logout_button, require_login
 
 
 # -----------------
 # Page config
 # -----------------
 st.set_page_config(page_title='Gear Overview', page_icon='👟', layout='wide')
+require_login()
+logout_button('sidebar')
 
 st.title('Gear Overview')
 st.caption('Complete overview of all bikes, shoes and other gear')
@@ -19,7 +22,7 @@ st.caption('Complete overview of all bikes, shoes and other gear')
 # -----------------
 # Load data
 # -----------------
-df_gear_details = load_gear_details()
+df_gear_details = load_gear_details(viewer_email())
 
 if df_gear_details.empty:
     st.warning('No gear data available.')

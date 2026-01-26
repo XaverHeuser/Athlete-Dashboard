@@ -1,13 +1,15 @@
-from queries import load_athlete_data
+from queries import load_athlete_data, viewer_email
 import streamlit as st
 from ui.formatters import fmt_date, fmt_dt, fmt_str, fmt_weight
+from utilities.auth import logout_button, require_login
 
 
 # -------------------------
 # Page configuration
 # -------------------------
 st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='wide')
-
+require_login()
+logout_button('sidebar')
 
 # -------------------------
 # Light CSS (optional, but helps a lot)
@@ -50,7 +52,7 @@ st.markdown(
 # Load athlete information
 # -------------------------
 try:
-    df_athlete = load_athlete_data()
+    df_athlete = load_athlete_data(viewer_email())
     if df_athlete.empty:
         st.warning('No athlete data found.')
         st.stop()

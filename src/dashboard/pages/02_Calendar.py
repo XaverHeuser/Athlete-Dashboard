@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import streamlit as st
 from streamlit_calendar import calendar
+from utilities.auth import logout_button, require_login
 from utilities.google_api import get_service, load_creds, make_flow
 from utilities.google_calendar import (
     build_event_body,
@@ -12,6 +13,13 @@ from utilities.google_calendar import (
     to_fullcalendar_events,
 )
 
+
+# -----------------
+# Page config
+# -----------------
+st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='wide')
+require_login()
+logout_button('sidebar')
 
 # ----------------
 # Config

@@ -49,41 +49,51 @@ def _table(name: str) -> str:
     return f'`{_GCP_PROJECT_ID}.{_BQ_DATASET_MARTS}.{name}`'
 
 
+def viewer_email() -> str:
+    """Get the email of the currently logged-in viewer."""
+    return (getattr(st.user, 'email', '') or '').strip().lower()
+
+
 # -------------------
 # BIGQUERY CLIENT
 # -------------------
-try:
-    creds = service_account.Credentials.from_service_account_info(
-        st.secrets['gcp_service_account']
-    )
-    client = bigquery.Client(credentials=creds, project=creds.project_id)
-except Exception:
-    # Local dev fallback (requires GOOGLE_APPLICATION_CREDENTIALS)
-    client = bigquery.Client()
+@st.cache_resource
+def get_bq_client():
+    try:
+        creds = service_account.Credentials.from_service_account_info(
+            st.secrets['gcp_service_account']
+        )
+        return bigquery.Client(credentials=creds, project=creds.project_id)
+    except Exception:
+        # Local dev fallback (requires GOOGLE_APPLICATION_CREDENTIALS)
+        return bigquery.Client()
 
 
 # ------------------------------
 # DATA LOADING QUERIES
 # ------------------------------
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_athlete_data() -> pd.DataFrame:
+def load_athlete_data(viewer_email: str = '') -> pd.DataFrame:
     """Load athlete metadata (one row per athlete)."""
+    client = get_bq_client()
     table_fqn = _table('dim_athlete_info')
     query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_activities() -> pd.DataFrame:
+def load_activities(viewer_email: str = '') -> pd.DataFrame:
     """Load all activities from fact table."""
+    client = get_bq_client()
     table_fqn = _table('fct_activities')
     query = f'SELECT * FROM {table_fqn} ORDER BY start_date_local DESC'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_gear_details() -> pd.DataFrame:
+def load_gear_details(viewer_email: str = '') -> pd.DataFrame:
     """Load gear details from dimension table."""
+    client = get_bq_client()
     table_fqn = _table('dim_gear')
     query = f'SELECT * FROM {table_fqn}'  # nosec B608: table_fqn is built from allowlisted identifiers only
     return client.query(query).to_dataframe()
@@ -91,9 +101,10 @@ def load_gear_details() -> pd.DataFrame:
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_activities_weekly(
-    start_week: str | None = None, end_week: str | None = None
+    start_week: str | None = None, end_week: str | None = None, viewer_email: str = ''
 ) -> pd.DataFrame:
     """Load weekly summary statistics for the athlete."""
+    client = get_bq_client()
     table_fqn = _table('fct_activities_weekly')
     query = f"""
         SELECT
@@ -121,10 +132,9 @@ def load_activities_weekly(
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_activity_streams(activity_id: int) -> pd.DataFrame:
-    """
-    Load time-series streams for a single activity.
-    """
+def load_activity_streams(activity_id: int, viewer_email: str = '') -> pd.DataFrame:
+    """Load time-series streams for a single activity."""
+    client = get_bq_client()
     table_fqn = _table('fct_activity_streams')
     query = f"""
         SELECT
@@ -150,8 +160,9 @@ def load_activity_streams(activity_id: int) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=900, show_spinner=False)  # type: ignore[misc]
-def load_activities_current_week() -> pd.DataFrame:
+def load_activities_current_week(viewer_email: str = '') -> pd.DataFrame:
     """Loads activities for the current week (Mon-Sun) based on activity_date_local."""
+    client = get_bq_client()
     # Use local date logic in Python; filter in SQL on DATE column activity_date_local
     today = pd.Timestamp.now(tz='Europe/Berlin').date()
     week_start = (
@@ -176,10 +187,9 @@ def load_activities_current_week() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_consistency_weekly_data() -> pd.DataFrame:
-    """
-    Load weekly data for consistency chart.
-    """
+def load_consistency_weekly_data(viewer_email: str = '') -> pd.DataFrame:
+    """Load weekly data for consistency chart."""
+    client = get_bq_client()
     table_fqn = _table('fct_consistency_weekly')
     query = f"""
         SELECT *
@@ -190,10 +200,9 @@ def load_consistency_weekly_data() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
-def load_consistency_multisport_weekly_data() -> pd.DataFrame:
-    """
-    Load weekly data for consistency chart.
-    """
+def load_consistency_multisport_weekly_data(viewer_email: str = '') -> pd.DataFrame:
+    """Load weekly data for consistency chart."""
+    client = get_bq_client()
     table_fqn = _table('fct_consistency_multisport_weekly')
     query = f"""
         SELECT *
