@@ -58,7 +58,7 @@ def viewer_email() -> str:
 # BIGQUERY CLIENT
 # -------------------
 @st.cache_resource
-def get_bq_client():
+def get_bq_client() -> bigquery.Client:
     try:
         creds = service_account.Credentials.from_service_account_info(
             st.secrets['gcp_service_account']
