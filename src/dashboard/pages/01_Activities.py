@@ -2,22 +2,25 @@
 
 import math
 
-from queries import load_activities
+from queries import load_activities, viewer_email
 import streamlit as st
 from ui.activity_list import render_activity_list
 from ui.routing import get_selected_activity_id_int
+from utilities.auth import logout_button, require_login
 
 
 # ------------------
 # Configuration
 # ------------------
 st.set_page_config(page_title='Activities', page_icon='📋', layout='wide')
+require_login()
+logout_button('sidebar')
 
 # --------------
 # Load data
 # --------------
 try:
-    df_activities = load_activities()
+    df_activities = load_activities(viewer_email())
     if df_activities.empty:
         st.warning('No activities found.')
         st.stop()

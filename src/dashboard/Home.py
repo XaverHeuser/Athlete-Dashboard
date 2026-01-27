@@ -1,6 +1,6 @@
 """Home page for the Athlete Dashboard."""
 
-from queries import load_activities_current_week, load_athlete_data
+from queries import load_activities_current_week
 import streamlit as st
 from ui.activity_list import render_activity_list
 from ui.consistency import compute_weekly_multisport_stats, show_consistency_heatmap
@@ -15,6 +15,7 @@ from ui.weekly_stats import (
     compute_weekly_stats,
     load_prepare_activities_weekly,
 )
+from utilities.auth import logout_button, require_login
 
 
 # --------------------------------------------------
@@ -23,17 +24,10 @@ from ui.weekly_stats import (
 st.set_page_config(
     page_title='Athlete Dashboard - Overview', page_icon='🏃', layout='wide'
 )
+require_login()
+logout_button('sidebar')
 
-# --------------------------------------------------
-# Load athlete information
-# --------------------------------------------------
-df_athlete = load_athlete_data()
-if df_athlete.empty:
-    st.error('No athlete data available.')
-    st.stop()
-
-athlete = df_athlete.iloc[0]
-st.title(f'Athlete Dashboard - {athlete.firstname} {athlete.lastname}')
+st.title(f'Athlete Dashboard - {st.user.name}')
 
 # --------------------------------------------------
 # Weekly activity stats
