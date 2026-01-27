@@ -1,6 +1,6 @@
 """Home page for the Athlete Dashboard."""
 
-from queries import load_activities_current_week, viewer_email
+from queries import load_activities_current_week
 import streamlit as st
 from ui.activity_list import render_activity_list
 from ui.consistency import compute_weekly_multisport_stats, show_consistency_heatmap
@@ -32,7 +32,7 @@ st.title(f'Athlete Dashboard - {st.user.name}')
 # --------------------------------------------------
 # Weekly activity stats
 # --------------------------------------------------
-df_activities_weekly = load_prepare_activities_weekly(viewer_email())
+df_activities_weekly = load_prepare_activities_weekly()
 
 df_current, df_previous, df_last_4_weeks = compute_weekly_dfs(df_activities_weekly)
 current_hours, delta_hours, current_distance, delta_distance = compute_weekly_stats(

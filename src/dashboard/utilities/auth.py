@@ -49,7 +49,15 @@ def require_login() -> None:
 
 def logout_button(location: str = 'sidebar') -> None:
     target = st.sidebar if location == 'sidebar' else st
-    if target.button('Log out'):
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        st.logout()
+
+    email = (getattr(st.user, 'email', '') or '').strip().lower()
+
+    with target:
+        if email:
+            st.caption('Signed in as')
+            st.markdown(f'**{email}**')
+
+        if st.button('Log out'):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.logout()

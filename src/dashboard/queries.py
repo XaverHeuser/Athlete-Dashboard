@@ -101,7 +101,7 @@ def load_gear_details(viewer_email: str = '') -> pd.DataFrame:
 
 @st.cache_data(ttl=3600, show_spinner=False)  # type: ignore[misc]
 def load_activities_weekly(
-    start_week: str | None = None, end_week: str | None = None, viewer_email: str = ''
+    start_week: str | None = None, end_week: str | None = None
 ) -> pd.DataFrame:
     """Load weekly summary statistics for the athlete."""
     client = get_bq_client()
