@@ -30,8 +30,6 @@ Create a personal data platform for your training history. Pull activities from 
 - Custom Analytics (TSS/TRIMP-like, PRs, YoY trends) *(Planned)*
 - Multi‑Source Ready *(Strava now; Garmin next)*
 
-
-
 ## Technology Stack
 
 | Component      | Technology               | Description                             |
@@ -98,6 +96,16 @@ TBD.
 > See [GCP Deployment docs](./docs/gcp/deployment.md)
 
 ---
+
+## Machine Learning
+
+### Race time predictions
+
+> Goal: Given on all training data up to date t, predict expected race finish time for distance d (5k, 10k, HM, M)
+
+- Target Variable: Finish time in seconds
+- Input: Aggregated training features, target_distance_km
+- One model for all distances
 
 ## Roadmap
 
