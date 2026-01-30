@@ -131,6 +131,7 @@ SELECT
     EXTRACT(HOUR FROM start_date_local) AS activity_hour_local,
 
     SAFE_DIVIDE(moving_time_s / 60.0, distance_m / 1000.0) AS avg_pace_min_per_km,
+    SAFE_DIVIDE(moving_time_s, SAFE_DIVIDE(distance_m, 1000.0)) AS pace_sec_per_km,
     avg_speed_mps * 3.6 AS avg_speed_kph,
     max_speed_mps * 3.6 AS max_speed_kph,
     SAFE_DIVIDE(distance_m, elapsed_time_s) * 3.6 AS avg_speed_overall_kph,

@@ -42,6 +42,7 @@ SELECT
   comment_count,
   achievement_count,
 
+  CASE WHEN workout_type = 1 THEN TRUE ELSE FALSE END AS is_race,
   is_commute,
   is_trainer,
   has_heartrate,
