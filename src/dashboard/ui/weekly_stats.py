@@ -40,7 +40,7 @@ def compute_weekly_dfs(
         df_activities_weekly['activity_week'] == previous_week
     ]
 
-    # Create df last 4 weeks
+    # Create df last 8 weeks
     available_weeks = (
         df_activities_weekly['activity_week'].drop_duplicates().sort_values()
     )
