@@ -44,12 +44,12 @@ def compute_weekly_dfs(
     available_weeks = (
         df_activities_weekly['activity_week'].drop_duplicates().sort_values()
     )
-    last_4_weeks = available_weeks.tail(4)
-    df_last_4_weeks = df_activities_weekly[
-        df_activities_weekly['activity_week'].isin(last_4_weeks)
+    last_8_weeks = available_weeks.tail(8)
+    df_last_8_weeks = df_activities_weekly[
+        df_activities_weekly['activity_week'].isin(last_8_weeks)
     ].copy()
 
-    return df_current, df_previous, df_last_4_weeks
+    return df_current, df_previous, df_last_8_weeks
 
 
 def compute_weekly_stats(
