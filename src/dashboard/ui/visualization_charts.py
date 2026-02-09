@@ -49,7 +49,7 @@ def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
         ]
         .sum()
         .sort_values('activity_week')
-        .tail(4)
+        .tail(8)
         .copy()
     )
 
@@ -58,7 +58,7 @@ def _prepare_weekly_aggregation(df: pd.DataFrame) -> pd.DataFrame:
 # Render weekly charts
 # -------------------------
 def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
-    """Render a compact weekly hours bar chart (last 4 weeks)."""
+    """Render a compact weekly hours bar chart (last 8 weeks)."""
     # Data prep
     df = _prepare_weekly_aggregation(df)
     df['moving_time_hhmm'] = hours_to_hhmm_series(df['total_moving_time_h'])
@@ -85,7 +85,7 @@ def render_weekly_hours_chart(df: pd.DataFrame, title: str) -> alt.Chart:
 
 
 def render_weekly_hours_per_sport_chart(df: pd.DataFrame, title: str) -> alt.Chart:
-    """Render grouped weekly hours per sport for the last 4 weeks."""
+    """Render grouped weekly hours per sport for the last 8 weeks."""
     # Data prep
     df = filter_main_disciplines(df)
     df['moving_time_hhmm'] = hours_to_hhmm_series(df['total_moving_time_h'])
