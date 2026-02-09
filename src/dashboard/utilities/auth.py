@@ -11,6 +11,11 @@ def _get_allowed_emails() -> set[str]:
 
 
 def require_login() -> None:
+    """This functions handles the app login for via Google."""
+    # If Streamlit auth isn't configured, is_logged_in won't exist.
+    if not hasattr(st, "user") or not hasattr(st.user, "is_logged_in"):
+        st.error("Authentication is not configured for this app run (missing [auth] in secrets.toml or wrong app root).")
+        st.stop()
 
     # Authenticate user
     if not st.user.is_logged_in:
