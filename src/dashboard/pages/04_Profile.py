@@ -8,7 +8,7 @@ from utilities.auth import logout_button, require_login
 # Page configuration
 # -------------------------
 st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='wide')
-require_login()
+# require_login()
 logout_button('sidebar')
 
 # -------------------------

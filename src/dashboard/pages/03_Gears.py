@@ -13,7 +13,7 @@ from utilities.auth import logout_button, require_login
 # Page config
 # -----------------
 st.set_page_config(page_title='Gear Overview', page_icon='👟', layout='wide')
-require_login()
+# require_login()
 logout_button('sidebar')
 
 st.title('Gear Overview')

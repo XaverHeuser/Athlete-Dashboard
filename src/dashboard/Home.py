@@ -24,10 +24,10 @@ from utilities.auth import logout_button, require_login
 st.set_page_config(
     page_title='Athlete Dashboard - Overview', page_icon='🏃', layout='wide'
 )
-require_login()
+# require_login()
 logout_button('sidebar')
 
-st.title(f'Athlete Dashboard - {st.user.name}')
+# st.title(f'Athlete Dashboard - {st.user.name}')
 
 # --------------------------------------------------
 # Weekly activity stats
