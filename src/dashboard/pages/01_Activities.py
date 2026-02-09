@@ -13,7 +13,7 @@ from utilities.auth import logout_button, require_login
 # Configuration
 # ------------------
 st.set_page_config(page_title='Activities', page_icon='📋', layout='wide')
-# require_login()
+require_login()
 logout_button('sidebar')
 
 # --------------

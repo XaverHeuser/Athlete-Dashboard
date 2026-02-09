@@ -18,7 +18,7 @@ from utilities.google_calendar import (
 # Page config
 # -----------------
 st.set_page_config(page_title='Athlete Profile', page_icon='👤', layout='wide')
-# require_login()
+require_login()
 logout_button('sidebar')
 
 # ----------------
