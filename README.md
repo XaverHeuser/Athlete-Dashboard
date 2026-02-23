@@ -30,8 +30,6 @@ Create a personal data platform for your training history. Pull activities from 
 - Custom Analytics (TSS/TRIMP-like, PRs, YoY trends) *(Planned)*
 - Multi‑Source Ready *(Strava now; Garmin next)*
 
-
-
 ## Technology Stack
 
 | Component      | Technology               | Description                             |
@@ -101,8 +99,8 @@ TBD.
 
 ## Roadmap
 
-- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests)
-- Phase 2: Streamlit MVP (overview + filters)
+- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests) -> Done
+- Phase 2: Streamlit MVP (overview + filters) -> Done
 - Phase 3: Garmin + advanced metrics (TSS/Fitness/Fatigue), optional Postgres path
 
 ---
