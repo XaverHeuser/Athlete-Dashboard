@@ -97,20 +97,10 @@ TBD.
 
 ---
 
-## Machine Learning
-
-### Race time predictions
-
-> Goal: Given on all training data up to date t, predict expected race finish time for distance d (5k, 10k, HM, M)
-
-- Target Variable: Finish time in seconds
-- Input: Aggregated training features, target_distance_km
-- One model for all distances
-
 ## Roadmap
 
-- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests)
-- Phase 2: Streamlit MVP (overview + filters)
+- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests) -> Done
+- Phase 2: Streamlit MVP (overview + filters) -> Done
 - Phase 3: Garmin + advanced metrics (TSS/Fitness/Fatigue), optional Postgres path
 
 ---
