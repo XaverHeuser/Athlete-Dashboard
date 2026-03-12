@@ -10,24 +10,12 @@ Create a personal data platform for your training history. Pull activities from 
 
 ---
 
-## Project Status
-
-> **Status**: *In Development* - Architecture and scaffolding exist; core components are being implemented.
-
-- Containers: Dockerfile (EL job) and Dockerfile.dbt (dbt runner)
-- Infra scaffolding: cloudbuild.yaml
-- dbt project: dbt/
-- Python src for ingestion: src/
-- Exploration: notebooks/
-
----
-
 ## Key Features
 
 - Automated Data Sync (Cloud Scheduler → Cloud Run)
 - Historical Archive (BigQuery raw/staging/marts)
 - Interactive Dashboard (Streamlit)
-- Custom Analytics (TSS/TRIMP-like, PRs, YoY trends) *(Planned)*
+- AI Chatbot for training analysis
 - Multi‑Source Ready *(Strava now; Garmin next)*
 
 ## Technology Stack
@@ -36,12 +24,12 @@ Create a personal data platform for your training history. Pull activities from 
 | -------------- | ------------------------ | --------------------------------------- |
 | Data Source    | Strava API               | Source of raw activity data             |
 | Cloud          | Google Cloud Platform    | Hosting for Run, Scheduler, BQ, Secrets |
-| Data Warehouse | BigQuery                 | Bronze → staging → marts datasets         |
+| Data Warehouse | BigQuery                 | Bronze → staging → marts datasets       |
 | EL             | Python 3.9+ on Cloud Run | Extract & Load raw JSON into `raw`      |
-| T              | dbt (BigQuery)           | SQL transforms to `staging`/`marts`       |
-| Scheduling     | Cloud Scheduler          | Triggers EL job (this triggers dbt-job)    |
-| Frontend       | Streamlit                | Queries `marts` for fast UX              |
-
+| T              | dbt (BigQuery)           | SQL transforms to `staging`/`marts`     |
+| Scheduling     | Cloud Scheduler          | Triggers EL job (this triggers dbt-job) |
+| Frontend       | Streamlit                | Queries `marts` for fast UX             |
+| AI             | Google Vertex AI         | Gemini-2.0-Flash                        |
 ---
 
 ## Project Structure
@@ -94,14 +82,6 @@ TBD.
 ## Deploying on GCP (Sketch)
 
 > See [GCP Deployment docs](./docs/gcp/deployment.md)
-
----
-
-## Roadmap
-
-- Phase 1: ELT core (Strava → BQ raw/staging/marts; dbt models/tests) -> Done
-- Phase 2: Streamlit MVP (overview + filters) -> Done
-- Phase 3: Garmin + advanced metrics (TSS/Fitness/Fatigue), optional Postgres path
 
 ---
 
