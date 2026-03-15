@@ -17,11 +17,37 @@ TABLE_ID = 'fct_activities'
 
 vertexai.init(project=_GCP_PROJECT_ID, location=LOCATION)
 bq_client = bigquery.Client(project=_GCP_PROJECT_ID)
+job_config = bigquery.QueryJobConfig(
+    maximum_bytes_billed=10**9
+)  # Limit to 1GB for safety
+
+
+# ------------------------------
+# Safety Check for SQL Queries
+# ------------------------------
+def is_safe_sql(sql_query: str) -> bool:
+    # List of forbidden SQL commands that could modify data or access sensitive information
+    forbidden_words = [
+        'DROP',
+        'DELETE',
+        'TRUNCATE',
+        'ALTER',
+        'UPDATE',
+        'INSERT',
+        'GRANT',
+    ]
+
+    upper_query = sql_query.upper()
+    for word in forbidden_words:
+        if word in upper_query:
+            return False
+    return True
+
 
 # -------------------
 # Define the Tool
 # -------------------
-# We tell Gemini how to use our BigQuery
+# Tell Gemini how to use BigQuery
 sql_declaration = FunctionDeclaration(
     name='list_activitiy_data',
     description='Get all activity data from BigQuery for performance analysis.',
@@ -37,11 +63,20 @@ sql_declaration = FunctionDeclaration(
     },
 )
 
+
+# ------------------------------
+# Model Initialization
+# ------------------------------
+generation_config = {
+    'temperature': 0.2,  # Less creative, more focused on accurate analysis
+    'max_output_tokens': 1000,  # Protects your budget from overly long responses
+    'top_p': 0.8,  # Diversity of word choice (0.8 is a good standard)
+    'top_k': 40,  # Limits the number of tokens considered at each step, improving focus
+}
+
+# Running tool wraps the function declaration and allows Gemini to call it during the conversation when needed
 running_tool = Tool(function_declarations=[sql_declaration])
 
-# ----------------------------------
-# System Instruction for Gemini
-# ----------------------------------
 # Define your schema as a string to keep the code clean
 SCHEMA_DESCRIPTION = f"""
 The table `{_GCP_PROJECT_ID}.{_BQ_DATASET_MARTS}.{TABLE_ID}` contains triathlon and fitness activity data with the following columns:
@@ -70,6 +105,7 @@ The table `{_GCP_PROJECT_ID}.{_BQ_DATASET_MARTS}.{TABLE_ID}` contains triathlon 
 model = GenerativeModel(
     'gemini-2.0-flash',
     tools=[running_tool],
+    generation_config=generation_config,
     system_instruction=[
         'You are an expert triathlon coach and data analyst.',
         f'DATASET CONTEXT:\n{SCHEMA_DESCRIPTION}',
@@ -127,14 +163,28 @@ if prompt:
                 st.markdown('**Generated SQL Query:**')
                 st.code(sql, language='sql')
                 try:
-                    # Run the query and show results in a dataframe
-                    data = bq_client.query(sql).to_dataframe()
-                    st.dataframe(data)
+                    # Check if the SQL query is safe before executing
+                    if is_safe_sql(sql):
+                        # Run the query and show results in a dataframe
+                        data = bq_client.query(
+                            sql, job_config=job_config
+                        ).to_dataframe()
+                        st.dataframe(data)
 
-                    # Result is sent back to Gemini for interpretation. We expect Gemini to return a text summary based on the data.
-                    response = st.session_state.chat.send_message(
-                        f'Data result for this query: {data.to_string()}'
-                    )
+                        # Result is sent back to Gemini for interpretation. We expect Gemini to return a text summary based on the data.
+                        response = st.session_state.chat.send_message(
+                            f'Data result for this query: {data.to_string()}'
+                        )
+
+                    else:
+                        # If the SQL query is flagged as unsafe, do not execute it and inform the user
+                        st.error(
+                            'The generated SQL query contains potentially unsafe commands and will not be executed.'
+                        )
+                        response = st.session_state.chat.send_message(
+                            'The generated SQL query was flagged as unsafe and was not executed. Explain the issue to the user.'
+                        )
+
                 except Exception as e:
                     st.error(f'SQL Error: {e}')
                     response = st.session_state.chat.send_message(
