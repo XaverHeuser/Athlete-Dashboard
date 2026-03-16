@@ -223,9 +223,7 @@ if prompt:
                                 except Exception as e:
                                     st.error(f'Error: {e}')
                                     content = f'Error: {e}'
-                                    status.update(
-                                        label='Query failed', state='error'
-                                    )
+                                    status.update(label='Query failed', state='error')
                             else:
                                 st.error('Blocked for safety.')
                                 content = 'Error: SQL blocked.'
