@@ -5,7 +5,7 @@ pip-audit==2.9.0
 pre-commit>=4.2.0
 pytest==8.4.2
 pytest-html==4.2.0
-pytest-cov==7.0.0
+pytest-cov==7.1.0
 pytest-xdist==3.8.0
 ruff==0.15.8
 types-requests==2.32.4.20260107
