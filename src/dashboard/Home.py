@@ -34,7 +34,7 @@ st.title(f'Athlete Dashboard - {st.user.name}')
 # --------------------------------------------------
 df_activities_weekly = load_prepare_activities_weekly()
 
-df_current, df_previous, df_last_4_weeks = compute_weekly_dfs(df_activities_weekly)
+df_current, df_previous, df_last_8_weeks = compute_weekly_dfs(df_activities_weekly)
 current_hours, delta_hours, current_distance, delta_distance = compute_weekly_stats(
     df_current, df_previous
 )
@@ -44,16 +44,16 @@ current_hours, delta_hours, current_distance, delta_distance = compute_weekly_st
 # ---------------------------------
 # Discipline distribution donuts
 donut_current = render_distribution_donut(df_current)
-donut_4w = render_distribution_donut(df_last_4_weeks)
+donut_8w = render_distribution_donut(df_last_8_weeks)
 
 # Weekly history (hours only)
 weekly_history_chart = render_weekly_hours_chart(
     df_activities_weekly, title='Weekly training hours'
 )
 
-# Weekly hours per sport (last 4 weeks)
+# Weekly hours per sport (last 8 weeks)
 weekly_sport_chart = render_weekly_hours_per_sport_chart(
-    df_last_4_weeks, title='Weekly hours per sport - last 4 weeks'
+    df_last_8_weeks, title='Weekly hours per sport - last 8 weeks'
 )
 
 
@@ -96,8 +96,8 @@ with st.container(border=True):
         st.altair_chart(donut_current)
 
     with col_4w:
-        st.markdown('**Discipline distribution - last 4 weeks**')
-        st.altair_chart(donut_4w)
+        st.markdown('**Discipline distribution - 8 weeks**')
+        st.altair_chart(donut_8w)
 
     # --------------------------------------------------
     # Row 2: Weekly History + Weekly Hours per Sport
