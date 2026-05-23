@@ -1,90 +1,167 @@
 # Athlete-Dashboard
 
-> Personal, extensible, and self-hosted dashboard for athletic activities powered by a modern ELT stack on Google Cloud.
+An automated, modern data stack (MDS) data engineering platform designed to orchestrate the Extract-Load (EL) ingestion of personal fitness metrics from the Strava API into Google BigQuery, execute transformation pipelines via dbt Core, and visualize biometric analytics through an interactive Streamlit application.
+
+[![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![dbt Version](https://img.shields.io/badge/dbt--core-1.11.2-orange.svg)](https://www.getdbt.com/)
+[![Streamlit App](https://img.shields.io/badge/Streamlit-Ready-brightgreen.svg)](src/dashboard/Home.py)
+[![CI/CD Pipelines](https://img.shields.io/badge/CI-Ruff%20%7C%20Mypy%20%7C%20Bandit-FF4B4B.svg)](https://github.com/XaverHeuser/athlete-dashboard/actions)
 
 ---
 
-## Project Goal & Motivation
+## 🚀 Key Features
 
-Create a personal data platform for your training history. Pull activities from Strava (and later Garmin), load raw JSON into BigQuery, and transform it with dbt into fast, analytics-ready tables that a Streamlit dashboard can query.
+- **Automated EL Pipelines**: Containerized python workers script sync routines pulling activities, athletic gear profiles and precise time-series GPS coordinate activity streams natively from the Strava REST API
+- **Dimensional Data Modeling (dbt)**: Transforms unstructured raw relational database fields into an analytical Star Schema, materializing standardized tables (Fact and Dimension tracking) optimized for analytical aggregation
+- **Multi-Sport Consistency Analytics**: Programmatically structures sophisticated mathematical metrics like multi-sport weekly consistency and localized training readiness indices inside intermediate SQL view mappings
+- **Interactive Multi-Page Streamlit App**: A high-performance tracking portal providing athletes with dynamic geographic data charts, workout calendars, performance profiles and localized machine-learning readiness forecasts powered by Gemini/Vertex AI
+- **Cloud-Native CI/CD Orchestration**: Built with independent validation workflows (`ci-pipeline.yml`) and isolated Cloud Run environment recipes to decouple ingestion workers from presentation layers
 
 ---
 
-## Key Features
+## 🏗 System Architecture & Workflow
 
-- Automated Data Sync (Cloud Scheduler → Cloud Run)
-- Historical Archive (BigQuery raw/staging/marts)
-- Interactive Dashboard (Streamlit)
-- AI Chatbot for training analysis
-- Multi‑Source Ready *(Strava now; Garmin next)*
+The diagram below illustrates how components interact across your environment boundaries—from Strava OAuth handshakes to Google Cloud Platform data storage, dbt modeling layers, and Streamlit visualization:
 
-## Technology Stack
+[![Architecture](https://img.plantuml.biz/plantuml/svg/ZLHDRzim3BthLt3kfJq4k-SmD6s284CAP6stOK21Wh4PMuWi6PBSD1lwtqT9Tk9sJJ4V38bwZz_afVDeVLihcFXAaQV7ARfgRT0MZmkziUYyRNFVMXAVV4KrGQDGQk6sKZTeiORSr8tHfFsTtoi2Ixb7NIeI0dDlB6JV7TaCq44uY5oPje1izkp9QcIpgmNCTD4OgRtBu8y0_Wuw8Rlp5fymmAAET0saiwKiAx-IUYjUHAzsRWoRXkjuModq6sDhE9zVhoxUqPrWTtb5HQiw9m-tpi2LQYdoug_1V8ibGJQnNcuuGBYbKdAEzf7CKhvtXjuOcorXKGVk-TJaMx8NaH55_9IC_IAbpEuzTh7s9-bJVlk7__AEqodUsrR3LxDsKK4K1KbICBT4-fJxJ8gSsP9F_-Lnp-3pISfRRmlqk4P7Xs9UoV9RItR_eC-d_0O_qL9bMaSf1Vrpf_rwZtfGW8rH1TSoSx5l7Ytk8kaMTqlSSpkUmF5Kb5ANNSl5yqTuuEObMrCXqLCgp43m8RFcyKkbk0cd8tQGaa5MVv3rz0oJ1No6ETLIoyXDOfQUtR3Djbwrjk4H38FnQfG8QoKzJ9gcdwPECYY_465GOJJwqlNp65QjgyX1whpKTEw8EcWPfx1vB1pifA-0GynvKPJG6EjH2N4q68Yzr-CGJwWx8A-4lPFk3V2OcZ4i3HOkeNcuuKcw5fNyZLuQxOH8pJbIpEfcgwV4g-XQyGZWwNcD4CSLC2eO5JMEuTxAiYGRsf-NX9MDFnXBEKXxQGonINc_XJomJmDGttKT9XZbv0m0oRc1hJ14znQr2tki2x6FWF5zxtSANoE5k2HTy6h_2m00)](https://editor.plantuml.com/uml/ZLHDRzim3BthLt3kfJq4k-SmD6s284CAP6stOK21Wh4PMuWi6PBSD1lwtqT9Tk9sJJ4V38bwZz_afVDeVLihcFXAaQV7ARfgRT0MZmkziUYyRNFVMXAVV4KrGQDGQk6sKZTeiORSr8tHfFsTtoi2Ixb7NIeI0dDlB6JV7TaCq44uY5oPje1izkp9QcIpgmNCTD4OgRtBu8y0_Wuw8Rlp5fymmAAET0saiwKiAx-IUYjUHAzsRWoRXkjuModq6sDhE9zVhoxUqPrWTtb5HQiw9m-tpi2LQYdoug_1V8ibGJQnNcuuGBYbKdAEzf7CKhvtXjuOcorXKGVk-TJaMx8NaH55_9IC_IAbpEuzTh7s9-bJVlk7__AEqodUsrR3LxDsKK4K1KbICBT4-fJxJ8gSsP9F_-Lnp-3pISfRRmlqk4P7Xs9UoV9RItR_eC-d_0O_qL9bMaSf1Vrpf_rwZtfGW8rH1TSoSx5l7Ytk8kaMTqlSSpkUmF5Kb5ANNSl5yqTuuEObMrCXqLCgp43m8RFcyKkbk0cd8tQGaa5MVv3rz0oJ1No6ETLIoyXDOfQUtR3Djbwrjk4H38FnQfG8QoKzJ9gcdwPECYY_465GOJJwqlNp65QjgyX1whpKTEw8EcWPfx1vB1pifA-0GynvKPJG6EjH2N4q68Yzr-CGJwWx8A-4lPFk3V2OcZ4i3HOkeNcuuKcw5fNyZLuQxOH8pJbIpEfcgwV4g-XQyGZWwNcD4CSLC2eO5JMEuTxAiYGRsf-NX9MDFnXBEKXxQGonINc_XJomJmDGttKT9XZbv0m0oRc1hJ14znQr2tki2x6FWF5zxtSANoE5k2HTy6h_2m00)
 
-| Component      | Technology               | Description                             |
-| -------------- | ------------------------ | --------------------------------------- |
-| Data Source    | Strava API               | Source of raw activity data             |
-| Cloud          | Google Cloud Platform    | Hosting for Run, Scheduler, BQ, Secrets |
-| Data Warehouse | BigQuery                 | Bronze → staging → marts datasets       |
-| EL             | Python 3.9+ on Cloud Run | Extract & Load raw JSON into `raw`      |
-| T              | dbt (BigQuery)           | SQL transforms to `staging`/`marts`     |
-| Scheduling     | Cloud Scheduler          | Triggers EL job (this triggers dbt-job) |
-| Frontend       | Streamlit                | Queries `marts` for fast UX             |
-| AI             | Google Vertex AI         | Gemini-2.0-Flash                        |
 ---
 
-## Project Structure
+## ⚙️ Configuration & Environment Setup
+
+The ingestion pipelines and Streamlit components load target warehouse contexts using environment variables. Initialize these keys within your running workspace environment:
+
+Variable Name |	Description | Example Target Context
+--------- | --------------- | --------------
+GCP_PROJECT_ID	| Targeted Google Cloud Platform Project ID | project-id
+BIGQUERY_DATASET | Target dataset ID configured inside your BigQuery data warehouse | strava_analytics
+STRAVA_CLIENT_ID | Application identifier generated by the Strava API management portal | 123456
+STRAVA_CLIENT_SECRET | Cryptographic secret key used to handle OAuth token refreshes | a1b2c3d4e5f6g7h8...
+STRAVA_REFRESH_TOKEN | Persistent token used to fetch short-lived active request bearers | 9876543210abcdef...
+
+---
+
+## 💻 Local Workspace Installation
+
+### 1. Project Initialization
 
 ```bash
-Athlete-Dashboard/
-├─ .github/                     # CI configs (future)
-├─ dbt/                         # dbt project (models, seeds, tests, macros)
-├─ docs/                        # Documentation (architecture, how‑tos)
-├─ notebooks/                   # Jupyter exploration
-├─ src/                         # Python EL job (Strava → BigQuery)
-├─ Dockerfile                   # EL container
-├─ Dockerfile.dbt               # dbt runner container
-├─ cloudbuild.yaml              # Build/deploy pipelines
-├─ requirements*.txt            # Python deps (core/dev/dbt)
-└─ README.md
+# Clone the repository structure locally
+git clone [https://github.com/XaverHeuser/athlete-dashboard.git](https://github.com/XaverHeuser/athlete-dashboard.git)
+cd athlete-dashboard
+
+# Setup an isolated Python virtual runtime environment
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Dependency Management Execution
+
+This repository isolates dependencies based on the current execution context. Run the following setup blocks based on your needs:
+
+```bash
+# Upgrade core package management tools to identical base lines
+python -m pip install --upgrade pip==26.1.1
+
+# Option A: Install Streamlit presentation layer and ingestion pipeline layers
+python -m pip install -r requirements.txt
+
+# Option B: Install dbt Core framework and BigQuery database adapters
+python -m pip install -r requirements-dbt.txt
+
+# Option C: Deploy quality verification layers (linters, type-checkers, unit tests)
+python -m pip install -r requirements-dev.txt
+```
+
+### 3. Initialize Local dbt Profiles
+
+To execute your models locally against BigQuery, set up a standard profiles.yml file pointing to your Google Cloud credentials file:
+
+```yaml
+# ~/.dbt/profiles.yml
+athlete_dashboard:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: strava
+      threads: 4
+      keyfile: /path/to/your/gcp-service-account-key.json
+      timeout_seconds: 300
+      priority: interactive
+      retries: 1
+```
+
+Verify your database connections and launch compilation tasks using the commands below:
+
+```bash
+cd dbt
+dbt deps     # Fetch external dependency libraries (dbt_utils)
+dbt debug    # Validate infrastructure connectivity parameters
+dbt run      # Execute downstream database transformations
+dbt test     # Run schema data integrity test invariants
+```
+
+### 4. Running the Dashboard Application Locally
+
+Launch the application shell to host the Streamlit analytical platform on a local network server:
+
+```bash
+streamlit run src/dashboard/Home.py
 ```
 
 ---
 
-## Workflow (ELT)
+## ☁️ Continuous Integration & Deployment (CI/CD)
 
-### 1. Extract & Load (Cloud Run)
+### Automated Pull Request Safeguards
 
-- Refresh Strava OAuth token (Secret Manager), fetch **incremental** activities since the last watermark.
-- Load raw payloads into BigQuery `raw.strava_activities` with metadata (`ingested_at`, `activity_id`, `source`).
-- Idempotent upsert by `activity_id` (dedupe).
+The configured repository uses a unified GitHub Actions pipeline (ci-pipeline.yml) to enforce code standards on every merge request into the main branch:
 
-### 2. Transform (dbt on BigQuery)
+- **Quality Checks:** Audits syntax and formatting rules using Ruff.
+- **Static Type Checking:** Evaluates explicit type annotations using strict mypy configurations.
+- **Security Auditing:** Scans files for exposed credentials or vulnerabilities using Bandit.
 
-- `raw → staging`: type casting, unit normalization, cleanup.
-- `staging → marts`: aggregates (daily/monthly summaries, PRs, training load).
-- dbt tests: uniqueness, not-null, references.
+### Google Cloud Build Automated Pipelines
 
-### 3. Present (Streamlit)
+The data platform splits build automation into specialized pipelines to reduce runtime overhead:
 
-- Pages: Overview, Trends, Records, Maps.
-- Read-only queries against `marts` only.
-
-See [Architecture Docs](./docs/architecture/architecture.md) for more info.
+- **EL Ingestion Pipeline (cloudbuild.el.yaml):** Automatically builds the ingestion image, pushes the updated artifact layer, and deploys it to target container environments.
+- **dbt Transformation Pipeline (cloudbuild.dbt.yaml):** Packages dbt execution entry points into an isolated environment to run modeling tasks on a scheduled trigger.
 
 ---
 
-## Getting Started (Local Dev)
+## 📂 Repository Structure
 
-TBD.
+```text
+├── .github/                 # Automated validation workflows & dependency maintenance engines
+│   └── workflows/
+│       └── ci-pipeline.yml  # Comprehensive Continuous Integration pipeline definitions
+├── dbt/                     # dbt Core modern data stack transformation definitions
+│   ├── macros/              # Custom modular SQL script injections (discipline mappings)
+│   ├── models/              # Multi-tier SQL transformation layers
+│   │   ├── intermediate/    # Aggregations, consistency scripts, logic layer splits
+│   │   ├── marts/           # Production Star Schema models (Fact & Dim tracking)
+│   │   └── staging/         # Initial field renaming and casting layers
+│   ├── dbt_project.yml      # Core dbt project properties metadata manifest
+│   └── profiles.yml         # BigQuery cloud database driver connection profiles
+├── notebooks/               # Local diagnostic exploratory environments and integration sandboxes
+├── src/                     # Core codebase modules
+│   ├── dashboard/           # Multi-page interactive Streamlit presentation layer app
+│   │   └── pages/           # Targeted analytics pages (AI, Gear, Profile, Calendar)
+│   ├── ingestion/           # Data platform extraction and ingestion pipelines
+│   └── models/              # Pydantic data modeling structural schema rules
+├── Dockerfile               # Production container definition for Streamlit app
+├── Dockerfile.dbt           # Production container configuration for dbt run workers
+├── cloudbuild.dbt.yaml      # GCP build pipeline automation for dbt transform workflows
+├── cloudbuild.el.yaml       # GCP build pipeline automation for extract-load workflows
+└── pyproject.toml           # Unified configuration file for linters, type checkers, and tool definitions
+```
 
 ---
 
-## Deploying on GCP (Sketch)
+## 📄 License
 
-> See [GCP Deployment docs](./docs/gcp/deployment.md)
-
----
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+Distributed directly under the terms of the open-source MIT License guidelines. See the standard accompanying LICENSE text metadata file for deep details.
