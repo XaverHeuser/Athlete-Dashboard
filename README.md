@@ -1,8 +1,10 @@
 # Athlete-Dashboard
 
-An automated, modern data stack (MDS) data engineering platform designed to orchestrate the Extract-Load (EL) ingestion of personal fitness metrics from the Strava API into Google BigQuery, execute transformation pipelines via dbt Core, and visualize biometric analytics through an interactive Streamlit application.
+An automated, modern data stack (MDS) data engineering platform designed to orchestrate the Extract-Load (EL) ingestion of personal fitness metrics from the Strava API into Google BigQuery, execute transformation pipelines via dbt Core, and visualize biometric analytics through an interactive Streamlit application. All infrastructure is declaratively managed via Terraform.
 
 [![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![GCP App](https://img.shields.io/badge/GCP-Cloud--Run-orange.svg)](https://cloud.google.com/run)
+[![Terraform as IAC](https://img.shields.io/badge/IAC-Terraform-mediumpurple.svg)](https://developer.hashicorp.com/terraform)
 [![dbt Version](https://img.shields.io/badge/dbt--core-1.11.2-orange.svg)](https://www.getdbt.com/)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-Ready-brightgreen.svg)](src/dashboard/Home.py)
 [![CI/CD Pipelines](https://img.shields.io/badge/CI-Ruff%20%7C%20Mypy%20%7C%20Bandit-FF4B4B.svg)](https://github.com/XaverHeuser/athlete-dashboard/actions)
@@ -12,6 +14,7 @@ An automated, modern data stack (MDS) data engineering platform designed to orch
 ## 🚀 Key Features
 
 - **Automated EL Pipelines**: Containerized python workers script sync routines pulling activities, athletic gear profiles and precise time-series GPS coordinate activity streams natively from the Strava REST API
+- **Infrastructure as Code (IaC)**: Comprehensive Terraform blueprints managing the lifecycle of all Google Cloud Platform components, including BigQuery datasets, Secret Manager resources, Cloud Run Jobs, Artifact Registry repositories, and strict least-privilege IAM bindings
 - **Dimensional Data Modeling (dbt)**: Transforms unstructured raw relational database fields into an analytical Star Schema, materializing standardized tables (Fact and Dimension tracking) optimized for analytical aggregation
 - **Multi-Sport Consistency Analytics**: Programmatically structures sophisticated mathematical metrics like multi-sport weekly consistency and localized training readiness indices inside intermediate SQL view mappings
 - **Interactive Multi-Page Streamlit App**: A high-performance tracking portal providing athletes with dynamic geographic data charts, workout calendars, performance profiles and localized machine-learning readiness forecasts powered by Gemini/Vertex AI
@@ -19,11 +22,11 @@ An automated, modern data stack (MDS) data engineering platform designed to orch
 
 ---
 
-## 🏗 System Architecture & Workflow
+## 🏗 System Architecture
 
 The diagram below illustrates how components interact across your environment boundaries—from Strava OAuth handshakes to Google Cloud Platform data storage, dbt modeling layers, and Streamlit visualization:
 
-[![Architecture](https://img.plantuml.biz/plantuml/svg/ZLHDRzim3BthLt3kfJq4k-SmD6s284CAP6stOK21Wh4PMuWi6PBSD1lwtqT9Tk9sJJ4V38bwZz_afVDeVLihcFXAaQV7ARfgRT0MZmkziUYyRNFVMXAVV4KrGQDGQk6sKZTeiORSr8tHfFsTtoi2Ixb7NIeI0dDlB6JV7TaCq44uY5oPje1izkp9QcIpgmNCTD4OgRtBu8y0_Wuw8Rlp5fymmAAET0saiwKiAx-IUYjUHAzsRWoRXkjuModq6sDhE9zVhoxUqPrWTtb5HQiw9m-tpi2LQYdoug_1V8ibGJQnNcuuGBYbKdAEzf7CKhvtXjuOcorXKGVk-TJaMx8NaH55_9IC_IAbpEuzTh7s9-bJVlk7__AEqodUsrR3LxDsKK4K1KbICBT4-fJxJ8gSsP9F_-Lnp-3pISfRRmlqk4P7Xs9UoV9RItR_eC-d_0O_qL9bMaSf1Vrpf_rwZtfGW8rH1TSoSx5l7Ytk8kaMTqlSSpkUmF5Kb5ANNSl5yqTuuEObMrCXqLCgp43m8RFcyKkbk0cd8tQGaa5MVv3rz0oJ1No6ETLIoyXDOfQUtR3Djbwrjk4H38FnQfG8QoKzJ9gcdwPECYY_465GOJJwqlNp65QjgyX1whpKTEw8EcWPfx1vB1pifA-0GynvKPJG6EjH2N4q68Yzr-CGJwWx8A-4lPFk3V2OcZ4i3HOkeNcuuKcw5fNyZLuQxOH8pJbIpEfcgwV4g-XQyGZWwNcD4CSLC2eO5JMEuTxAiYGRsf-NX9MDFnXBEKXxQGonINc_XJomJmDGttKT9XZbv0m0oRc1hJ14znQr2tki2x6FWF5zxtSANoE5k2HTy6h_2m00)](https://editor.plantuml.com/uml/ZLHDRzim3BthLt3kfJq4k-SmD6s284CAP6stOK21Wh4PMuWi6PBSD1lwtqT9Tk9sJJ4V38bwZz_afVDeVLihcFXAaQV7ARfgRT0MZmkziUYyRNFVMXAVV4KrGQDGQk6sKZTeiORSr8tHfFsTtoi2Ixb7NIeI0dDlB6JV7TaCq44uY5oPje1izkp9QcIpgmNCTD4OgRtBu8y0_Wuw8Rlp5fymmAAET0saiwKiAx-IUYjUHAzsRWoRXkjuModq6sDhE9zVhoxUqPrWTtb5HQiw9m-tpi2LQYdoug_1V8ibGJQnNcuuGBYbKdAEzf7CKhvtXjuOcorXKGVk-TJaMx8NaH55_9IC_IAbpEuzTh7s9-bJVlk7__AEqodUsrR3LxDsKK4K1KbICBT4-fJxJ8gSsP9F_-Lnp-3pISfRRmlqk4P7Xs9UoV9RItR_eC-d_0O_qL9bMaSf1Vrpf_rwZtfGW8rH1TSoSx5l7Ytk8kaMTqlSSpkUmF5Kb5ANNSl5yqTuuEObMrCXqLCgp43m8RFcyKkbk0cd8tQGaa5MVv3rz0oJ1No6ETLIoyXDOfQUtR3Djbwrjk4H38FnQfG8QoKzJ9gcdwPECYY_465GOJJwqlNp65QjgyX1whpKTEw8EcWPfx1vB1pifA-0GynvKPJG6EjH2N4q68Yzr-CGJwWx8A-4lPFk3V2OcZ4i3HOkeNcuuKcw5fNyZLuQxOH8pJbIpEfcgwV4g-XQyGZWwNcD4CSLC2eO5JMEuTxAiYGRsf-NX9MDFnXBEKXxQGonINc_XJomJmDGttKT9XZbv0m0oRc1hJ14znQr2tki2x6FWF5zxtSANoE5k2HTy6h_2m00)
+[![Architecture](https://img.plantuml.biz/plantuml/svg/ZLN1Rjim3BthAxZqqXs2tNCOcZP1a245ihRRC610mTYCBKIM34bkcWtzzr6I7RjPKoo7GABU8vyeahvo7grlAWLJNohoz3X3LsuCslnngRSMdRTDvXjBueClgIAe5Kejt4xg6YrMa9cgDfgql_S7HM0fywWBHK9Wves5qJT7TWJe82n4faoJmsZ-xCbgvB3h9SnrNXkflHl17m7yE_g4qRst-8G15dsaRI1Th6HH-hNKE_4Yn83nGDRYrjWg4euxkBYbN3RLkh5rKDSAMHZ3Ok4cxjOAVSHUBcxM7oEV5_-AIkZxhAIyKUtjZhjMsRLgAFBYNutP3Wk2qTHwkUNCm1qLafDxY6IsyhuDT19ile9b5RYNCvFjo2PTqSH7ATXFKihitsBd6t-MFkEpV_WlRuXEzxrhD7mn6nSTH5Em90SBIwJFoMTIvCnNlFelnHs3rsSffsfpzBX1HyStlPR5ruRiuPU-dF4P_41BfMaSfHHqnwttcmFgmGDiZShvBKSk5joZnNqatU5-XGUkupCuRgT2wgAjrRX-3mzSzMGhBapqb1vcO7YNMN7VfgUu3QiUEqZ98AlVoNfwXkaIFi62Agbbv2OpMo_QldZTIznkX9MI7gPrtJLWQnayl12Xjs4y_jnMyWJMZIl9GQgvL6wkHnszJDA5kI4SxAKlWI-NyMmfe3RMenAY3nY8dTv9k4buSK2U8WSdtGcmJye4LWPpbz3StV0aNODA_aOlZNP2z2CY4BdXMRqrZEBZeEHa3gOg7Yl6jatOHOXRqTPi3-0sUuqG_QmOvuoA7YVmO6LHa0rzmjF4ojgBBbXAMPfy4uZLp1Cqf8qr3a1TURQO49HlC00aSODOeTiUB6eN4j1cfBi1uxicQHs-HWfnHJhdZyTV)](https://editor.plantuml.com/uml/ZLN1Rjim3BthAxZqqXs2tNCOcZP1a245ihRRC610mTYCBKIM34bkcWtzzr6I7RjPKoo7GABU8vyeahvo7grlAWLJNohoz3X3LsuCslnngRSMdRTDvXjBueClgIAe5Kejt4xg6YrMa9cgDfgql_S7HM0fywWBHK9Wves5qJT7TWJe82n4faoJmsZ-xCbgvB3h9SnrNXkflHl17m7yE_g4qRst-8G15dsaRI1Th6HH-hNKE_4Yn83nGDRYrjWg4euxkBYbN3RLkh5rKDSAMHZ3Ok4cxjOAVSHUBcxM7oEV5_-AIkZxhAIyKUtjZhjMsRLgAFBYNutP3Wk2qTHwkUNCm1qLafDxY6IsyhuDT19ile9b5RYNCvFjo2PTqSH7ATXFKihitsBd6t-MFkEpV_WlRuXEzxrhD7mn6nSTH5Em90SBIwJFoMTIvCnNlFelnHs3rsSffsfpzBX1HyStlPR5ruRiuPU-dF4P_41BfMaSfHHqnwttcmFgmGDiZShvBKSk5joZnNqatU5-XGUkupCuRgT2wgAjrRX-3mzSzMGhBapqb1vcO7YNMN7VfgUu3QiUEqZ98AlVoNfwXkaIFi62Agbbv2OpMo_QldZTIznkX9MI7gPrtJLWQnayl12Xjs4y_jnMyWJMZIl9GQgvL6wkHnszJDA5kI4SxAKlWI-NyMmfe3RMenAY3nY8dTv9k4buSK2U8WSdtGcmJye4LWPpbz3StV0aNODA_aOlZNP2z2CY4BdXMRqrZEBZeEHa3gOg7Yl6jatOHOXRqTPi3-0sUuqG_QmOvuoA7YVmO6LHa0rzmjF4ojgBBbXAMPfy4uZLp1Cqf8qr3a1TURQO49HlC00aSODOeTiUB6eN4j1cfBi1uxicQHs-HWfnHJhdZyTV)
 
 ---
 
@@ -38,6 +41,38 @@ BIGQUERY_DATASET | Target dataset ID configured inside your BigQuery data wareho
 STRAVA_CLIENT_ID | Application identifier generated by the Strava API management portal | 123456
 STRAVA_CLIENT_SECRET | Cryptographic secret key used to handle OAuth token refreshes | a1b2c3d4e5f6g7h8...
 STRAVA_REFRESH_TOKEN | Persistent token used to fetch short-lived active request bearers | 9876543210abcdef...
+
+---
+
+## 🛠 Cloud Infrastructure Provisioning (Terraform)
+
+This platform provides full infrastructure definition scripts inside the /terraform folder. The resources are decoupled structurally by architectural concern.
+
+### 1. Prerequisites
+
+- Terraform CLI installed locally.
+- Google Cloud SDK (gcloud) authenticated against your target platform account
+
+### 2. Initialization and Deployment
+
+Navigate to the terraform directory and initialize the cloud backend provider layers:
+
+```bash
+cd terraform
+
+# Initialize the workspace and download necessary Google provider modules
+terraform init
+
+# Audit resource change specifications before modifying existing states
+terraform plan
+
+# Execute provisioning blueprints 
+terraform apply
+```
+
+### 3. Populate Application Secrets
+
+Go to the Secret Manger in GCP and update each secret with a new  version of your own strava secrets.
 
 ---
 
@@ -153,6 +188,11 @@ The data platform splits build automation into specialized pipelines to reduce r
 │   │   └── pages/           # Targeted analytics pages (AI, Gear, Profile, Calendar)
 │   ├── ingestion/           # Data platform extraction and ingestion pipelines
 │   └── models/              # Pydantic data modeling structural schema rules
+├── terraform/               # Infrastructure as Code (IaC) configuration blueprints
+│   ├── bigquery.tf          # Declarative BigQuery multi-layer datasets (raw, staging, mart)
+│   ├── cloudbuild.tf        # Cloud Storage bucket configurations and deployment triggers
+│   ├── el_pipeline.tf       # Extract-Load job constructs and Secret environment injections
+│   ├── ...
 ├── Dockerfile               # Production container definition for Streamlit app
 ├── Dockerfile.dbt           # Production container configuration for dbt run workers
 ├── cloudbuild.dbt.yaml      # GCP build pipeline automation for dbt transform workflows

@@ -15,12 +15,26 @@ from ingestion.schemas.strava_activity_streams_schema import ACTIVITY_STREAMS_SC
 from ingestion.transformers.strava_streams import explode_streams
 
 
-def trigger_dbt_job() -> None:
-    project = os.environ.get('GCP_PROJECT_ID')
-    region = os.environ.get('GCP_REGION')
-    dbt_job_name = os.environ.get('CLOUD_RUN_DBT_JOB_NAME')
+# -------------------
+# Constants
+# -------------------
+# TODO: Move to config
+DATASET_RAW = 'dataset_raw'
+TABLE_NAME_RAW_ACTIVITIES = 'raw_activities'
+TABLE_NAME_RAW_ATHLETE_INFO = 'raw_athlete_info'
+TABLE_NAME_RAW_GEAR_DETAILS = 'raw_gear_details'
+TABLE_NAME_RAW_ACTIVITY_STREAMS = 'raw_activity_streams'
 
-    url = f'https://{region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{project}/jobs/{dbt_job_name}:run'
+
+# --------------------------
+# Pipeline Orchestration
+# --------------------------
+def trigger_dbt_job() -> None:
+    PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
+    REGION = os.environ.get('GCP_REGION')
+    CLOUD_RUN_DBT_JOB_NAME = os.environ.get('CLOUD_RUN_DBT_JOB_NAME')
+
+    url = f'https://{REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/{PROJECT_ID}/jobs/{CLOUD_RUN_DBT_JOB_NAME}:run'
 
     creds, _ = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
     authed_session = AuthorizedSession(creds)
@@ -54,7 +68,7 @@ def run() -> None:
     # Extract activities
     activities_data = client.fetch_all_activities(days=3)
     df_activities = pd.DataFrame([
-        {**a.model_dump(), 'ingested_at': ingested_at_dt} for a in activities_data
+        {**a.model_dump(), 'ingested_at': ingested_at_str} for a in activities_data
     ])
 
     # Extract streams
@@ -72,8 +86,8 @@ def run() -> None:
         if len(buffer) >= BATCH_ROWS:
             loader.load_data(
                 data=buffer,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
+                dataset=DATASET_RAW,
+                table_name=TABLE_NAME_RAW_ACTIVITY_STREAMS,
                 write_disposition='WRITE_APPEND',
                 schema=ACTIVITY_STREAMS_SCHEMA,
             )
@@ -81,8 +95,8 @@ def run() -> None:
     if buffer:
         loader.load_data(
             data=buffer,
-            dataset=os.environ['BIGQUERY_DATASET'],
-            table_name=os.environ['BIGQUERY_RAW_ACTIVITY_STREAMS'],
+            dataset=DATASET_RAW,
+            table_name=TABLE_NAME_RAW_ACTIVITY_STREAMS,
             write_disposition='WRITE_APPEND',
             schema=ACTIVITY_STREAMS_SCHEMA,
         )
@@ -93,31 +107,31 @@ def run() -> None:
     for gear_id in df_activities['gear_id'].unique():
         if gear_id and gear_id is not None:
             gear = client.fetch_gear_details(gear_id=gear_id)
-            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at_dt})
+            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at_str})
     df_gear_details = pd.DataFrame(gear_details)
 
     try:
         if not df_athlete_info.empty:
             loader.load_data(
                 data=df_athlete_info,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_ATHLETE_INFO'],
+                dataset=DATASET_RAW,
+                table_name=TABLE_NAME_RAW_ATHLETE_INFO,
                 write_disposition='WRITE_TRUNCATE',
             )
 
         if not df_activities.empty:
             loader.load_data(
                 data=df_activities,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_ACTIVITIES'],
+                dataset=DATASET_RAW,
+                table_name=TABLE_NAME_RAW_ACTIVITIES,
                 write_disposition='WRITE_APPEND',
             )
 
         if not df_gear_details.empty:
             loader.load_data(
                 data=df_gear_details,
-                dataset=os.environ['BIGQUERY_DATASET'],
-                table_name=os.environ['BIGQUERY_RAW_GEAR_DETAILS'],
+                dataset=DATASET_RAW,
+                table_name=TABLE_NAME_RAW_GEAR_DETAILS,
                 write_disposition='WRITE_APPEND',
             )
 
