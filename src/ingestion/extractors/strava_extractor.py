@@ -98,18 +98,17 @@ class StravaExtractor(BaseExtractor):
             if not data:
                 break
 
-            invalid_count = 0
             for item in data:
                 try:
                     all_activities.append(StravaActivity(**item))
                 except ValidationError as e:
-                    invalid_count += 1
+                    total_invalid_count += 1
                     print(f'Validation error: {e.errors()}')
 
             page += 1
 
         print(
-            f'All activities fetched: {len(all_activities)} valid, {invalid_count} invalid.'
+            f'All activities fetched: {len(all_activities)} valid, {total_invalid_count} invalid.'
         )
         return all_activities
 
