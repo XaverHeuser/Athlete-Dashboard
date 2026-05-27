@@ -14,6 +14,7 @@ from ingestion.loaders.bigquery_loader import BigQueryLoader
 from ingestion.schemas.strava_activity_streams_schema import ACTIVITY_STREAMS_SCHEMA
 from ingestion.transformers.strava_streams import explode_streams
 
+
 # -------------------
 # Constants
 # -------------------
@@ -67,7 +68,7 @@ def run() -> None:
     # Extract activities
     activities_data = client.fetch_all_activities(days=3)
     df_activities = pd.DataFrame([
-        {**a.model_dump(), 'ingested_at': ingested_at_dt} for a in activities_data
+        {**a.model_dump(), 'ingested_at': ingested_at_str} for a in activities_data
     ])
 
     # Extract streams
@@ -106,7 +107,7 @@ def run() -> None:
     for gear_id in df_activities['gear_id'].unique():
         if gear_id and gear_id is not None:
             gear = client.fetch_gear_details(gear_id=gear_id)
-            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at_dt})
+            gear_details.append({**gear.model_dump(), 'ingested_at': ingested_at_str})
     df_gear_details = pd.DataFrame(gear_details)
 
     try:
