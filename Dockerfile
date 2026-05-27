@@ -1,18 +1,19 @@
-# Dockerfile
+# Optimized lightweight Python image for fast Cloud Run cold starts
 FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl gnupg && \
-    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" \
-      | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg && \
-    apt-get update && apt-get install -y google-cloud-cli && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install system dependencies if required by python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy source code
 COPY src/ ./src/
 
+# Run the pipeline script
 CMD ["python", "src/main.py"]
