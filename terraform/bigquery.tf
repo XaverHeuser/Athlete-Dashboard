@@ -4,7 +4,7 @@ resource "google_bigquery_dataset" "dataset_raw" {
   labels = {
     service     = "bigquery-datasets"
     environment = "prod"
-    data_stage   = "raw"
+    data_stage  = "raw"
   }
 }
 
@@ -14,7 +14,7 @@ resource "google_bigquery_dataset" "dataset_staging" {
   labels = {
     service     = "bigquery-datasets"
     environment = "prod"
-    data_stage   = "staging"
+    data_stage  = "staging"
   }
 }
 
@@ -24,7 +24,7 @@ resource "google_bigquery_dataset" "dataset_intermediate" {
   labels = {
     service     = "bigquery-datasets"
     environment = "prod"
-    data_stage   = "intermediate"
+    data_stage  = "intermediate"
   }
 }
 
@@ -34,6 +34,6 @@ resource "google_bigquery_dataset" "dataset_mart" {
   labels = {
     service     = "bigquery-datasets"
     environment = "prod"
-    data_stage   = "mart"
+    data_stage  = "mart"
   }
 }
