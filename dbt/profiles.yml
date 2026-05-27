@@ -4,7 +4,7 @@ dbt:
     prod:
       type: bigquery
       method: oauth
-      project: athlete-dashboard-467718
-      dataset: strava_data
+      project: athlete-dashboard1
+      dataset: dataset_raw
       location: europe-west1
       threads: 4
