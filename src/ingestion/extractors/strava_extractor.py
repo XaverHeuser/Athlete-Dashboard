@@ -70,7 +70,7 @@ class StravaExtractor(BaseExtractor):
             raise
         return athlete_info
 
-    def fetch_all_activities(self, days: int = 3) -> list[StravaActivity]:
+    def fetch_all_activities(self, days: int = 1) -> list[StravaActivity]:
         """Fetches all activities."""
         print('Start fetching all activities.')
 
@@ -83,9 +83,12 @@ class StravaExtractor(BaseExtractor):
         activities_url = StravaEndpoints.get_activities()
         all_activities: list[StravaActivity] = []
         page = 1
+        total_invalid_count = 0
 
         while True:
+            # Remove after param to fetch all activities to backfill the historical data
             params = {'per_page': 200, 'page': page, 'after': after}
+            # params = {'per_page': 200, 'page': page}
 
             response = requests.get(
                 activities_url, headers=self.headers, params=params, timeout=10
