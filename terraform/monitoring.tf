@@ -3,7 +3,7 @@ resource "google_monitoring_notification_channel" "email_admin" {
   display_name = "Platform Engineering Admin Email"
   type         = "email"
   labels = {
-    email_address = "xaver.heuser@gmail.com" # Swap with your target alert email
+    email_address = var.alert_recipient_email
   }
 }
 
