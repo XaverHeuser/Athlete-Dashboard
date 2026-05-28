@@ -24,21 +24,21 @@ models:
     
     # Default (if not overridden)
     +materialized: view
-    +schema: 'strava_data'
+    +schema: 'dataset_raw'
     
     staging:
       +materialized: view
-      +schema: 'strava_staging'
+      +schema: 'dataset_staging'
       +tags: ['staging', 'strava']
 
     intermediate:
       +materialized: view
-      +schema: 'strava_intermediate'
+      +schema: 'dataset_intermediate'
       +tags: ['intermediate', 'strava']
 
     marts:
       +materialized: table
-      +schema: 'strava_marts'
+      +schema: 'dataset_mart'
       +tags: ['mart', 'strava']
 
 # Project-level variables
