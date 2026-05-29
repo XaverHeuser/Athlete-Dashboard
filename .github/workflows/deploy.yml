@@ -1,0 +1,82 @@
+name: Build and Deploy Cloud Run Job
+
+on:
+  push:
+    branches:
+      - main
+
+# Define environment variables for the workflow
+env:
+  PROJECT_ID: athlete-dashboard1
+  REGION: europe-west1
+  WIF_PROVIDER: "projects/876390191679/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider"
+  SA_EMAIL: "github-actions-deployer@athlete-dashboard1.iam.gserviceaccount.com"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    # Define the matrix strategy
+    strategy:
+      fail-fast: true
+      matrix:
+        # Define pairs for each image
+        include:
+          - image: "extract-load-image"
+            repo_name: "athlete-dashboard-el-repo"
+            job_name: "extract-load-job"
+            dockerfile: "./Dockerfile"
+            
+          - image: "dbt-image"
+            repo_name: "athlete-dashboard-dbt-repo"
+            job_name: "dbt-transform-job"
+            dockerfile: "./Dockerfile.dbt"
+
+    # Request the OIDC token from GitHub
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+        # Authenticate to GCP using the Workload Identity Federation setup in Terraform
+      - name: Authenticate to GCP via Workload Identity Federation
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SA_EMAIL }}
+
+      # Install Cloud SDK
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+      
+      # Log directly into Docker using the generated OIDC access token
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      
+      # Dynamically references matrix paths to build the right Dockerfile
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repo_name }}/${{ matrix.image }}:${{ github.sha }} \
+                       -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repo_name }}/${{ matrix.image }}:latest \
+                       -f ${{ matrix.dockerfile }} .
+
+      # Pushes the specific image variants simultaneously
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repo_name }}/${{ matrix.image }} --all-tags
+
+      # Triggers updates to the correct matching Cloud Run job
+      - name: Update Cloud Run Job
+        run: |
+          gcloud run jobs update ${{ matrix.job_name }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repo_name }}/${{ matrix.image }}:${{ github.sha }} \
+            --region ${{ env.REGION }}
