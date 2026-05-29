@@ -6,21 +6,21 @@ resource "google_service_account" "github_actions" {
 
 # Grant GitHub the ability to build/push Docker images
 resource "google_project_iam_member" "ar_writer" {
-  project = "finance-analysis-id"
+  project = var.project_id
   role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
 # Grant GitHub the ability to trigger Cloud Run Job updates
 resource "google_project_iam_member" "cloud_run_developer" {
-  project = "finance-analysis-id"
+  project = var.project_id
   role    = "roles/run.developer"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
 # Allow GitHub to pass the runtime service account to Cloud Run
 resource "google_project_iam_member" "sa_user" {
-  project = "finance-analysis-id"
+  project = var.project_id
   role    = "roles/iam.serviceAccountUser"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
