@@ -48,3 +48,15 @@ variable "dataset_mart_id" {
   type        = string
   default     = "dataset_mart"
 }
+
+variable "github_username" {
+  description = "GitHub username for OIDC federation."
+  type        = string
+  default     = "XaverHeuser"
+}
+
+variable "github_repo_name" {
+  description = "GitHub repository name for OIDC federation."
+  type        = string
+  default     = "Athlete-Dashboard"
+}
