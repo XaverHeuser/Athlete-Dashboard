@@ -18,7 +18,7 @@ An automated, modern data stack (MDS) data engineering platform designed to orch
 - **Dimensional Data Modeling (dbt)**: Transforms unstructured raw relational database fields into an analytical Star Schema, materializing standardized tables (Fact and Dimension tracking) optimized for analytical aggregation
 - **Multi-Sport Consistency Analytics**: Programmatically structures sophisticated mathematical metrics like multi-sport weekly consistency and localized training readiness indices inside intermediate SQL view mappings
 - **Interactive Multi-Page Streamlit App**: A high-performance tracking portal providing athletes with dynamic geographic data charts, workout calendars, performance profiles and localized machine-learning readiness forecasts powered by Gemini/Vertex AI
-- **Cloud-Native CI/CD Orchestration**: Built with independent validation workflows (`ci-pipeline.yml`) and isolated Cloud Run environment recipes to decouple ingestion workers from presentation layers
+- **Cloud-Native CI/CD Orchestration**: Built with independent validation workflows (`ci-pipeline.yml`, `deploy.yml`) and isolated Cloud Run environment recipes to decouple ingestion workers from presentation layers
 
 ---
 
@@ -153,11 +153,15 @@ streamlit run src/dashboard/Home.py
 
 ### Automated Pull Request Safeguards
 
-The configured repository uses a unified GitHub Actions pipeline (ci-pipeline.yml) to enforce code standards on every merge request into the main branch:
+The configured repository uses a unified GitHub Actions pipeline (`ci-pipeline.yml`) to enforce code standards on every merge request into the main branch:
 
 - **Quality Checks:** Audits syntax and formatting rules using Ruff.
 - **Static Type Checking:** Evaluates explicit type annotations using strict mypy configurations.
 - **Security Auditing:** Scans files for exposed credentials or vulnerabilities using Bandit.
+
+### Automated Build and Push
+
+A GitHub Action pipeline (`deploy.yml`) will be executed on every push to the main branch. It builds and pushed the el and dbt Docker Images to GCPs Artifacts Registry. Both Cloud Run Jobs (el & dbt job) will be updated with the new created image.
 
 ### Google Cloud Build Automated Pipelines
 
@@ -174,6 +178,7 @@ The data platform splits build automation into specialized pipelines to reduce r
 ├── .github/                 # Automated validation workflows & dependency maintenance engines
 │   └── workflows/
 │       └── ci-pipeline.yml  # Comprehensive Continuous Integration pipeline definitions
+|       └── deploy.yml       # Automated Deployment
 ├── dbt/                     # dbt Core modern data stack transformation definitions
 │   ├── macros/              # Custom modular SQL script injections (discipline mappings)
 │   ├── models/              # Multi-tier SQL transformation layers
