@@ -51,9 +51,8 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.ref"        = "assertion.ref"
   }
   # Block unauthorized repos AND force it to only accept the main branch globally
-  # attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}' && assertion.ref == 'refs/heads/main'"
+  attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}' && assertion.ref == 'refs/heads/main'"
 
-  attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}'"
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }

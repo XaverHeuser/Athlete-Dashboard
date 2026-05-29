@@ -3,8 +3,9 @@ name: Build and Deploy Cloud Run Job
 on:
   push:
     branches:
-      - 183-cicd-deploy-images
+      - main
 
+# Define environment variables for the workflow
 env:
   PROJECT_ID: athlete-dashboard1
   REGION: europe-west1
