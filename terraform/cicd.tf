@@ -51,8 +51,9 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.ref"        = "assertion.ref"
   }
   # Block unauthorized repos AND force it to only accept the main branch globally
-  attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}' && assertion.ref == 'refs/heads/main'"
+  # attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}' && assertion.ref == 'refs/heads/main'"
 
+  attribute_condition = "assertion.repository == '${var.github_username}/${var.github_repo_name}'"
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
@@ -62,8 +63,8 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
 resource "google_service_account_iam_member" "wif_impersonation" {
   service_account_id = google_service_account.github_actions.name
   role               = "roles/iam.workloadIdentityUser"
-  
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.github_username}/${var.github_repo_name}"
+
+  member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.github_username}/${var.github_repo_name}"
 }
 
 # Output the Provider Name
