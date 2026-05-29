@@ -48,3 +48,12 @@ variable "dataset_mart_id" {
   type        = string
   default     = "dataset_mart"
 }
+
+# -----------------------
+# Alerting email
+# -----------------------
+variable "alert_recipient_email" {
+  type        = string
+  description = "The private email address of the developer receiving alerts."
+  sensitive   = true
+}
