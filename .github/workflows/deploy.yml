@@ -56,7 +56,7 @@ jobs:
       
       # Log directly into Docker using the generated OIDC access token
       - name: Log in to Artifact Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
