@@ -135,6 +135,7 @@ def run() -> None:
                 write_disposition='WRITE_APPEND',
             )
 
+        # NOTE: Remove the following two lines of code for pipeline orchestration in Airflow
         print('Triggering dbt-job...')
         trigger_dbt_job()
     except Exception as e:

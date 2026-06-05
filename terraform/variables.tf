@@ -59,7 +59,8 @@ variable "github_repo_name" {
   description = "GitHub repository name for OIDC federation."
   type        = string
   default     = "Athlete-Dashboard"
- 
+}
+
 # -----------------------
 # Alerting email
 # -----------------------

@@ -1,3 +1,9 @@
+# Airflow
+airflow/config/airflow.cfg
+airflow/config/gcp-key.json
+airflow/logs/
+airflow/plugins/
+
 # Terraform
 .terraform/
 *.tfstate
@@ -13,6 +19,7 @@ logs/
 # Credentials
 credentials/
 .streamlit/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
