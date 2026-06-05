@@ -135,7 +135,7 @@ def run() -> None:
                 write_disposition='WRITE_APPEND',
             )
 
-        print('Triggering dbt-job...')
-        trigger_dbt_job()
+        # print('Triggering dbt-job...')
+        # trigger_dbt_job()
     except Exception as e:
         print(f'Load failed. dbt-job not triggered. Error: {e}')
