@@ -135,7 +135,8 @@ def run() -> None:
                 write_disposition='WRITE_APPEND',
             )
 
-        # print('Triggering dbt-job...')
-        # trigger_dbt_job()
+        # NOTE: Remove the following two lines of code for pipeline orchestration in Airflow
+        print('Triggering dbt-job...')
+        trigger_dbt_job()
     except Exception as e:
         print(f'Load failed. dbt-job not triggered. Error: {e}')

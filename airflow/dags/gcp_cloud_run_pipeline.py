@@ -1,7 +1,12 @@
 from datetime import datetime, timedelta
 import os
+
+from airflow.providers.google.cloud.operators.cloud_run import (
+    CloudRunExecuteJobOperator,
+)
+
 from airflow import DAG
-from airflow.providers.google.cloud.operators.cloud_run import CloudRunExecuteJobOperator
+
 
 # Fetch infrastructure variables dynamically from the environment (.env)
 GCP_PROJECT = os.environ.get('GCP_PROJECT_ID')
@@ -24,7 +29,6 @@ with DAG(
     catchup=False,
     tags=['gcp', 'production'],
 ) as dag:
-
     # Task 1: Trigger Extract-Load container
     trigger_extract_load = CloudRunExecuteJobOperator(
         task_id='run_extract_load',
