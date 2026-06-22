@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
         # Authenticate to GCP using the Workload Identity Federation setup in Terraform
       - name: Authenticate to GCP via Workload Identity Federation
