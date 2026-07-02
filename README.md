@@ -207,6 +207,21 @@ The data platform splits build automation into specialized pipelines to reduce r
 
 ---
 
+##  Strava Developer API Changes
+
+Strava changed the developer API. Only members with a subscription can access the API.
+Due to this, no new data will be loaded. The Cloud scheduler trigger is paused.
+
+```
+Effective June 30, 2026
+
+Subscription required for existing Standard Tier developers.
+A Strava subscription will be required to access the API as a Standard Tier developer.
+Extended Access Tier developers are not affected.
+```
+
+---
+
 ## 📄 License
 
 Distributed directly under the terms of the open-source MIT License guidelines. See the standard accompanying LICENSE text metadata file for deep details.
