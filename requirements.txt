@@ -4,7 +4,7 @@ dotenv==0.9.9
 google-auth==2.50.0
 google-api-python-client==2.197.0
 google-auth-oauthlib==1.4.0
-google-cloud-aiplatform==1.148.1
+google-cloud-aiplatform==1.162.0
 google-cloud-bigquery==3.41.0
 google-cloud-bigquery-storage==2.38.0
 matplotlib==3.10.7 
