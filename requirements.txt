@@ -15,5 +15,5 @@ pyarrow==25.0.0
 pydantic==2.13.4
 python-dotenv==1.2.1
 requests==2.34.2
-streamlit==1.50.0
+streamlit==1.60.0
 streamlit-calendar==1.4.0
